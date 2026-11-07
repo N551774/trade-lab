@@ -65,7 +65,7 @@ header[data-testid="stHeader"] {background: transparent; height: 2.4rem;}
 .tl-brand .logo img {width:34px; height:34px; border-radius:9px;}
 .tl-brand .wm {font-family: var(--num); font-weight:700; font-size:1.25rem; letter-spacing:-.02em; line-height:1;}
 .tl-brand .wm i {font-style:normal; color:var(--lime);}
-.tl-brand .logo small {display:block; font-size:.68rem; color:var(--muted); margin-top:3px;}
+.tl-brand .logo small {display:block; font-size:.68rem; color:var(--muted); margin-top:3px; white-space:nowrap;}
 .tl-brand .meta {display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
 .chip {display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--surface);
   font-size:.78rem; color:var(--muted); white-space:nowrap;}
@@ -75,7 +75,7 @@ header[data-testid="stHeader"] {background: transparent; height: 2.4rem;}
 /* ナビ（上に固定） */
 .st-key-topnav {position: sticky; top: 2.4rem; z-index: 50; padding: 8px 0 10px 0; margin-bottom: 8px; background: rgba(11,11,12,.88);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);}
-.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;}
+.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: wrap;}
 .st-key-topnav [data-testid="stButtonGroup"] > div::-webkit-scrollbar {display:none;}
 .st-key-topnav button {flex: none !important; white-space: nowrap;}
 .st-key-topnav button {border-radius: 999px !important; padding: 7px 13px !important; font-size: .88rem; background: transparent !important;
@@ -151,13 +151,15 @@ hr {border-color: var(--line) !important;}
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
 @media (max-width: 1400px) {
   .block-container {padding-left: 1.6rem; padding-right: 1.6rem;}
-  .st-key-topnav button {padding: 6px 12px !important; font-size: .84rem;}
+  .st-key-topnav button {padding: 5px 10px !important; font-size: .8rem !important;}
+  .st-key-topnav button p {font-size: .8rem !important;}
   .st-key-topnav [data-testid="stButtonGroup"] > div {gap: 4px;}
 }
 @media (max-width: 640px) {
   .block-container {padding: 2.8rem 0.8rem 2rem 0.8rem;}
   .tl-brand .meta .chip:not(.keep) {display:none;}
-  .st-key-topnav [data-testid="stButtonGroup"] > div {flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;}
+  .st-key-topnav [data-testid="stButtonGroup"] > div {flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent);}
   .st-key-topnav [data-testid="stButtonGroup"] > div::-webkit-scrollbar {display:none;}
   .st-key-topnav button {padding: 7px 14px !important; font-size: .84rem; flex: none !important; white-space: nowrap;}
   .hours {display:none;}
@@ -477,13 +479,14 @@ st.markdown(
     f"<span class='chip'>USD/JPY <b>{fx:,.2f}</b></span>"
     f"<span class='chip keep'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b></span></div></div>",
     unsafe_allow_html=True)
+_SHORT = {P_PICK: "狙い目", P_ENV: "相場", P_AN: "分析", P_LOG: "記録", P_HELP: "使い方"}  # タブは短い名前で1行に収める
 _ICONS = {P_PICK: ":material/target:", P_SCALP: ":material/bolt:", P_PERF: ":material/insights:",
           P_ENV: ":material/public:", P_AN: ":material/candlestick_chart:",
           P_PAPER: ":material/sports_esports:", P_VAL: ":material/science:", P_LOG: ":material/menu_book:",
           P_HELP: ":material/help:"}
 with st.container(key="topnav"):
     page = st.segmented_control("ページ", PAGES, key="page", label_visibility="collapsed",
-                                format_func=lambda x: f"{_ICONS[x]} {x.split(' ', 1)[1]}")
+                                format_func=lambda x: f"{_ICONS[x]} {_SHORT.get(x, x.split(' ', 1)[1])}")
 if page is None:
     page = PAGES[0]
 if not use_yahoo:
