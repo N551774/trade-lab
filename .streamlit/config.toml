@@ -5,8 +5,9 @@ toolbarMode = "minimal"
 gatherUsageStats = false
 
 [theme]
-base = "light"
-primaryColor = "#4f46e5"
-backgroundColor = "#f6f7fb"
-secondaryBackgroundColor = "#eef0f7"
-textColor = "#1f2430"
+base = "dark"
+primaryColor = "#8b5cf6"
+backgroundColor = "#07090f"
+secondaryBackgroundColor = "#121624"
+textColor = "#e9ecf5"
+borderColor = "#20263a"
