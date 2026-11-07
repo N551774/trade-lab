@@ -35,7 +35,7 @@ import inspect as _inspect
 PKW = {"width": "stretch"} if "width" in _inspect.signature(st.plotly_chart).parameters else {"use_container_width": True}
 PKW["theme"] = None  # 独自のダークテーマ（charts.py）を使う
 JST = ZoneInfo("Asia/Tokyo")
-LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAB4FBMVEVgl5QeJjRebJ4mEy0yMlceIzIxTlg0i6leo9kUKTMsLEI7MGA9d5oywedAM19AMWZhTitGR19wa8Bhk3m6kSynmXeBkp2artC/0eLq3r8JChVMOYwUFyoTRlgSOEouJFQ5KmgPJzQAAABEMXo2N3AMEhxHQY4mHUb8/PssRXJBLnVxSOlpV+ohGzkVTWBQiekaKEU6RYRjZeoOMT0oJS8AAQKVeCxVVspZeOpcSMhOZ8ppWCsQDiEtNU0yNjJQRy1Ids1LlutVOLEYUGF5Pu0CAgNEOiiHaysoKC02mM45tOdpO9GohSzn6u06iMgICQs0p8x1Yy+EhpTwtyT/wRxebOiTmsvGmyvDxssAADw0KlRJKpJIhcp3eoiwtbvYpynLzeTO1ej+vhn7wi0TExkUFBwcHEA8PDw+PoEmQ1o4ZaY2drVVQrWegTCzuM3L09cOFRkSFhsbGykUJCwmJTUkITU8WatlQM/76bEAAFUYMzsnJzQiIDQvKUQwKEg2LFU7M1w9RDkzVY0qZIo9dso3pbs+ruUytNpcLrJKTWlbUjVHUrFUaXtdnMJCoKhlaoFtdcVxgcR7qsiOiFaPk3aDmLmdvdGgfSuiqKuzyNfd5+/7zVb602n84JIODhIKEBJ86sXcAAAAoHRSTlP/kf8bnF3w///cF8j//zvf//////////////7//v7+/v7+A/7+/f/+///////9///////+/S7///////////////////9M//8N////////aP///////////wTT////////////qNX/BP//////////cZHRrmy3////A9Q30ypwrmX//////////////////////////////////////4tf5giXCAAABclJREFUeNqd2IdT20gUB+ClpFzvTcgSVmxYU4wBSw4yrjkTA8GUUHKhpBcgkN6TS++X3q/+q/e2SFoVjJM3MMnOSN/89u2qIKTxOgK/XzY2fhXZ4q9IpLlZdSpJ62zd5TI7jRbi//6mla9/pjYL1dbWJowY0QrV2SlbdeVMWXNDFzXt+m5ypIO0kShtgmZTgiR3niEZbOiI9uk1N+NMy6ECJflsWWuwoCPaVSGOi3FRgZB85TLNhEi0q6rXabKLUe5MbqmzgUgAXWzY7UAexqY8kuySyjRRWbvmdpp8RSgBUj2QfBYQVNZ+V1urO+tLZ7Qy0hpUO9BaDpUi4uQ8kKzD1JxAaztMighQJ9ncTtPrAHI6XcUhUkSQQMkODGTBYtApDW2oKZBHSiYHcl+n0+ncQDLJpA2o0YGqOgwCikDZXHp8u2FsH0/nskyqQ/bM1gkEEoUicHQmlwbm7Vug0jk2u1NIXLKm2qDMADg7vt+zZ2YHSAMsEhJbVB1qsqHcuLFj5sDk/smdIOWyHwllMpmHEGjn/r//OTC5xzB4pPWgFl7w36McUrNpw5jZ/xfGF3ZCpNqgFqEYpGYWN6a3r8xMEuiAF1pr1USnpTtG8twau/MEvTQMz9TCDtS8DtRNoVtf3Bt7gpDxwwWn2WEv5JdcTncMpMGhe2N30HevMP5lBpZ/xYCNZEFV5uZyKDQ2NDQ2tgmNYPzSWFkxjHHY2l4oQHI5BIoNDoG06TjGr2DpDHqJhMNhDq0tuRyAYgS6u+kNxu/gahtPP2QOSG6o2XvD9jkA3R18gfH7bPZGLncjm82GeSG1c12pW4Q2Dz7G+M/PFdjgmWy2N+yG3NIWF9QtOrHBQdLox8sKr0QiwaGk7Jaat4hUiwVYVansw/hFpaI4RaUEgazJcYm/jxDnKL++Ija0/B7jN5WCCFFJQXBbsiNZkrtuLi3dtCTlNcY/VwqFSkhRQiJFIZ/kopYLUMvc+QMaPddVKMyFlBCUIzGIScGhzhW6oApLJFM8Bo2emyvYkBCKQaxPrc6j0pHyXbTyBFrchfHm20TOh3g5kPUiIEiqJamqA5GJvcP4p9tsGPJKSA6SwCK3sPmnmYRpQwrCeGGpywNxKoSEtxM3lXgAEzk+UW/mt1KINPr4oumHKCVCXLKoCcxq73QerLwCjR7ZqOS30nJDQAHU76KIBYsofwNx8MTTBVgmPLL63DyXgVtHvRIzGWQGQf2eV5TWSHeMxNn1AC6k2PQ+Emvf61WMf4QlF6B4XKSQLHmk1kfmM3LyRCJBOnXOfL46Que4oMSrQx4pYk6TCPVyQoVEqjllpszpvRCQbEHF3Do1BT8MinsgkByqvx5OwtOpR4SBSvX09EylUvXziySQYvbQ4lDcAzmh+uV5slDPUj2pRNiGoFIJdnFZQy8U5xBPJWVWaZwUOVMOhwUoEwjZ0jYbkiRZis5DW/d+29fR09FBIaBSHbRSZNPBzrOGFhQPgKTkAsSZP8aO7TssEynRFwzBIL5tWyAUlWDz7Mr0H2OH9pGWOVBf7RBJNAETFCGQBIiUPSTQWlOjjZKPtdNikBzu48MEh/hQ8SybD5LkIjv0PN9XVSCx/FA/h4Y5ZLnrQHEfJM22DwPTXowyqKn9PDmzGGYQd4teKISiXkge/hVq+DCHDrOhyiGFDSM1QJI8e//+rCzJljRbLM7CM7CXS0UoxeeE/FOz91U0al/J9OkuPlxDfuiUVINEod5q0EZ0UKpBCnukkO9O24hORKtBURFypJDvIbIB6Yekj5BsyxrpSD8pfZzk6n2djrRS9IOkYKoEkH7yg6QAqlepI39l69W6FCz1epxLJQJpetXJBUjUsgv69p/Ovtboox8sWRjd8Sd0/tlHry5F15As8IRuQUQ6FK1J8lG9l0apwz+N6XrpYI2hPNTpEnPsj3V6abRmyrFOj5Z0z1c/Eqr078FD0cCSA9J8cvrkqBVH07T/ASDjD9xvPOqBAAAAAElFTkSuQmCC"
+LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEUOKUr8WmoAAAD8/f2esscAGz2luMxPN1IOKkoNKUkgLUwZM1Kgq7gAVVUyS2iVp7o5Um+osr4AAFUMKEoOKUkOKkpme5OURFuxxdgAAH8OKkoAPz9QZHtkO1X+YG4BHkApN1V2i6R8kqnq7O4OKUomQF5DWXRXbIVbcIhxgpSEmrHSUWSoSV66TGHATWHS193Z3uIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjF17AAAAQHRSTlP+/wD//////64y////A/////8DFkVy////AtwE//////////+d////////////////AAAAAAAAAAAAAAAAAAAAm1LHrQAAAblJREFUeNrt2NuOgjAQBuChldKKHFZABHE9H/f4/k+3tQi6mhhhZrNusv8FFyR8mTbQMAOsTJ8xlcgcGiSXiTIPmoC5ZpqR0CKypgzksWgJLSMj/fgRGjGVQ/soDRjIYzGgEh9qAr0/CpBRep80FOVYCKKMgceWaAck8wC/sHJxwCQFJBlEQBIFCQ2UgKSBJOTw99N1iKD02XkoyHHerNTBUy9WmRRbj1WFDOr+Q48NuS4R9PFJA7mcTykgGxZcX9CQX2w43xY+FlrzYwocZPcq6Mn+IQhwUH0evWKh7nj8bqXjxifkFdTszA7d29D43ldnOLgJWfdWFN6GYApE0N0brJdWPWUHraHVbL4XwWy+vqhINIX2QyE6QmdloEEF7RpCbiA6JiIsbwwCXVQv2DU+xS6hSXkeTdCQvrXg0xbn6jUEnLs0UFEADQSTFhDUkI/8cdmK8j2ao//JfH8jZr4P+Jx/a8iaTl8/MqELvxiypoaszSJr/BQQtaJkzTFZu+5RlGQGCBlBwx4dhix9/OJiM2QhG/uYQRTOGZ2NxiRiNDY6Dev0vC1uN6yLvw3r6vFhQ+UwPsyOwBf7iBj8XKKIiwAAAABJRU5ErkJggg=="
 try:
     import base64 as _b64, io as _io
     from PIL import Image as _Image
@@ -44,115 +44,119 @@ except Exception:
     _icon = "📈"
 st.set_page_config(page_title="短期トレード・ラボ", page_icon=_icon, layout="wide")
 st.markdown("""<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
 :root {
-  --bg:#07090f; --surface:rgba(255,255,255,.035); --surface2:rgba(255,255,255,.06); --line:rgba(255,255,255,.08);
-  --text:#e9ecf5; --muted:#8a93a8; --accent:#8b5cf6; --accent2:#22d3ee; --up:#ff5a6a; --down:#4c8dff; --gold:#fbbf24;
-  --grad: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 100%);
+  --bg:#0b0b0c; --surface:#161615; --surface2:#1f1f1d; --line:#2a2a28;
+  --text:#f2f2ef; --muted:#9a9a95; --lime:#c6f432; --up:#ff5a6a; --down:#4c7dff;
+  --num: "Space Grotesk", "Noto Sans JP", sans-serif;
 }
-html, body, .stApp, .stMarkdown, button, input, textarea, select, [data-testid="stMetricValue"] {
-  font-family: "Inter", "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif !important; font-feature-settings: "tnum" 1, "palt" 1;}
-.stApp {background:
-  radial-gradient(900px 500px at 8% -10%, rgba(139,92,246,.18), transparent 60%),
-  radial-gradient(800px 480px at 100% 0%, rgba(34,211,238,.10), transparent 60%), var(--bg) !important;}
+html, body, .stApp, .stMarkdown, button, input, textarea, select {
+  font-family: "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif !important;}
+[data-testid="stMetricValue"], .num {font-family: var(--num) !important; font-variant-numeric: tabular-nums; letter-spacing:-.01em;}
+.stApp {background: var(--bg) !important;}
 header[data-testid="stHeader"] {background: transparent; height: 2.4rem;}
-.block-container {padding-top: 2.6rem; padding-bottom: 4rem; max-width: 1320px;}
+.block-container {padding-top: 2.6rem; padding-bottom: 4rem; max-width: 1280px;}
 /* ブランドバー */
 .tl-brand {display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 0 0 14px 0;}
-.tl-brand .logo {display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.08rem; letter-spacing:.02em; color:var(--text);}
-.tl-brand .logo img {width:34px; height:34px; border-radius:9px; box-shadow:0 0 0 1px var(--line), 0 6px 24px rgba(139,92,246,.35);}
-.tl-brand .logo small {display:block; font-weight:600; font-size:.62rem; letter-spacing:.22em; color:var(--muted);}
+.tl-brand .logo {display:flex; align-items:center; gap:12px; color:var(--text);}
+.tl-brand .logo img {width:34px; height:34px; border-radius:9px;}
+.tl-brand .wm {font-family: var(--num); font-weight:700; font-size:1.25rem; letter-spacing:-.02em; line-height:1;}
+.tl-brand .wm i {font-style:normal; color:var(--lime);}
+.tl-brand .logo small {display:block; font-size:.68rem; color:var(--muted); margin-top:3px;}
 .tl-brand .meta {display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
-.chip {display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; background:var(--surface);
-  border:1px solid var(--line); font-size:.78rem; color:var(--muted); white-space:nowrap;}
-.chip b {color:var(--text); font-weight:600;}
-.dot {width:7px; height:7px; border-radius:50%; background:#5b6275; display:inline-block;}
-.dot.on {background:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.18);}
+.chip {display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--surface);
+  font-size:.78rem; color:var(--muted); white-space:nowrap;}
+.chip b {color:var(--text); font-weight:600; font-family: var(--num);}
+.dot {width:7px; height:7px; border-radius:50%; background:#55554f; display:inline-block;}
+.dot.on {background:var(--lime); box-shadow:0 0 0 3px rgba(198,244,50,.18);}
 /* ナビ（上に固定） */
-.st-key-topnav {position: sticky; top: 2.4rem; z-index: 50; padding: 8px 0 10px 0; margin-bottom: 8px;
-  background: rgba(7,9,15,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);}
+.st-key-topnav {position: sticky; top: 2.4rem; z-index: 50; padding: 8px 0 10px 0; margin-bottom: 8px; background: rgba(11,11,12,.88);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);}
 .st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: wrap;}
-.st-key-topnav button {border-radius: 12px !important; padding: 7px 15px !important; background: var(--surface) !important;
-  border: 1px solid var(--line) !important; color: var(--muted) !important; font-weight: 600 !important; transition: all .15s;}
-.st-key-topnav button:hover {color: var(--text) !important; border-color: rgba(139,92,246,.5) !important;}
-.st-key-topnav button[aria-checked="true"] {background: var(--grad) !important; color: #fff !important; border-color: transparent !important;
-  box-shadow: 0 6px 22px rgba(139,92,246,.35);}
+.st-key-topnav button {border-radius: 999px !important; padding: 8px 16px !important; background: transparent !important;
+  border: 1px solid var(--line) !important; color: var(--text) !important; font-weight: 500 !important;}
+.st-key-topnav button:hover {border-color: #55554f !important;}
+.st-key-topnav button[aria-checked="true"] {background: var(--lime) !important; color: #0b0b0c !important; border-color: var(--lime) !important; font-weight: 700 !important;}
+.st-key-topnav button[aria-checked="true"] * {color: #0b0b0c !important;}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {border-radius: 999px !important; margin-right: 6px; border: 1px solid var(--line) !important; background: transparent !important; color: var(--text) !important;}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"][aria-checked="true"] {background: var(--lime) !important; border-color: var(--lime) !important; color: #0b0b0c !important; font-weight: 700 !important;}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"][aria-checked="true"] * {color: #0b0b0c !important;}
+[class*="st-key-card_"] .rulebar {background: var(--surface2);}
 /* ページ見出し */
-.hero {margin: 4px 0 10px 0;}
-.hero .eyebrow {font-size:.7rem; font-weight:700; letter-spacing:.24em; background:var(--grad); -webkit-background-clip:text; color:transparent;}
-.hero h1 {font-size: 2.1rem !important; font-weight: 800 !important; margin: 2px 0 2px 0 !important; padding:0 !important; color: var(--text); letter-spacing:.01em;}
+.hero {margin: 6px 0 12px 0;}
+.hero .eyebrow {font-size:.82rem; color:var(--muted);}
+.hero h1 {font-size: 2.2rem !important; font-weight: 900 !important; margin: 2px 0 2px 0 !important; padding:0 !important; color: var(--text); letter-spacing:-.01em;}
 .hero p {color: var(--muted); margin: 0; font-size: .92rem;}
+.bigcount {display:flex; align-items:baseline; gap:10px; margin: 6px 0 14px 0;}
+.bigcount b {font-family: var(--num); font-size: 4.2rem; font-weight:700; line-height:1; letter-spacing:-.04em; color:var(--text);}
+.bigcount span {font-weight:700; font-size:1rem;} .bigcount small {color:var(--muted); font-size:.85rem; margin-left:4px;}
 .hours {display:flex; flex-wrap:wrap; gap:6px 18px; font-size:.76rem; color:var(--muted); margin: 2px 0 14px 0;}
-.hours b {color:#c9cfdd; font-weight:600; margin-right:6px;}
-.rulebar {display:flex; align-items:center; gap:14px; padding:12px 16px; border-radius:14px; margin:6px 0 12px 0;
-  background:linear-gradient(90deg, rgba(52,211,153,.10), rgba(52,211,153,.02)); border:1px solid rgba(52,211,153,.28);}
-.rulebar .badge {font-size:.66rem; font-weight:800; letter-spacing:.16em; color:#04130d; background:#34d399; padding:4px 8px; border-radius:6px; flex:none;}
-.rulebar b {color:#d1fae5; font-size:.92rem;} .rulebar small {display:block; color:#86c9ad; font-size:.78rem; margin-top:2px;}
-h2 {font-size: 1.6rem !important; font-weight: 800 !important;}
+.hours b {color:var(--text); font-weight:600; margin-right:6px;}
+.rulebar {display:flex; align-items:center; gap:14px; padding:12px 16px; border-radius:18px; margin:6px 0 12px 0; background:var(--surface);}
+.rulebar .badge {font-family: var(--num); font-size:.7rem; font-weight:700; letter-spacing:.08em; color:#0b0b0c; background:var(--lime); padding:4px 10px; border-radius:999px; flex:none;}
+.rulebar b {color:var(--text); font-size:.92rem;} .rulebar small {display:block; color:var(--muted); font-size:.78rem; margin-top:2px;}
+h2 {font-size: 1.6rem !important; font-weight: 900 !important;}
 h3 {font-size: 1.2rem !important; font-weight: 700 !important;}
 h4 {font-size: 1.02rem !important; font-weight: 700 !important;}
-h3, h4 {color: var(--text);}
 /* カード */
-[class*="st-key-card_"] {background: var(--surface) !important; border: 1px solid var(--line) !important; border-radius: 18px !important;
-  padding: 18px 20px !important; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);}
-[class*="st-key-card_"]:hover {border-color: rgba(139,92,246,.35) !important;}
-[data-testid="stExpander"] details {background: var(--surface); border:1px solid var(--line) !important; border-radius: 14px;}
-[data-testid="stExpander"] summary:hover {color: var(--text);}
-[data-testid="stMetric"] {background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 16px;}
-[data-testid="stMetricValue"] {font-size: 1.35rem !important; font-weight: 700 !important; color: var(--text);}
-[data-testid="stMetricLabel"] p {color: var(--muted) !important; font-size:.78rem !important; letter-spacing:.04em;}
-[data-testid="stAlert"] > div {border-radius: 14px; border: 1px solid var(--line);}
-[data-testid="stSidebar"] {background: rgba(10,12,20,.85) !important; border-right: 1px solid var(--line); backdrop-filter: blur(12px);}
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] strong {color: var(--text);}
-.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {border-radius: 12px; font-weight: 600; border:1px solid var(--line);}
-.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {background: var(--grad); border: none; box-shadow: 0 6px 22px rgba(139,92,246,.35);}
-[data-testid="stDataFrame"] {border-radius: 14px; overflow: hidden; border: 1px solid var(--line);}
+[class*="st-key-card_"] {background: var(--surface) !important; border-radius: 24px !important; padding: 20px 22px !important;}
+[data-testid="stExpander"] details {background: var(--surface); border:none !important; border-radius: 18px;}
+[data-testid="stMetric"] {background: var(--surface); border-radius:18px; padding:12px 16px;}
+[data-testid="stMetricValue"] {font-size: 1.5rem !important; font-weight: 700 !important; color: var(--text);}
+[data-testid="stMetricLabel"] p {color: var(--muted) !important; font-size:.78rem !important;}
+[data-testid="stAlert"] > div {border-radius: 18px;}
+[data-testid="stSidebar"] {background: #111110 !important; border-right: 1px solid var(--line);}
+.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {border-radius: 999px; font-weight: 700; border:1px solid var(--line); background: transparent;}
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {background: var(--lime); color:#0b0b0c; border: none;}
+.stButton > button[kind="primary"] *, .stFormSubmitButton > button[kind="primary"] * {color:#0b0b0c !important;}
+[data-testid="stDataFrame"] {border-radius: 18px; overflow: hidden;}
 hr {border-color: var(--line) !important;}
 /* 狙い目カード */
-.pc-head {display:flex; align-items:center; gap:12px; margin-bottom:8px;}
-.pc-rank {width:34px; height:34px; border-radius:10px; display:grid; place-items:center; font-weight:800; color:#fff; background:var(--grad); flex:none;}
-.pc-name {font-size:1.12rem; font-weight:800; color:var(--text); line-height:1.2;}
-.pc-name span {font-size:.78rem; font-weight:500; color:var(--muted); margin-left:6px;}
-.pc-score {margin-left:auto; text-align:right; font-size:.72rem; color:var(--muted); letter-spacing:.08em;}
-.pc-score b {display:block; font-size:1.3rem; color:var(--text); letter-spacing:0;}
-.pc-bar {height:4px; border-radius:4px; background:var(--surface2); overflow:hidden; margin:2px 0 10px 0;}
-.pc-bar i {display:block; height:100%; background:var(--grad);}
-.ticket {border-radius:14px; border:1px solid var(--line); background:rgba(0,0,0,.25); overflow:hidden; margin-bottom:10px;}
-.ticket .row {display:flex; justify-content:space-between; align-items:baseline; padding:10px 14px; border-bottom:1px solid var(--line);}
-.ticket .row:last-child {border-bottom:none;}
-.ticket .k {font-size:.78rem; color:var(--muted); letter-spacing:.04em;}
-.ticket .v {font-size:1.12rem; font-weight:700; color:var(--text);}
-.ticket .v small {font-size:.75rem; font-weight:600; margin-left:6px;}
-.ticket .entry .v {color:var(--gold);} .ticket .stop .v small {color:var(--down);} .ticket .tgt .v small {color:var(--up);}
-.ticket .entry {background:rgba(251,191,36,.06);}
+.pc-head {display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;}
+.pc-name {font-size:1.25rem; font-weight:900; color:var(--text); line-height:1.25;}
+.pc-name span {display:block; font-size:.8rem; font-weight:500; color:var(--muted); margin-top:2px;}
+.pc-score {font-family: var(--num); font-size:.9rem; font-weight:700; color:#0b0b0c; background:var(--lime); padding:5px 12px; border-radius:999px; white-space:nowrap;}
+.pc-score.low {background:var(--surface2); color:var(--text);}
+.entry {margin: 0 0 12px 0;}
+.entry .k {font-size:.8rem; color:var(--muted);}
+.entry .v {font-family: var(--num); font-size: 2.7rem; font-weight:700; letter-spacing:-.03em; line-height:1.05; color:var(--text);}
+.tiles {display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; margin-bottom:12px;}
+.tile {padding:12px 14px; border-radius:16px;}
+.tile .k {font-size:.74rem;} .tile .v {font-family: var(--num); font-size:1.3rem; font-weight:700; color:var(--text);} .tile .s {font-size:.78rem;}
+.tile.stop {background:#0f1a33;} .tile.stop .k, .tile.stop .s {color:#9db8ff;}
+.tile.tgt {background:#33121a;} .tile.tgt .k, .tile.tgt .s {color:#ffa3ae;}
+.rr {margin-bottom:12px;} .rr .lbl {display:flex; justify-content:space-between; font-size:.76rem; color:var(--muted); margin-bottom:6px;}
+.rr .bar {display:flex; gap:3px; height:8px;} .rr .bar i {display:block; border-radius:8px;}
 .plan-row {display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:0.95rem;}
 .plan-row b {font-variant-numeric: tabular-nums;}
-.tag {display:inline-block; padding:2px 10px; border-radius:999px; font-size:0.74rem; font-weight:600; margin:0 6px 6px 0;
-  background:var(--surface2); color:#c9cfdd; border:1px solid var(--line);}
-.tag-setup {background:rgba(139,92,246,.16); color:#c4b5fd; border-color:rgba(139,92,246,.35);}
-.tag-short {background:rgba(76,141,255,.15); color:#9cc0ff; border-color:rgba(76,141,255,.35);}
-.stars {color:var(--gold); letter-spacing:1px;}
-.tag-warn {background:rgba(251,191,36,.10); color:#fcd34d; border-color:rgba(251,191,36,.3); white-space:normal; line-height:1.5;}
-.tag-fx {background:rgba(34,211,238,.10); color:#67e8f9; border-color:rgba(34,211,238,.3);}
+.tag {display:inline-block; padding:3px 11px; border-radius:999px; font-size:0.75rem; font-weight:500; margin:0 6px 6px 0;
+  background:var(--surface2); color:#d6d6d1;}
+.tag-setup {background:var(--text); color:#0b0b0c; font-weight:700;}
+.tag-short {background:#0f1a33; color:#9db8ff;}
+.stars {color:var(--lime);}
+.tag-warn {background:#2a2410; color:#f3d46b; white-space:normal; line-height:1.5; border-radius:12px;}
+.tag-fx {background:#10262a; color:#7fe3f0;}
 [data-testid="stElementContainer"]:has(iframe[height="0"]) {display:none;}
 /* Streamlit標準の英語メニューは隠す */
 [data-testid="stToolbar"], [data-testid="stAppDeployButton"], [data-testid="stMainMenu"],
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
 @media (max-width: 1400px) {
   .block-container {padding-left: 1.6rem; padding-right: 1.6rem;}
-  .st-key-topnav button {padding: 6px 11px !important; font-size: .84rem;}
+  .st-key-topnav button {padding: 6px 12px !important; font-size: .84rem;}
   .st-key-topnav [data-testid="stButtonGroup"] > div {gap: 4px;}
 }
 @media (max-width: 640px) {
-  .block-container {padding: 2.8rem 0.7rem 2rem 0.7rem;}
+  .block-container {padding: 2.8rem 0.8rem 2rem 0.8rem;}
   .tl-brand .meta .chip:not(.keep) {display:none;}
   .st-key-topnav [data-testid="stButtonGroup"] > div {flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;}
   .st-key-topnav [data-testid="stButtonGroup"] > div::-webkit-scrollbar {display:none;}
-  .st-key-topnav button {padding: 6px 12px !important; font-size: .82rem; flex: none !important; white-space: nowrap;}
+  .st-key-topnav button {padding: 7px 14px !important; font-size: .84rem; flex: none !important; white-space: nowrap;}
   .hours {display:none;}
-  .hero h1 {font-size: 1.55rem !important;}
-  [class*="st-key-card_"] {padding: 14px 14px !important;}
-  [data-testid="stMetricValue"] {font-size: 1.1rem !important;}
+  .hero h1 {font-size: 1.7rem !important;}
+  .bigcount b {font-size: 3.6rem;}
+  .entry .v {font-size: 2.4rem;}
+  [class*="st-key-card_"] {padding: 16px 16px !important; border-radius: 22px !important;}
+  [data-testid="stMetricValue"] {font-size: 1.15rem !important;}
 }
 </style>""", unsafe_allow_html=True)
 
@@ -188,7 +192,7 @@ def _password_gate():
         allowed = [e.strip().lower() for e in (sec["allowed_emails"] if isinstance(sec["allowed_emails"], (list, tuple))
                                                else str(sec["allowed_emails"]).split(","))]
         if not st.user.get("is_logged_in", False):
-            hero("SHORT-TERM TRADE LAB", "短期トレード・ラボ")
+            hero("trade/lab", "短期トレード・ラボ")
             st.caption("登録したGoogleアカウントでログインしてください。スマホではFace IDや指紋（パスキー）でログインできます。")
             if st.button("Googleでログイン", type="primary"):
                 st.login()
@@ -201,7 +205,7 @@ def _password_gate():
         return
     if not pw or st.session_state.get("auth_ok"):
         return
-    hero("SHORT-TERM TRADE LAB", "短期トレード・ラボ")
+    hero("trade/lab", "短期トレード・ラボ")
     with st.form("login"):
         v = st.text_input("パスワード", type="password")
         if st.form_submit_button("ログイン", type="primary"):
@@ -214,7 +218,7 @@ def _password_gate():
 
 
 # スマホの「ホーム画面に追加」用のアイコンと名前（Streamlit Cloud の外枠ページの <head> に追加する）
-ICON_URL = "https://raw.githubusercontent.com/N551774/trade-lab/main/icon-180.png"
+ICON_URL = "https://raw.githubusercontent.com/N551774/trade-lab/main/icon-d-180.png"
 try:
     import streamlit.components.v1 as _components
     _components.html(f"""<script>
@@ -227,7 +231,7 @@ try:
     add('link', {{rel:'icon', type:'image/png', sizes:'180x180', href:'{ICON_URL}'}});
     add('meta', {{name:'apple-mobile-web-app-title', content:'トレードラボ'}});
     add('meta', {{name:'application-name', content:'トレードラボ'}});
-    add('meta', {{name:'theme-color', content:'#07090f'}});
+    add('meta', {{name:'theme-color', content:'#0b0b0c'}});
   }}
 }})();
 </script>""", height=0)
@@ -448,7 +452,7 @@ _ms = su.market_status()
 _chip = lambda lbl, st_: f"<span class='chip'><span class='dot{' on' if '中' in st_ and '外' not in st_ else ''}'></span>{lbl} <b>{st_}</b></span>"
 st.markdown(
     f"<div class='tl-brand'><div class='logo'><img src='data:image/png;base64,{LOGO_B64}'>"
-    f"<div>短期トレード・ラボ<small>SHORT-TERM TRADE LAB</small></div></div>"
+    f"<div><div class='wm'>trade<i>/</i>lab</div><small>短期トレード・ラボ</small></div></div>"
     f"<div class='meta'>{_chip('東証', _ms['東証'])}{_chip('米国', _ms['米国'])}"
     f"<span class='chip'>USD/JPY <b>{fx:,.2f}</b></span>"
     f"<span class='chip keep'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b></span></div></div>",
@@ -561,10 +565,8 @@ def plan_card(rank, item, plan, style):
         left, right = st.columns([1.25, 1])
         with left:
             st.markdown(
-                f"<div class='pc-head'><div class='pc-rank'>{rank}</div>"
-                f"<div class='pc-name'>{name}<span>{t}</span></div>"
-                f"<div class='pc-score'>SCORE<b>{plan.score}</b></div></div>"
-                f"<div class='pc-bar'><i style='width:{max(4, min(100, plan.score))}%'></i></div>"
+                f"<div class='pc-head'><div class='pc-name'>{rank}. {name}<span>{t}</span></div>"
+                f"<div class='pc-score{' low' if plan.score < 50 else ''}'>{plan.score}</div></div>"
                 + (f"<span class='tag tag-short'>空売り</span>" if plan.side == '売り' else "")
                 + f"<span class='tag tag-setup'>{plan.setup}</span><span class='tag'>{item['cat']}</span>"
                 f"<span class='tag'>保有 {plan.hold}</span>"
@@ -597,22 +599,27 @@ def plan_card(rank, item, plan, style):
                 st.markdown("**この銘柄の過去成績**：過去データ内に同じパターンなし")
         with right:
             short = plan.side == "売り"
-            k_e, k_s, k_t = ("空売り", "損切り（買い戻し）", "利確（買い戻し）") if short else ("買い", "損切り", "利確")
+            k_e = "この値段以下で空売り" if short else "この値段以上で買い"
+            pos_ = su.position(plan, t, capital, risk_pct, fx, lot) if tradable else {"qty": 0}
+            amt_s = f" ・ −{yen(pos_['loss'])}" if pos_.get("qty", 0) > 0 else ""
+            amt_t = f" ・ +{yen(pos_['gain'])}" if pos_.get("qty", 0) > 0 else ""
+            rr_ = max(0.2, min(5.0, float(plan.rr)))
             st.markdown(
-                "<div class='ticket'>"
-                f"<div class='row entry'><span class='k'>{k_e}</span><span class='v'>{fmtp(plan.entry, cur)}</span></div>"
-                f"<div class='row stop'><span class='k'>{k_s}</span><span class='v'>{fmtp(plan.stop, cur)}"
-                f"<small>{'+' if short else '−'}{plan.risk_pct:.1f}%</small></span></div>"
-                f"<div class='row tgt'><span class='k'>{k_t}</span><span class='v'>{fmtp(plan.target, cur)}"
-                f"<small>{'−' if short else '+'}{plan.reward_pct:.1f}%</small></span></div>"
-                f"<div class='row'><span class='k'>リスクリワード</span><span class='v'>1 : {plan.rr:.1f}</span></div>"
-                "</div>", unsafe_allow_html=True)
+                f"<div class='entry'><div class='k'>{k_e}</div><div class='v'>{fmtp(plan.entry, cur)}</div></div>"
+                "<div class='tiles'>"
+                f"<div class='tile stop'><div class='k'>損切り{'（買い戻し）' if short else ''}</div><div class='v'>{fmtp(plan.stop, cur)}</div>"
+                f"<div class='s'>{'+' if short else '−'}{plan.risk_pct:.1f}%{amt_s}</div></div>"
+                f"<div class='tile tgt'><div class='k'>利確{'（買い戻し）' if short else ''}</div><div class='v'>{fmtp(plan.target, cur)}</div>"
+                f"<div class='s'>{'−' if short else '+'}{plan.reward_pct:.1f}%{amt_t}</div></div></div>"
+                f"<div class='rr'><div class='lbl'><span>リスク 1</span><span>リワード {plan.rr:.1f}</span></div>"
+                f"<div class='bar'><i style='flex:1;background:var(--down)'></i><i style='flex:{rr_:.2f};background:var(--up)'></i></div></div>",
+                unsafe_allow_html=True)
             st.caption(plan.entry_how)
             if tradable:
                 pos = su.position(plan, t, capital, risk_pct, fx, lot)
                 if pos["qty"] > 0:
-                    st.success(f"**{pos['qty']:,}株** {'空売りする' if short else '買う'}場合：必要資金 約{yen(pos['cost'])}\n\n"
-                               f"損切りなら −{yen(pos['loss'])}／利確なら +{yen(pos['gain'])}")
+                    st.markdown(f"<div class='rulebar'><span class='badge'>{pos['qty']:,}株</span><div><b>{'空売りする' if short else '買う'}場合の目安</b>"
+                                f"<small>必要資金 約{yen(pos['cost'])}</small></div></div>", unsafe_allow_html=True)
                     if short:
                         st.caption("※空売りには信用取引口座が必要です。米国株の空売りは対応していない証券会社もあります。")
                 elif pos["raw"] > 0:
@@ -626,7 +633,7 @@ def plan_card(rank, item, plan, style):
             if tradable:
                 q = su.position(plan, t, capital, risk_pct, fx, lot)["qty"]
                 b2.button("買ったら記録", key=f"rec_{style}_{t}_{plan.setup}", on_click=record_plan,
-                          args=(t, plan, q, lot), width="stretch")
+                          args=(t, plan, q, lot), width="stretch", type="primary")
         with st.expander("チャートで確認"):
             st.plotly_chart(charts.plan_chart(item["df"], plan, style == "デイトレ"), **PKW,
                             key=f"pc_{style}_{t}_{plan.setup}", config={"displaylogo": False})
@@ -634,14 +641,15 @@ def plan_card(rank, item, plan, style):
 
 if page == P_PICK:
     ms = su.market_status()
-    hero("TODAY'S SETUPS", "今日の狙い目", "検証済みルールで、いま入れる銘柄だけを表示")
+    hero("スイング・デイトレの候補", "今日の狙い目", "検証済みルールで、いま入れる銘柄だけを表示")
     st.markdown(
         f"<div class='hours'><span><b>東証</b>{ms['東証_時間']}</span><span><b>米国株</b>{ms['米国_時間']}"
         f"（次の開始 {ms['米国_開始']}）</span><span><b>原油・金</b>{ms['先物_時間']}</span></div>",
         unsafe_allow_html=True)
 
     style_label = st.segmented_control("スタイル", ["スイング（数日〜2週間）", "デイトレ（当日中）"],
-                                       default="スイング（数日〜2週間）", key="style_sel")
+                                       default="スイング（数日〜2週間）", key="style_sel",
+                                       format_func=lambda x: x.split("（")[0], label_visibility="collapsed")
     style = "デイトレ" if style_label and style_label.startswith("デイトレ") else "スイング"
 
     # 相場の天気と直近イベント
@@ -720,7 +728,8 @@ if page == P_PICK:
     errs = [it for it in results if it["err"]]
 
     if items:
-        st.markdown(f"**{len(results)}銘柄中 {len(items)}件** が条件に合いました。スコアの高い順に表示しています。")
+        st.markdown(f"<div class='bigcount'><b>{len(items)}</b><span>銘柄</span><small>/ {len(results)}銘柄中・スコア順</small></div>",
+                    unsafe_allow_html=True)
         for i, (it, p) in enumerate(items[:top_n], 1):
             plan_card(i, it, p, style)
         if len(items) > top_n:
@@ -753,7 +762,7 @@ if page == P_PICK:
 # 🌏 相場環境
 # ===========================================================================
 if page == P_ENV:
-    hero("MARKET OVERVIEW", "相場環境", "為替・金利・指数・イベントから、今日の地合いを判断")
+    hero("今日の地合い", "相場環境", "為替・金利・指数・イベントをまとめて確認")
     with st.spinner("為替・金利・指数を取得中…"):
         msum, frames = macro(use_yahoo)
     if not msum:
@@ -836,7 +845,7 @@ def symbol_picker():
 
 
 if page == P_AN:
-    hero("ANALYSIS", "銘柄分析", "チャートと指標で、1銘柄を深く見る")
+    hero("1銘柄を深く見る", "銘柄分析", "チャートと指標で、判断材料をそろえる")
     ticker = symbol_picker()
     c1, c2, c3 = st.columns(3)
     iv_label = c1.selectbox("足", list(data.INTERVALS), index=4)
@@ -1036,7 +1045,7 @@ def forward_section():
 # 🎮 仮想売買（リプレイ）
 # ===========================================================================
 if page == P_PAPER:
-    hero("PAPER TRADING", "仮想売買", "本物のデータでルールを試し、成績を毎日記録")
+    hero("本物のデータで練習", "仮想売買", "本物のデータでルールを試し、成績を毎日記録")
     forward_section()
     st.divider()
     st.markdown("### ⏪ デイトレのリプレイ（過去の日を再生）")
@@ -1296,7 +1305,7 @@ def pattern_table(style, use_yahoo):
 
 
 if page == P_VAL:
-    hero("BACKTEST", "検証", "過去データで、パターンと戦略の実力を確認")
+    hero("過去データで確かめる", "検証", "過去データで、パターンと戦略の実力を確認")
     st.markdown("#### 狙い目パターンの過去成績（全銘柄）")
     st.caption("各パターンが出たあと、損切りより先に利確に届いたかを過去データで集計。"
                "**R** は「損切り幅＝1」としたときの損益（+2R＝損切り幅の2倍の利益）。平均Rがプラスなら、続けるほど増える傾向です。")
@@ -1372,7 +1381,7 @@ if page == P_VAL:
 # 📒 トレード記録
 # ===========================================================================
 if page == P_LOG:
-    hero("JOURNAL", "トレード記録", "実際の売買を記録して、勝ち方・負け方を振り返る")
+    hero("実際の売買", "トレード記録", "実際の売買を記録して、勝ち方・負け方を振り返る")
     st.caption("実際に売買したら記録しましょう。勝率や「損切りを守れているか」を振り返るのが上達の近道です。")
     log = journal.load()
     stt = journal.stats(log)
