@@ -239,6 +239,10 @@ except Exception:
     pass
 
 _password_gate()
+try:
+    data.WIDE = bool(storage.get("universe_wide", False))
+except Exception:
+    data.WIDE = False
 
 PAGES = ["🎯 今日の狙い目", "🌏 相場環境", "📈 銘柄分析", "🎮 仮想売買", "🧪 検証", "📒 トレード記録", "❓ 使い方"]
 P_PICK, P_ENV, P_AN, P_PAPER, P_VAL, P_LOG, P_HELP = PAGES
@@ -560,6 +564,12 @@ def scan_one(cat, name, t, style, use_yahoo, fxdf=None):
 def run_scan(style, cats, extra):
     targets = data.universe(cats) + [("マイ銘柄", data.name_of(t), t) for t in extra if t not in
                                       {x[2] for x in data.universe(cats)}]
+    if use_yahoo:  # まとめて先に取得しておく（銘柄が多くても速く終わる）
+        tks_ = [t for _, _, t in targets]
+        if style == "スイング":
+            data.fetch_many(tks_ + ["^N225", "^GSPC", "JPY=X"], "2y", "1d")
+        else:
+            data.fetch_many(tks_, "60d", "5m")
     with ThreadPoolExecutor(max_workers=8) as pool:
         try:
             fxdf = fetch("JPY=X", "2y", "1d", use_yahoo)
@@ -718,7 +728,7 @@ if page == P_PICK:
         st.warning("🧪 検証結果：デイトレのパターンは、実データの過去60日では**勝てる設定が見つかっていません**。"
                    "練習・観察用としてお使いください（実際のお金で使うのはおすすめしません）。")
 
-    key = (style, tuple(cats), tuple(extra), use_yahoo)
+    key = (style, tuple(cats), tuple(extra), use_yahoo, data.WIDE)
     n_targets = len(data.universe(cats)) + len([t for t in extra if t not in {x[2] for x in data.universe(cats)}])
     cols = st.columns([1, 4])
     refresh = cols[0].button(":material/refresh: 最新に更新", width="stretch")
@@ -727,6 +737,7 @@ if page == P_PICK:
         with st.spinner(f"{n_targets}銘柄をチェック中…（初回は30秒ほどかかります）"):
             if refresh:
                 fetch.clear()
+                data._BULK.clear()
             st.session_state["scan"] = run_scan(style, cats, extra)
             st.session_state["scan_key"] = key
             st.session_state["scan_at"] = time.time()
@@ -1336,6 +1347,72 @@ if page == P_PAPER:
                     st.dataframe(bt_.assign(**{c_: bt_[c_].round(2) for c_ in bt_.select_dtypes("number").columns}),
                                  hide_index=True, width="stretch")
         st.dataframe(rs["table"].drop(columns="_rule").head(25).round(2), hide_index=True, width="stretch")
+
+    st.divider()
+    st.markdown("### 🌐 対象を広げる検証（54銘柄 → 約220銘柄）")
+    st.markdown("採用中のスイングのルールを**そのまま**（設定を選び直さずに）約220銘柄に当てはめ、"
+                "学習期間と検証期間の両方で、今の54銘柄より良い成績になるかを確かめます。設定を選び直さないので、過去への合わせすぎが起きません。")
+    if st.button("🌐 拡大した対象で検証する（2〜5分）"):
+        rule_ = load_rule(swing=True)
+        wide_tk = [(n, t) for _, n, t in data.universe(ALL_CATS, wide=True) if data.is_tradable(t)]
+        narrow_set = {t for _, _, t in data.universe(ALL_CATS, wide=False)}
+        with st.spinner(f"{len(wide_tk)}銘柄の日足（5年分）をまとめて取得中…"):
+            if use_yahoo:
+                got = data.fetch_many([t for _, t in wide_tk], "5y", "1d")
+            else:
+                got = {t: fetch(t, "5y", "1d", False) for _, t in wide_tk}
+            idx_ = {}
+            for k_, it_ in (("US", "^GSPC"), ("JP", "^N225")):
+                try:
+                    idx_[k_] = fetch(it_, "5y", "1d", use_yahoo)
+                except Exception:
+                    idx_[k_] = None
+        names_ = {t: n for n, t in wide_tk}
+        with st.spinner("仮想売買を計算中…"):
+            prep_w = pt.prepare_swing(got, idx_, None)
+            usable_ = prep_w["days"][200:]
+            split_ = usable_[int(len(usable_) * 0.6)]
+            res_ = []
+            for label_, keys_ in (("今の54銘柄", [t for t in got if t in narrow_set]), ("拡大（約220銘柄）", list(got))):
+                prep_ = prep_w if label_.startswith("拡大") else pt.prepare_swing({t: got[t] for t in keys_}, idx_, None)
+                tr_ = pt.simulate_swing(prep_, names_, capital, risk_pct, fx, rule_, start=usable_[0],
+                                        allow_odd_lot=True, cost_pct=0.1)
+                a_, b_ = tr_[tr_["買い日"] < split_], tr_[tr_["買い日"] >= split_]
+                res_.append({"対象": label_, "銘柄数": len(keys_),
+                             "学習_回数": len(a_), "学習_勝率%": round((a_["R"] > 0).mean() * 100, 1) if len(a_) else None,
+                             "学習_平均R": round(a_["R"].mean(), 3) if len(a_) else None, "学習_損益": round(a_["損益(円)"].sum()),
+                             "検証_回数": len(b_), "検証_勝率%": round((b_["R"] > 0).mean() * 100, 1) if len(b_) else None,
+                             "検証_平均R": round(b_["R"].mean(), 3) if len(b_) else None, "検証_損益": round(b_["損益(円)"].sum())})
+        info_ = {"rows": res_, "split": f"{split_:%Y/%m/%d}", "from": f"{usable_[0]:%Y/%m/%d}", "end": f"{usable_[-1]:%Y/%m/%d}",
+                 "missing": sorted(set(t for _, t in wide_tk) - set(got)), "at": datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
+        st.session_state["wide_res"] = info_
+        try:
+            storage.put("wide_test", info_)
+        except Exception:
+            pass
+    wr_ = st.session_state.get("wide_res") or storage.get("wide_test")
+    if wr_:
+        st.caption(f"学習：{wr_['from']}〜　検証：{wr_['split']}〜{wr_['end']}（実行 {wr_['at']}）")
+        st.dataframe(pd.DataFrame(wr_["rows"]), hide_index=True, width="stretch")
+        if wr_.get("missing"):
+            st.caption(f"データが取れなかった銘柄（{len(wr_['missing'])}）：" + ", ".join(wr_["missing"]))
+        n_, w_ = wr_["rows"][0], wr_["rows"][1]
+        good_ = (w_["検証_回数"] >= 30 and (w_["検証_平均R"] or 0) > 0 and w_["検証_損益"] > 0 and (w_["学習_平均R"] or 0) > 0
+                 and w_["検証_損益"] >= n_["検証_損益"])
+        if good_:
+            st.success("拡大した対象でも、学習・検証の両期間でプラス。しかも検証期間の損益が今の54銘柄以上です。")
+        else:
+            st.warning("拡大した対象は、今の54銘柄を上回る結果になりませんでした。今の対象のままがおすすめです。")
+    c_w1, c_w2 = st.columns(2)
+    if not data.WIDE and c_w1.button("拡大した対象（約220銘柄）を使う"):
+        storage.put("universe_wide", True)
+        st.session_state.pop("scan", None)
+        st.rerun()
+    if data.WIDE and c_w2.button("標準の54銘柄に戻す"):
+        storage.put("universe_wide", False)
+        st.session_state.pop("scan", None)
+        st.rerun()
+    st.caption(f"いまの対象：{'拡大（約220銘柄）' if data.WIDE else '標準（54銘柄）'}")
 
 
 # ===========================================================================
