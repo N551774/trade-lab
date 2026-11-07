@@ -134,6 +134,7 @@ hr {border-color: var(--line) !important;}
 .stars {color:var(--gold); letter-spacing:1px;}
 .tag-warn {background:rgba(251,191,36,.10); color:#fcd34d; border-color:rgba(251,191,36,.3); white-space:normal; line-height:1.5;}
 .tag-fx {background:rgba(34,211,238,.10); color:#67e8f9; border-color:rgba(34,211,238,.3);}
+[data-testid="stElementContainer"]:has(iframe[height="0"]) {display:none;}
 /* Streamlit標準の英語メニューは隠す */
 [data-testid="stToolbar"], [data-testid="stAppDeployButton"], [data-testid="stMainMenu"],
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
@@ -211,6 +212,27 @@ def _password_gate():
                 st.error("パスワードが違います")
     st.stop()
 
+
+# スマホの「ホーム画面に追加」用のアイコンと名前（Streamlit Cloud の外枠ページの <head> に追加する）
+ICON_URL = "https://raw.githubusercontent.com/N551774/trade-lab/main/icon-180.png"
+try:
+    import streamlit.components.v1 as _components
+    _components.html(f"""<script>
+(function(){{
+  const docs=[]; try{{docs.push(window.top.document)}}catch(e){{}}; try{{docs.push(window.parent.document)}}catch(e){{}}
+  for (const d of docs) {{
+    if (!d || d.getElementById('tl-touch')) continue;
+    const add=(tag, attrs)=>{{const el=d.createElement(tag); for (const k in attrs) el.setAttribute(k, attrs[k]); d.head.appendChild(el); return el;}};
+    add('link', {{id:'tl-touch', rel:'apple-touch-icon', sizes:'180x180', href:'{ICON_URL}'}});
+    add('link', {{rel:'icon', type:'image/png', sizes:'180x180', href:'{ICON_URL}'}});
+    add('meta', {{name:'apple-mobile-web-app-title', content:'トレードラボ'}});
+    add('meta', {{name:'application-name', content:'トレードラボ'}});
+    add('meta', {{name:'theme-color', content:'#07090f'}});
+  }}
+}})();
+</script>""", height=0)
+except Exception:
+    pass
 
 _password_gate()
 
