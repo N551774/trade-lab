@@ -145,7 +145,10 @@ def research(frames: dict[str, pd.DataFrame], test_frac: float = 0.4, min_trades
     ok = tb[tb["学習_回数"] >= min_trades].sort_values("学習_平均R", ascending=False)
     best = ok.iloc[0].to_dict() if len(ok) else None
     cum = select(tr, best).sort_values("時刻")[["時刻", "日", "銘柄", "パターン", "方向", "R"]] if best else None
-    return {"best": best, "table": ok, "split": split, "from": days[0], "end": days[-1],
+    # パターンごとに、学習期間で一番良かった設定（回数20回以上）も残す
+    bp = (tb[tb["学習_回数"] >= 20].sort_values("学習_平均R", ascending=False)
+          .groupby("パターン", as_index=False).head(1).reset_index(drop=True))
+    return {"best": best, "table": ok, "by_pattern": bp, "split": split, "from": days[0], "end": days[-1],
             "n_days": len(days), "n_symbols": tr["銘柄"].nunique(), "trades": cum}
 
 
