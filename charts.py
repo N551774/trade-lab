@@ -8,18 +8,18 @@ from plotly.subplots import make_subplots
 
 import plotly.io as pio
 
-UP, DOWN = "#ff5a6a", "#4c8dff"  # 陽線=赤 / 陰線=青（日本式）
-ENTRY_C, STOP_C, TARGET_C = "#fbbf24", "#4c8dff", "#ff5a6a"
+UP, DOWN = "#ff5a6a", "#4c7dff"  # 陽線=赤 / 陰線=青（日本式）
+ENTRY_C, STOP_C, TARGET_C = "#c6f432", "#4c7dff", "#ff5a6a"
 
 # アプリ共通のダークテーマ（背景は透明にしてカードになじませる）
 _t = go.layout.Template(pio.templates["plotly_dark"])
 _t.layout.update(
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="Inter, Noto Sans JP, sans-serif", color="#aab2c5", size=12),
-    colorway=["#8b5cf6", "#22d3ee", "#fbbf24", "#34d399", "#ff5a6a", "#4c8dff", "#f472b6"],
+    font=dict(family="Space Grotesk, Noto Sans JP, sans-serif", color="#9a9a95", size=12),
+    colorway=["#c6f432", "#7fe3f0", "#f2f2ef", "#ffb547", "#ff5a6a", "#4c7dff", "#b18cff"],
     xaxis=dict(gridcolor="rgba(255,255,255,.05)", zerolinecolor="rgba(255,255,255,.08)", linecolor="rgba(255,255,255,.1)"),
     yaxis=dict(gridcolor="rgba(255,255,255,.05)", zerolinecolor="rgba(255,255,255,.08)", linecolor="rgba(255,255,255,.1)", side="right"),
-    hoverlabel=dict(bgcolor="#121624", bordercolor="#2a3150", font=dict(color="#e9ecf5")),
+    hoverlabel=dict(bgcolor="#161615", bordercolor="#2a2a28", font=dict(color="#f2f2ef")),
     legend=dict(bgcolor="rgba(0,0,0,0)"),
 )
 pio.templates["tradelab"] = _t
@@ -45,7 +45,7 @@ def plan_chart(df: pd.DataFrame, plan, intraday: bool, bars: int = 90, height: i
                                    increasing=dict(line_color=UP, fillcolor=UP),
                                    decreasing=dict(line_color=DOWN, fillcolor=DOWN), name="価格", showlegend=False))
     if not intraday:
-        for n, col in ((20, "#17c964"), (50, "#9353d3")):
+        for n, col in ((20, "#7fe3f0"), (50, "#b18cff")):
             fig.add_trace(go.Scatter(x=x, y=df["Close"].rolling(n).mean().tail(bars), name=f"{n}日線",
                                      line=dict(width=1.2, color=col)))
     else:
@@ -73,7 +73,7 @@ def price_chart(d: pd.DataFrame, p: dict, overlays: list[str], lower: list[str],
     fig.add_trace(go.Candlestick(x=x, open=d["Open"], high=d["High"], low=d["Low"], close=d["Close"], name="価格",
                                  increasing=dict(line_color=UP, fillcolor=UP),
                                  decreasing=dict(line_color=DOWN, fillcolor=DOWN)), 1, 1)
-    ma_colors = {"MA_S": "#fbbf24", "MA_M": "#22d3ee", "MA_L": "#8b5cf6"}
+    ma_colors = {"MA_S": "#c6f432", "MA_M": "#7fe3f0", "MA_L": "#b18cff"}
     labels = {"MA_S": f"MA{p['ma_short']}", "MA_M": f"MA{p['ma_mid']}", "MA_L": f"MA{p['ma_long']}"}
     if "移動平均" in overlays:
         for k in ("MA_S", "MA_M", "MA_L"):
