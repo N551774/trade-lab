@@ -137,6 +137,11 @@ hr {border-color: var(--line) !important;}
 /* Streamlit標準の英語メニューは隠す */
 [data-testid="stToolbar"], [data-testid="stAppDeployButton"], [data-testid="stMainMenu"],
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
+@media (max-width: 1400px) {
+  .block-container {padding-left: 1.6rem; padding-right: 1.6rem;}
+  .st-key-topnav button {padding: 6px 11px !important; font-size: .84rem;}
+  .st-key-topnav [data-testid="stButtonGroup"] > div {gap: 4px;}
+}
 @media (max-width: 640px) {
   .block-container {padding: 2.8rem 0.7rem 2rem 0.7rem;}
   .tl-brand .meta .chip:not(.keep) {display:none;}
