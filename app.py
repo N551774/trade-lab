@@ -942,7 +942,8 @@ if page == P_AN:
         found += [("スイング", p_, dd) for p_ in su.find_plans(dd, "スイング", cur)]
         di = fetch(ticker, "60d", "5m", use_yahoo)
         last_ = pd.Timestamp(di.index[-1])
-        last_ = last_.tz_localize("UTC") if last_.tzinfo is None else last_
+        if last_.tzinfo is None:  # 時刻は取引所の現地時間（タイムゾーンなし）で入っている
+            last_ = last_.tz_localize("Asia/Tokyo" if ticker.endswith(".T") or ticker == "^N225" else "America/New_York")
         live_ = (pd.Timestamp.now(tz="UTC") - last_) <= pd.Timedelta(minutes=30) or not use_yahoo
         if live_:
             found += [("デイトレ", p_, di) for p_ in su.find_plans(di, "デイトレ", cur)]
@@ -1694,7 +1695,7 @@ if page == P_SCALP:
 
     with card():
         st.markdown("#### 超短期の検証（過去60日・5分足）")
-        st.caption("4つのパターン×買い/売り×保有5/10/15/30分×損切りあり/なし×「注目株に絞る/絞らない」×「寄り後60分に絞る/絞らない」"
+        st.caption("6つのパターン×買い/売り×保有5/10/15/30分×損切りあり/なし×「注目株に絞る/絞らない」×「寄り後60分に絞る/絞らない」"
                    "の全組み合わせを、前半60%（学習）で選び、後半40%（検証）でも勝てるかを確かめます。売買コストは片道0.05%で計算します。"
                    "注目株＝その日の窓が2%以上、または出来高が普段の2.5倍以上（プロのデイトレーダーが「動く銘柄」に絞るのと同じ考え方）。")
         mkt_ = st.segmented_control("市場", ["米国", "日本"], default="米国", key="scalp_mkt", label_visibility="collapsed") or "米国"
