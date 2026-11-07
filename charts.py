@@ -6,8 +6,24 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-UP, DOWN = "#e5484d", "#3e7bfa"  # 陽線=赤 / 陰線=青
-ENTRY_C, STOP_C, TARGET_C = "#f5a524", "#3e7bfa", "#e5484d"
+import plotly.io as pio
+
+UP, DOWN = "#ff5a6a", "#4c8dff"  # 陽線=赤 / 陰線=青（日本式）
+ENTRY_C, STOP_C, TARGET_C = "#fbbf24", "#4c8dff", "#ff5a6a"
+
+# アプリ共通のダークテーマ（背景は透明にしてカードになじませる）
+_t = go.layout.Template(pio.templates["plotly_dark"])
+_t.layout.update(
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter, Noto Sans JP, sans-serif", color="#aab2c5", size=12),
+    colorway=["#8b5cf6", "#22d3ee", "#fbbf24", "#34d399", "#ff5a6a", "#4c8dff", "#f472b6"],
+    xaxis=dict(gridcolor="rgba(255,255,255,.05)", zerolinecolor="rgba(255,255,255,.08)", linecolor="rgba(255,255,255,.1)"),
+    yaxis=dict(gridcolor="rgba(255,255,255,.05)", zerolinecolor="rgba(255,255,255,.08)", linecolor="rgba(255,255,255,.1)", side="right"),
+    hoverlabel=dict(bgcolor="#121624", bordercolor="#2a3150", font=dict(color="#e9ecf5")),
+    legend=dict(bgcolor="rgba(0,0,0,0)"),
+)
+pio.templates["tradelab"] = _t
+pio.templates.default = "tradelab"
 
 
 def _x(d, intraday):
@@ -57,7 +73,7 @@ def price_chart(d: pd.DataFrame, p: dict, overlays: list[str], lower: list[str],
     fig.add_trace(go.Candlestick(x=x, open=d["Open"], high=d["High"], low=d["Low"], close=d["Close"], name="価格",
                                  increasing=dict(line_color=UP, fillcolor=UP),
                                  decreasing=dict(line_color=DOWN, fillcolor=DOWN)), 1, 1)
-    ma_colors = {"MA_S": "#f5a524", "MA_M": "#17c964", "MA_L": "#9353d3"}
+    ma_colors = {"MA_S": "#fbbf24", "MA_M": "#22d3ee", "MA_L": "#8b5cf6"}
     labels = {"MA_S": f"MA{p['ma_short']}", "MA_M": f"MA{p['ma_mid']}", "MA_L": f"MA{p['ma_long']}"}
     if "移動平均" in overlays:
         for k in ("MA_S", "MA_M", "MA_L"):
