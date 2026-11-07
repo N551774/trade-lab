@@ -34,10 +34,44 @@ UP, DOWN = charts.UP, charts.DOWN
 import inspect as _inspect
 PKW = {"width": "stretch"} if "width" in _inspect.signature(st.plotly_chart).parameters else {"use_container_width": True}
 JST = ZoneInfo("Asia/Tokyo")
-st.set_page_config(page_title="短期トレード・ラボ", page_icon="📈", layout="wide")
+LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEU3MppkV5OhnNRJK6JxaufKrnA0N3cpKnA/P785L8E/QJBCP7VgN9NiPeFRQHhGRKlIRKiAboy8tbnx0GLh3s5WQ+U2NZE7N6xKQtJBPLRHQq9iQOhDPMX81UwAAAEyNHtmPuhLQ5YuLoj29ftFPpjwylI7NMXo5/GMiNKPd3LYtVhsZ86liWtoV4m0mGl3ZorHqGXDu63Kw7XPzMza2ewPBiURCyswKrN7ZXjZ19QAAH9hXMx6dtXjx24tLnw7O35SOctcVsaKepDJqVwCAQUXFzZHRK+BfNa8uujIt5DKye7/4kdLQNJpV31jW7CFfKqWhYuLhLabl+Wpoq8AAP8cHFIwNHQ1OHlCOrZFO+JVVVVkO96EbHSWktvhvVfg3u4gE0wjI1goKGosLXYzNHMwM3M7NKtPL61WM8FFPspERKVFQq5VVapaVbl9d7CYgnaYk7ezlV+ol46zpZm3tNLcwnTSwIwTDzkAAFUVET0AKionEzohEkIjI14qKmcpK2zlT0Q4AAAAgHRSTlNo//9v//9vlQT//qC81/90jf/////+/v7+/v7+/v8E/v3+/v///////////////////////xEx////Av////kJsv///ygNzP//////0/////////8BD5XOkv8D1/////86DhPPTb2GhJfVUqQD/////////////0IDOgYNRU5bdrdcRvIAAAThSURBVHjardhnW9tIEADgheR6L9KqLpaRLbnhigtgMDa9l0AggUvvl16uX/76za4kq2Bbsrn5hAG9z8zs7kgWIlbcIOTP+8fXJ6zgg/GlFghJkla+f3pEyIINIMe586mj9HBo6H6Gxcp3C+TXay40Q8j96/xgByQ9wLB4yi63oBmyfDwxEeZ0Kckfz+4yCaCZa0cPIjlU0nUpGCsLVALoxvKDaAx1RPECJKzcgT4haPsxH80BSRR7Sc8AQQvk34moDo9FsRclIPI5+n05soMhekvS3RlEPvLRGQcKUsIJQcv3hnFcSfT3+wj9M5zTG4Iuoc/4+fnojOt4LUEQvkL3+GGcgIQdR9hC83z4oveBsPhyCluOIKD5+fgQjAfi+VR60wPFIaIzXQjjXEFV1RS2HQuKD+9oUyqNfDSoHyPhvLrJoDEs+qB4JMaB4Ac7oYQmhkIY94NwxoS5m6ZQAYtKCIT7QzXzHa9lqQOLJgh+KB7JsTMyD/k6MJ2UupcMQNHToRm9OPz2F+jPNp/bUXxQtGycfKSdV4ev6RbSJew6AA1EAkcULsDmz8UP4EzB7UQQvFC8H3PhmNP/l/Cr0npCVdMBJywjn6soCpS2X2pCQnW4Dyg+KHJzFIVB/B51CprkdzhPRmHZMEfU98D56Y0Ov/EwHIcGMLUAQyGNbunEh0Ovw3Eu1DOPjGTX5Tq6Trf0J6VxtzCOc6E+BVXmat3mJG2Ibulmsfwu6FCoX1/wxly3quTsolUY3dLrpcaa4mco1LfDNcgI20Ul5zJJBRw6PdaLZWND8TMA9XXGK0ZlYzHpQlBYCpz3xXJjkkIc1xeChjyXrK0sCsYkhOkc77mMJGnbdEu3fyxXjIMAE4SwdGvRPhpeSJk7ME1zR+vQLa2JJnSIGwhhBllkF6KVrQK0n0+pCTWrSV+MryW5EKiGK0LNWnEPJCir5+b+bhsK68ATZPJg4zQMOl8z1s6t9gJkGE5pq6a526Yrn4MZoFy9yg2ERLxIk5jMsDUXKoZRMWhGDNpts/shnR3c6WkYNGtBdMmxVG6Uy41VigpKZn/3DT0abAZxPaM3RCdqsVQsll7ARhDplv4hYRfWx/FAYheiG0DX3jYTzeaeptEHa02jhZ0NcLoQXSoGGQzStVSC3UrT2To87I+l2JQe4NiQteJJgAzD2MGavt1Ru5HOnqXYlJaUEKg7KjLgVBpjei5L00k0C2mLStCP+UGFUcgdXMlZ41ajXMqfses79bd5rZ61LLalBzkccuefgheBKa4X2JUp62uQpuWptVkYsPI21HVE/LxRKr5nGUzlgIE/OVY2zOGQ68Buaa+ztUrXGWNPELBgroQ4MvIO9u3XrMkvNeeuxfluXYMcL2RvHVaVd5KGO7LsQqKY63SbzNLhooYs+yBc2EyoiayTzpCMDcGgUHDOU9XQDIWsDkBK7TycT1EYwpE9gZ7YvYScxJGaY8U36ETwx0hMTG4h9D8wsZh8BVWfcJdmYnKsishDbjjkIgPQY3iBUKUHYUTGcWK34Vs2QZxwKQagR+QvRKZJ6zJVUae1NM1e+1S3LsPE5JtV50XUH1ujM+DchqoYNE2qrVGZmPx1lTrOO7alhyP0GBQ59miJOQ5EyG8nQ/cGPjz+m/jf+lF1CbW2hsgmdrN1pWqnQwj5D/i9NMVu20JSAAAAAElFTkSuQmCC"
+try:
+    import base64 as _b64, io as _io
+    from PIL import Image as _Image
+    _icon = _Image.open(_io.BytesIO(_b64.b64decode(LOGO_B64)))
+except Exception:
+    _icon = "📈"
+st.set_page_config(page_title="短期トレード・ラボ", page_icon=_icon, layout="wide")
 st.markdown("""<style>
-.block-container {padding-top: 1.4rem; max-width: 1400px;}
-[data-testid="stMetricValue"] {font-size: 1.35rem;}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+html, body, [class*="css"], .stMarkdown, button, input, textarea, select {font-family: "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif;}
+/* 上の余白：Streamlitのヘッダー（透明）の下に隠れないように */
+header[data-testid="stHeader"] {background: transparent; height: 2.6rem;}
+.block-container {padding-top: 3.0rem; padding-bottom: 3rem; max-width: 1320px;}
+/* 上部のブランドバー */
+.tl-brand {display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 0 0 10px 0;}
+.tl-brand .logo {display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.15rem; color:#1f2430;}
+.tl-brand .logo img {width:30px; height:30px; border-radius:8px;}
+.tl-brand .meta {font-size:.82rem; color:#6b7280; text-align:right;}
+.tl-brand .meta b {color:#1f2430; font-variant-numeric: tabular-nums;}
+/* ページ切り替え：スクロールしても上に残る */
+.st-key-topnav {position: sticky; top: 2.6rem; z-index: 50; background: var(--tl-bg, #f6f7fb); padding: 6px 0 8px 0;
+  border-bottom: 1px solid rgba(31,36,48,.08); margin-bottom: 6px;}
+.st-key-topnav [data-testid="stButtonGroup"] {flex-wrap: wrap;}
+.st-key-topnav button {border-radius: 999px !important; padding: 4px 14px !important;}
+/* カード（枠つきコンテナ）を白いカードに */
+[data-testid="stVerticalBlockBorderWrapper"] {background:#ffffff; border-radius:14px !important; border-color: rgba(31,36,48,.08) !important;
+  box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 2px 8px rgba(16,24,40,.04);}
+[data-testid="stExpander"] details {background:#ffffff; border-radius:12px; border-color: rgba(31,36,48,.08);}
+[data-testid="stMetric"] {background:#ffffff; border:1px solid rgba(31,36,48,.08); border-radius:12px; padding:8px 14px;}
+[data-testid="stMetricValue"] {font-size: 1.3rem; font-weight:700;}
+[data-testid="stMetricLabel"] {color:#6b7280;}
+h1, h2 {letter-spacing: .01em; font-weight: 700 !important;}
+h2 {font-size: 1.75rem !important;}
+.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px;}
+[data-testid="stSidebar"] {background:#ffffff; border-right:1px solid rgba(31,36,48,.06);}
+[data-testid="stSidebar"] h1 {font-size: 1.15rem !important;}
+.stButton > button, .stDownloadButton > button {border-radius: 10px;}
 .plan-row {display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(128,128,128,.18); font-size:0.98rem;}
 .plan-row b {font-variant-numeric: tabular-nums;}
 .tag {display:inline-block; padding:1px 9px; border-radius:10px; font-size:0.8rem; margin-right:6px; background:rgba(128,128,128,.16);}
@@ -50,7 +84,9 @@ st.markdown("""<style>
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
 /* スマホ向け：余白と文字を小さく */
 @media (max-width: 640px) {
-  .block-container {padding: 3.2rem 0.6rem 2rem 0.6rem;}
+  .block-container {padding: 3.0rem 0.6rem 2rem 0.6rem;}
+  .tl-brand .meta {display:none;}
+  .st-key-topnav button {padding: 2px 10px !important; font-size: .85rem;}
   h1 {font-size: 1.6rem !important;} h2 {font-size: 1.35rem !important;} h3 {font-size: 1.15rem !important;}
   h4 {font-size: 1.05rem !important;}
   [data-testid="stMetricValue"] {font-size: 1.1rem;}
@@ -285,8 +321,7 @@ def record_plan(ticker, plan, qty, lot):
 # サイドバー（共通設定）
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.title("📈 短期トレード・ラボ")
-    st.markdown("**資金と1回のリスク**")
+    st.markdown("**⚙️ 資金と1回のリスク**")
     capital = st.number_input("1回のトレードに使う資金（万円）", 1.0, 100000.0, 50.0, 5.0) * 10000
     risk_pct = st.slider("1回の許容損失（資金の%）", 0.5, 5.0, 2.0, 0.5,
                          help="損切りになったときに失う金額の上限。初心者は1〜2%が目安です。")
@@ -312,7 +347,13 @@ with st.sidebar:
                "表示される価格は目安です。売買はご自身の判断と責任で行ってください。")
 
 fx, fx_live = usdjpy(use_yahoo)
-page = st.segmented_control("ページ", PAGES, key="page", label_visibility="collapsed")
+_now = datetime.now(JST)
+st.markdown(
+    f"<div class='tl-brand'><div class='logo'><img src='data:image/png;base64,{LOGO_B64}'>短期トレード・ラボ</div>"
+    f"<div class='meta'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b>　ドル円 <b>{fx:,.2f}</b></div></div>",
+    unsafe_allow_html=True)
+with st.container(key="topnav"):
+    page = st.segmented_control("ページ", PAGES, key="page", label_visibility="collapsed")
 if page is None:
     page = PAGES[0]
 if not use_yahoo:
