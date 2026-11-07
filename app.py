@@ -62,10 +62,32 @@ st.markdown("""<style>
 # パスワード（クラウドで公開するとき用：Secrets に app_password を設定すると有効）
 # ---------------------------------------------------------------------------
 def _password_gate():
+    """ログインの確認
+    ・Secrets に [auth]（GoogleのOAuth設定）と allowed_emails があれば「Googleでログイン」
+      （スマホではGoogleのパスキー＝Face ID・指紋でログインできる）
+    ・なければ app_password によるパスワード
+    """
     try:
-        pw = st.secrets.get("app_password")
+        sec = st.secrets
+        has_auth = "auth" in sec and "allowed_emails" in sec
+        pw = sec.get("app_password")
     except Exception:
-        pw = None
+        has_auth, pw = False, None
+    if has_auth:
+        allowed = [e.strip().lower() for e in (sec["allowed_emails"] if isinstance(sec["allowed_emails"], (list, tuple))
+                                               else str(sec["allowed_emails"]).split(","))]
+        if not st.user.get("is_logged_in", False):
+            st.markdown("## 📈 短期トレード・ラボ")
+            st.caption("登録したGoogleアカウントでログインしてください。スマホではFace IDや指紋（パスキー）でログインできます。")
+            if st.button("Googleでログイン", type="primary"):
+                st.login()
+            st.stop()
+        if str(st.user.get("email", "")).lower() not in allowed:
+            st.error("このGoogleアカウントでは使えません。")
+            if st.button("ログアウト"):
+                st.logout()
+            st.stop()
+        return
     if not pw or st.session_state.get("auth_ok"):
         return
     st.markdown("## 📈 短期トレード・ラボ")
@@ -190,8 +212,16 @@ def save_watch(items):
         pass
 
 
+# 検証済みの既定ルール（Mac版での検証結果。採用ルールが未設定のクラウド版などで使う）
+VALIDATED_SWING = {"avoid_earnings": False, "filter": True, "patterns": "すべて", "stop": "標準", "target_r": None}
+VALIDATED_DAY = {"stop": 4.0, "target_r": 2.0, "patterns": "売りのみ（すべて）"}
+
+
 def load_rule(swing=False):
-    return storage.get("swing_rule" if swing else "day_rule")
+    r = storage.get("swing_rule" if swing else "day_rule")
+    if r is None:
+        return VALIDATED_SWING if swing else VALIDATED_DAY
+    return r
 
 
 def save_rule(rule, swing=False):
