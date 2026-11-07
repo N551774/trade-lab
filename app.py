@@ -28,6 +28,7 @@ import forward as fw
 import market as mk
 import setups as su
 import strategies as strat
+import scalp
 
 UP, DOWN = charts.UP, charts.DOWN
 # Streamlitのバージョン差を吸収（古い版は plotly_chart に width 指定ができない）
@@ -72,8 +73,10 @@ header[data-testid="stHeader"] {background: transparent; height: 2.4rem;}
 /* ナビ（上に固定） */
 .st-key-topnav {position: sticky; top: 2.4rem; z-index: 50; padding: 8px 0 10px 0; margin-bottom: 8px; background: rgba(11,11,12,.88);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);}
-.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: wrap;}
-.st-key-topnav button {border-radius: 999px !important; padding: 8px 16px !important; background: transparent !important;
+.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;}
+.st-key-topnav [data-testid="stButtonGroup"] > div::-webkit-scrollbar {display:none;}
+.st-key-topnav button {flex: none !important; white-space: nowrap;}
+.st-key-topnav button {border-radius: 999px !important; padding: 7px 13px !important; font-size: .88rem; background: transparent !important;
   border: 1px solid var(--line) !important; color: var(--text) !important; font-weight: 500 !important;}
 .st-key-topnav button:hover {border-color: #55554f !important;}
 .st-key-topnav button[aria-checked="true"] {background: var(--lime) !important; color: #0b0b0c !important; border-color: var(--lime) !important; font-weight: 700 !important;}
@@ -111,6 +114,10 @@ h4 {font-size: 1.02rem !important; font-weight: 700 !important;}
 .stButton > button[kind="primary"] *, .stFormSubmitButton > button[kind="primary"] * {color:#0b0b0c !important;}
 [data-testid="stDataFrame"] {border-radius: 18px; overflow: hidden;}
 hr {border-color: var(--line) !important;}
+.kpis {display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin: 6px 0 12px 0;}
+.kpi {background: var(--surface2); border-radius:16px; padding:12px 14px;}
+.kpi .k {font-size:.76rem; color:var(--muted);} .kpi .v {font-family: var(--num); font-size:1.45rem; font-weight:700; color:var(--text); line-height:1.25;}
+.kpi .s {font-size:.74rem; color:var(--muted);}
 /* 狙い目カード */
 .pc-head {display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;}
 .pc-name {font-size:1.25rem; font-weight:900; color:var(--text); line-height:1.25;}
@@ -172,6 +179,13 @@ _CARD_N = [0]
 def card():
     _CARD_N[0] += 1
     return st.container(border=False, key=f"card_{_CARD_N[0]}")
+
+
+def kpis(items) -> None:
+    """数字のタイル（ラベル・値・補足）を横に並べる"""
+    st.markdown("<div class='kpis'>" + "".join(
+        f"<div class='kpi'><div class='k'>{k}</div><div class='v'>{v}</div><div class='s'>{s_}</div></div>"
+        for k, v, s_ in items) + "</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # パスワード（クラウドで公開するとき用：Secrets に app_password を設定すると有効）
@@ -244,8 +258,8 @@ try:
 except Exception:
     data.WIDE = False
 
-PAGES = ["🎯 今日の狙い目", "🌏 相場環境", "📈 銘柄分析", "🎮 仮想売買", "🧪 検証", "📒 トレード記録", "❓ 使い方"]
-P_PICK, P_ENV, P_AN, P_PAPER, P_VAL, P_LOG, P_HELP = PAGES
+PAGES = ["🎯 今日の狙い目", "⚡ 超短期", "🌏 相場環境", "📈 銘柄分析", "🎮 仮想売買", "🧪 検証", "📊 成績", "📒 トレード記録", "❓ 使い方"]
+P_PICK, P_SCALP, P_ENV, P_AN, P_PAPER, P_VAL, P_PERF, P_LOG, P_HELP = PAGES
 ALL_CATS = ["日本株", "米国株", "ETF", "原油", "金・貴金属"]
 st.session_state.setdefault("page", PAGES[0])
 st.session_state.setdefault("sym", "7203.T")
@@ -461,7 +475,8 @@ st.markdown(
     f"<span class='chip'>USD/JPY <b>{fx:,.2f}</b></span>"
     f"<span class='chip keep'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b></span></div></div>",
     unsafe_allow_html=True)
-_ICONS = {P_PICK: ":material/target:", P_ENV: ":material/public:", P_AN: ":material/candlestick_chart:",
+_ICONS = {P_PICK: ":material/target:", P_SCALP: ":material/bolt:", P_PERF: ":material/insights:",
+          P_ENV: ":material/public:", P_AN: ":material/candlestick_chart:",
           P_PAPER: ":material/sports_esports:", P_VAL: ":material/science:", P_LOG: ":material/menu_book:",
           P_HELP: ":material/help:"}
 with st.container(key="topnav"):
@@ -1616,6 +1631,233 @@ if page == P_LOG:
 # ===========================================================================
 # ❓ 使い方
 # ===========================================================================
+
+# ===========================================================================
+# ⚡ 超短期（5〜30分で手じまい）
+# ===========================================================================
+def _us_scalp_targets():
+    return [(n, t) for c_, n, t in data.universe(["米国株", "ETF"], wide=True)
+            if data.is_tradable(t) and not t.endswith(".T")]
+
+
+if page == P_SCALP:
+    hero("5〜30分で手じまい", "超短期トレード", "5分足でサインを探し、決めた時間がたったら必ず手じまいする売買")
+    st.markdown(
+        "<div class='rulebar'><span class='badge'>注意</span><div><b>超短期は米国株・米国ETFだけが対象です</b>"
+        "<small>無料の株価データは、日本株が約20分遅れで届くため、5〜30分の売買には使えません。米国株はほぼリアルタイムです"
+        "（米国の取引時間は日本時間 23:30〜翌6:00、夏時間は22:30〜翌5:00）。</small></div></div>", unsafe_allow_html=True)
+    srule = storage.get("scalp_rule")
+    sres = storage.get("scalp_research")
+    if srule:
+        st.markdown(f"<div class='rulebar'><span class='badge'>VERIFIED</span><div><b>採用中：{srule['パターン']}・{srule['方向']}・"
+                    f"{srule['保有']}で手じまい・損切り{srule['損切り']}</b><small>検証期間 {srule['検証_回数']}回・1回平均 "
+                    f"{srule['検証_平均R']:+.2f}R（1R＝5分足の平均値幅）</small></div></div>", unsafe_allow_html=True)
+    else:
+        st.info("まだ検証に合格したルールがありません。下の「超短期の検証」を実行すると、勝てる設定があるかを過去60日分の実データで確かめます。"
+                "合格したルールがないうちは、サインは参考表示だけにします。")
+
+    with card():
+        st.markdown("#### いまのサイン（米国株・ETF）")
+        ms_ = su.market_status()
+        if "取引中" not in str(ms_.get("米国", "")):
+            st.caption(f"米国市場は今は {ms_.get('米国')} です。サインは取引時間中に出ます（次の開始：{ms_.get('米国_開始', '')}）。")
+        else:
+            rule_ = srule or {"パターン": "すべて", "方向": "買い＋売り", "保有": "15分", "損切り": "ATR1本"}
+            tks_ = _us_scalp_targets()
+            with st.spinner(f"{len(tks_)}銘柄の5分足を確認中…"):
+                got_ = data.fetch_many([t for _, t in tks_], "5d", "5m") if use_yahoo else {}
+            sigs_ = []
+            for n_, t_ in tks_:
+                for x_ in scalp.live(got_.get(t_), rule_, "America/New_York"):
+                    sigs_.append({"銘柄": n_, "ティッカー": t_, **x_})
+            if not sigs_:
+                st.caption("今はサインが出ていません。5分ごとに「最新に更新」で確認してください。")
+            for x_ in sigs_[:12]:
+                ex_jst = pd.Timestamp(x_["手じまい"]).tz_localize("America/New_York").tz_convert(JST)
+                stop_txt = f"${x_['損切り']:,.2f}" if x_["損切り"] else "なし（時間で手じまい）"
+                st.markdown(
+                    f"<div class='rulebar'><span class='badge'>{x_['方向']}</span><div><b>{x_['銘柄']}（{x_['ティッカー']}）"
+                    f"　目安 ${x_['目安価格']:,.2f}</b><small>{x_['パターン']}・損切り {stop_txt}・"
+                    f"<b>{ex_jst:%H:%M}（日本時間）に必ず手じまい</b>{'' if srule else '・※未検証のルール'}</small></div></div>",
+                    unsafe_allow_html=True)
+            st.button(":material/refresh: 最新に更新", key="scalp_refresh")
+
+    with card():
+        st.markdown("#### 超短期の検証（過去60日・5分足）")
+        st.caption("4つのパターン×買い/売り×保有5/10/15/30分×損切りあり/なしの全組み合わせを、前半60%（学習）で選び、"
+                   "後半40%（検証）でも勝てるかを確かめます。売買コストは片道0.05%で計算します。")
+        for k_, v_ in scalp.PATTERNS.items():
+            st.markdown(f"- **{k_}**：{v_}")
+        if st.button("⚡ 超短期の検証を実行（1〜3分）"):
+            tks_ = _us_scalp_targets()
+            with st.spinner(f"{len(tks_)}銘柄の5分足（60日分）を取得中…"):
+                if use_yahoo:
+                    fr_ = data.fetch_many([t for _, t in tks_], "60d", "5m")
+                else:
+                    fr_ = {t: data.demo_data(t, "5m", 4600) for _, t in tks_[:20]}
+            with st.spinner("全組み合わせを計算中…"):
+                rs_ = scalp.research(fr_)
+            b_ = rs_["best"]
+            cum_ = None
+            if rs_.get("trades") is not None and len(rs_["trades"]):
+                g_ = rs_["trades"].groupby("日")["R"].sum().cumsum()
+                cum_ = {"d": [f"{x:%Y-%m-%d}" for x in g_.index], "r": [round(float(v), 3) for v in g_.values]}
+            top_ = rs_["table"].head(15).round(3).to_dict("records") if len(rs_["table"]) else []
+            info_ = {"best": b_, "passed": scalp.passed(b_), "top": top_, "cum": cum_,
+                     "split": f"{rs_['split']:%Y/%m/%d}" if b_ else None, "from": f"{rs_['from']:%Y/%m/%d}" if b_ else None,
+                     "end": f"{rs_['end']:%Y/%m/%d}" if b_ else None, "n_symbols": rs_.get("n_symbols"),
+                     "at": datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
+            storage.put("scalp_research", info_)
+            sres = info_
+        if sres and sres.get("best"):
+            b_ = sres["best"]
+            st.caption(f"{sres['n_symbols']}銘柄　学習：{sres['from']}〜　検証：{sres['split']}〜{sres['end']}（実行 {sres['at']}）")
+            kpis([("学習期間（1回平均）", f"{b_['学習_平均R']:+.2f}R", f"{b_['学習_回数']}回・勝率{b_['学習_勝率%']:.0f}%"),
+                  ("検証期間（1回平均）", f"{b_['検証_平均R']:+.2f}R", f"{b_['検証_回数']}回・勝率{b_['検証_勝率%']:.0f}%")])
+            st.markdown(f"**選ばれた設定**：{b_['パターン']}・{b_['方向']}・{b_['保有']}で手じまい・損切り{b_['損切り']}")
+            if sres.get("cum"):
+                fig_ = go.Figure(go.Scatter(x=sres["cum"]["d"], y=sres["cum"]["r"], mode="lines", line=dict(color="#c6f432", width=2)))
+                fig_.add_vline(x=sres["split"].replace("/", "-"), line=dict(color="#9a9a95", dash="dot"))
+                fig_.update_layout(height=260, margin=dict(l=10, r=10, t=30, b=10), title="累積R（点線より右が検証期間）", showlegend=False)
+                st.plotly_chart(fig_, **PKW, config={"displaylogo": False})
+            if sres["passed"]:
+                st.success("検証期間でもプラス。採用できます。")
+                if st.button("この超短期ルールを採用する"):
+                    storage.put("scalp_rule", b_)
+                    st.rerun()
+            else:
+                st.warning("検証期間では勝てる設定になりませんでした。超短期は、サインを参考に見るだけにしておくのが安全です。")
+            with st.expander("上位15の設定（学習期間の成績順）"):
+                st.dataframe(pd.DataFrame(sres["top"]), hide_index=True, width="stretch")
+        if srule and st.button("採用中の超短期ルールを取り消す"):
+            storage.put("scalp_rule", None)
+            st.rerun()
+
+
+# ===========================================================================
+# 📊 成績（検証とフォワードの結果をまとめて見る）
+# ===========================================================================
+@st.cache_data(ttl=21600, show_spinner=False)
+def perf_swing(capital_, risk_, fx_, use_yahoo_, rule_json):
+    import json as _json
+    rule_ = _json.loads(rule_json)
+    tk_ = [(n, t) for _, n, t in data.universe(ALL_CATS, wide=False) if data.is_tradable(t)]
+    if use_yahoo_:
+        got_ = data.fetch_many([t for _, t in tk_], "5y", "1d")
+    else:
+        got_ = {t: data.demo_data(t, "1d", 1300) for _, t in tk_}
+    idx_ = {}
+    for k_, it_ in (("US", "^GSPC"), ("JP", "^N225")):
+        try:
+            idx_[k_] = fetch(it_, "5y", "1d", use_yahoo_)
+        except Exception:
+            idx_[k_] = None
+    prep_ = pt.prepare_swing(got_, idx_, None)
+    usable_ = prep_["days"][200:]
+    split_ = usable_[int(len(usable_) * 0.6)]
+    tr_ = pt.simulate_swing(prep_, {t: n for n, t in tk_}, capital_, risk_, fx_, rule_, start=usable_[0],
+                            allow_odd_lot=True, cost_pct=0.1)
+    return tr_, split_, usable_[0], usable_[-1]
+
+
+def _kpis(tr_):
+    if not len(tr_):
+        return None
+    eq = tr_.sort_values("売り日")["損益(円)"].cumsum()
+    dd = (eq - eq.cummax()).min()
+    w, l_ = tr_[tr_["R"] > 0], tr_[tr_["R"] <= 0]
+    return {"n": len(tr_), "win": (tr_["R"] > 0).mean() * 100, "avg_r": tr_["R"].mean(), "pnl": tr_["損益(円)"].sum(),
+            "dd": dd, "avg_w": w["R"].mean() if len(w) else 0, "avg_l": l_["R"].mean() if len(l_) else 0}
+
+
+if page == P_PERF:
+    hero("検証とフォワードの結果", "成績", "これまでに確かめた結果を、ひと目で分かる形にまとめています")
+    one_r = capital * risk_pct / 100
+    st.markdown(
+        f"<div class='rulebar'><span class='badge'>1R＝{one_r:,.0f}円</span><div><b>R（アール）＝損切りで失う覚悟をした額の何倍か</b>"
+        f"<small>いまの設定（資金{capital/10000:,.0f}万円・1回{risk_pct}%）では1R＝{one_r:,.0f}円。"
+        f"+0.4Rなら1回平均 約{one_r*0.4:,.0f}円のプラス、−1Rは損切り1回分です。</small></div></div>", unsafe_allow_html=True)
+
+    import json as _json
+    with st.spinner("スイングの成績を計算中…（初回は1分ほど）"):
+        try:
+            tr_, split_, from_, end_ = perf_swing(capital, risk_pct, round(fx, 0), use_yahoo,
+                                                  _json.dumps(load_rule(swing=True), ensure_ascii=False))
+        except Exception as e_:
+            tr_ = None
+            st.error(f"計算できませんでした：{str(e_)[:120]}")
+    if tr_ is not None and len(tr_):
+        a_, b_ = tr_[tr_["買い日"] < split_], tr_[tr_["買い日"] >= split_]
+        ka, kb = _kpis(a_), _kpis(b_)
+        with card():
+            st.markdown("#### スイング（採用中のルール）を過去に当てはめた結果")
+            st.caption(f"学習期間 {from_:%Y/%m}〜{split_:%Y/%m}（ルールを選んだ期間）／ 検証期間 {split_:%Y/%m}〜{end_:%Y/%m}"
+                       "（ルール選びに使っていない期間＝本当の実力に近い）")
+            kpis([("検証期間の損益", f"{kb['pnl']:+,.0f}円", f"{kb['n']}回の取引"),
+                  ("勝率", f"{kb['win']:.0f}%", f"学習期間 {ka['win']:.0f}%"),
+                  ("1回平均", f"{kb['avg_r']:+.2f}R", f"約{kb['avg_r']*one_r:+,.0f}円"),
+                  ("最大の落ち込み", f"{kb['dd']:,.0f}円", "一番悪かった時期の目減り")])
+            ratio = abs(kb["avg_w"] / kb["avg_l"]) if kb["avg_l"] else float("nan")
+            st.markdown(f"**ひとことで**：勝つのは約{kb['win']:.0f}%ですが、勝ったとき平均 {kb['avg_w']:+.2f}R、負けたとき平均 {kb['avg_l']:+.2f}R"
+                        f"で、**勝ちが負けの約{ratio:.1f}倍**あるので、合計でプラスになっています。")
+            eq_ = tr_.sort_values("売り日")
+            fig = go.Figure()
+            fig.add_vrect(x0=split_, x1=end_, fillcolor="rgba(198,244,50,.07)", line_width=0)
+            fig.add_trace(go.Scatter(x=eq_["売り日"], y=eq_["損益(円)"].cumsum(), mode="lines", line=dict(color="#c6f432", width=2.5),
+                                     name="累積損益"))
+            fig.add_annotation(x=split_, y=1, yref="paper", text="ここから検証期間", showarrow=False, xanchor="left",
+                               font=dict(color="#c6f432", size=12))
+            fig.update_layout(height=320, margin=dict(l=10, r=10, t=36, b=10), title="累積損益（円）", showlegend=False)
+            st.plotly_chart(fig, **PKW, config={"displaylogo": False})
+            c_l, c_r = st.columns(2)
+            mon = tr_.assign(月=pd.to_datetime(tr_["売り日"]).dt.to_period("M").dt.to_timestamp()).groupby("月")["損益(円)"].sum()
+            f2 = go.Figure(go.Bar(x=mon.index, y=mon.values, marker_color=[UP if v >= 0 else DOWN for v in mon.values]))
+            f2.update_layout(height=260, margin=dict(l=10, r=10, t=36, b=10), title="月ごとの損益（円）")
+            c_l.plotly_chart(f2, **PKW, config={"displaylogo": False})
+            bins = pd.cut(tr_["R"].clip(-1.5, 4), bins=[-1.6, -0.75, -0.25, 0, 0.5, 1, 2, 4.1],
+                          labels=["−1R前後", "−0.5R", "−0.2R〜0", "0〜0.5R", "0.5〜1R", "1〜2R", "2R以上"])
+            dist = bins.value_counts().reindex(bins.cat.categories)
+            f3 = go.Figure(go.Bar(x=list(dist.index.astype(str)), y=dist.values,
+                                  marker_color=[DOWN, DOWN, DOWN, UP, UP, UP, UP]))
+            f3.update_layout(height=260, margin=dict(l=10, r=10, t=36, b=10), title="1回ごとの結果の分布（回数）")
+            c_r.plotly_chart(f3, **PKW, config={"displaylogo": False})
+
+    wt_ = storage.get("wide_test")
+    if wt_:
+        with card():
+            st.markdown("#### 対象を広げる検証（11/7）")
+            dfw = pd.DataFrame(wt_["rows"])
+            f4 = go.Figure()
+            f4.add_trace(go.Bar(name="学習期間", x=dfw["対象"], y=dfw["学習_平均R"], marker_color="#55554f"))
+            f4.add_trace(go.Bar(name="検証期間", x=dfw["対象"], y=dfw["検証_平均R"], marker_color="#c6f432"))
+            f4.update_layout(barmode="group", height=300, margin=dict(l=10, r=10, t=56, b=10), title="1回平均（R）",
+                             legend=dict(orientation="h", y=1.0, x=1, xanchor="right", yanchor="bottom"))
+            st.plotly_chart(f4, **PKW, config={"displaylogo": False})
+            st.caption("学習・検証の両方で今の54銘柄がいちばん安定。候補を増やすと「どれを選ぶか」で成績が下がるため、今は54銘柄のままにしています。")
+
+    sr_ = storage.get("scalp_research")
+    with card():
+        st.markdown("#### 超短期（5〜30分）の検証")
+        if sr_ and sr_.get("best"):
+            b_ = sr_["best"]
+            st.markdown(f"選ばれた設定：{b_['パターン']}・{b_['方向']}・{b_['保有']}・損切り{b_['損切り']}　"
+                        f"学習 {b_['学習_平均R']:+.2f}R（{b_['学習_回数']}回）／ 検証 **{b_['検証_平均R']:+.2f}R**（{b_['検証_回数']}回）　"
+                        + ("✅ 合格" if sr_["passed"] else "❌ 不合格"))
+        else:
+            st.caption("まだ実行していません（「⚡ 超短期」ページで実行できます）。")
+
+    with card():
+        st.markdown("#### フォワードテスト（11/5〜・毎日自動で記録）")
+        try:
+            fd_ = fw.Store().load_days()
+        except Exception:
+            fd_ = pd.DataFrame()
+        if len(fd_):
+            kpis([("記録した日数", f"{len(fd_)}日", "取引日のみ"),
+                  ("デイトレの取引", f"{int(fd_['取引数'].sum())}回", f"勝ち {int(fd_['勝ち'].sum())}回"),
+                  ("デイトレの損益", f"{fd_['損益'].sum():+,.0f}円", "仮想売買")])
+        st.caption("スイングのフォワード成績は「🎮 仮想売買」ページで確認できます。2週間分たまる11/19に、検証時の成績と比べて報告します。")
+
 if page == P_HELP:
     st.markdown("""
 ## ❓ 使い方
