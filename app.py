@@ -1373,7 +1373,9 @@ if page == P_PAPER:
             usable_ = prep_w["days"][200:]
             split_ = usable_[int(len(usable_) * 0.6)]
             res_ = []
-            for label_, keys_ in (("今の54銘柄", [t for t in got if t in narrow_set]), ("拡大（約220銘柄）", list(got))):
+            etf_set = {t for c_, _, t in data.universe(ALL_CATS, wide=True) if c_ in ("ETF", "金・貴金属", "原油")}
+            for label_, keys_ in (("今の54銘柄", [t for t in got if t in narrow_set]), ("拡大（約220銘柄）", list(got)),
+                                  ("54銘柄＋ETF・金だけ追加", [t for t in got if t in narrow_set or t in etf_set])):
                 prep_ = prep_w if label_.startswith("拡大") else pt.prepare_swing({t: got[t] for t in keys_}, idx_, None)
                 tr_ = pt.simulate_swing(prep_, names_, capital, risk_pct, fx, rule_, start=usable_[0],
                                         allow_odd_lot=True, cost_pct=0.1)
@@ -1396,11 +1398,12 @@ if page == P_PAPER:
         st.dataframe(pd.DataFrame(wr_["rows"]), hide_index=True, width="stretch")
         if wr_.get("missing"):
             st.caption(f"データが取れなかった銘柄（{len(wr_['missing'])}）：" + ", ".join(wr_["missing"]))
-        n_, w_ = wr_["rows"][0], wr_["rows"][1]
+        n_ = wr_["rows"][0]
+        w_ = max(wr_["rows"][1:], key=lambda r: (r["学習_平均R"] or -9) + (r["検証_平均R"] or -9))
         good_ = (w_["検証_回数"] >= 30 and (w_["検証_平均R"] or 0) > 0 and w_["検証_損益"] > 0 and (w_["学習_平均R"] or 0) > 0
                  and w_["検証_損益"] >= n_["検証_損益"])
         if good_:
-            st.success("拡大した対象でも、学習・検証の両期間でプラス。しかも検証期間の損益が今の54銘柄以上です。")
+            st.success(f"「{w_['対象']}」は学習・検証の両期間でプラス。しかも検証期間の損益が今の54銘柄以上です。")
         else:
             st.warning("拡大した対象は、今の54銘柄を上回る結果になりませんでした。今の対象のままがおすすめです。")
     c_w1, c_w2 = st.columns(2)
