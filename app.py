@@ -926,6 +926,14 @@ if page == P_AN:
         pass
     if found:
         for style_, pl, dfx in found:
+            if style_ == "スイング" and (load_rule(swing=True) or {}).get("filter"):
+                try:
+                    ix_ = fetch("^N225" if ticker.endswith(".T") else "^GSPC", "1y", "1d", use_yahoo)["Close"]
+                    if not ix_.iloc[-1] > ix_.rolling(50).mean().iloc[-1]:
+                        st.warning(f"検証済みルールでは今は**見送り**です（{'日経平均' if ticker.endswith('.T') else 'S&P500'}が50日線の下＝相場全体が下落基調）。"
+                                   "下のカードは、相場が持ち直したときの参考です。")
+                except Exception:
+                    pass
             plan_card("", {"ticker": ticker, "name": data.name_of(ticker), "cat": style_, "df": dfx}, pl, style_)
     else:
         st.info("今はどの狙い目パターンにも当てはまりません（様子見）。")
