@@ -33,8 +33,9 @@ UP, DOWN = charts.UP, charts.DOWN
 # Streamlitのバージョン差を吸収（古い版は plotly_chart に width 指定ができない）
 import inspect as _inspect
 PKW = {"width": "stretch"} if "width" in _inspect.signature(st.plotly_chart).parameters else {"use_container_width": True}
+PKW["theme"] = None  # 独自のダークテーマ（charts.py）を使う
 JST = ZoneInfo("Asia/Tokyo")
-LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEU3MppkV5OhnNRJK6JxaufKrnA0N3cpKnA/P785L8E/QJBCP7VgN9NiPeFRQHhGRKlIRKiAboy8tbnx0GLh3s5WQ+U2NZE7N6xKQtJBPLRHQq9iQOhDPMX81UwAAAEyNHtmPuhLQ5YuLoj29ftFPpjwylI7NMXo5/GMiNKPd3LYtVhsZ86liWtoV4m0mGl3ZorHqGXDu63Kw7XPzMza2ewPBiURCyswKrN7ZXjZ19QAAH9hXMx6dtXjx24tLnw7O35SOctcVsaKepDJqVwCAQUXFzZHRK+BfNa8uujIt5DKye7/4kdLQNJpV31jW7CFfKqWhYuLhLabl+Wpoq8AAP8cHFIwNHQ1OHlCOrZFO+JVVVVkO96EbHSWktvhvVfg3u4gE0wjI1goKGosLXYzNHMwM3M7NKtPL61WM8FFPspERKVFQq5VVapaVbl9d7CYgnaYk7ezlV+ol46zpZm3tNLcwnTSwIwTDzkAAFUVET0AKionEzohEkIjI14qKmcpK2zlT0Q4AAAAgHRSTlNo//9v//9vlQT//qC81/90jf/////+/v7+/v7+/v8E/v3+/v///////////////////////xEx////Av////kJsv///ygNzP//////0/////////8BD5XOkv8D1/////86DhPPTb2GhJfVUqQD/////////////0IDOgYNRU5bdrdcRvIAAAThSURBVHjardhnW9tIEADgheR6L9KqLpaRLbnhigtgMDa9l0AggUvvl16uX/76za4kq2Bbsrn5hAG9z8zs7kgWIlbcIOTP+8fXJ6zgg/GlFghJkla+f3pEyIINIMe586mj9HBo6H6Gxcp3C+TXay40Q8j96/xgByQ9wLB4yi63oBmyfDwxEeZ0Kckfz+4yCaCZa0cPIjlU0nUpGCsLVALoxvKDaAx1RPECJKzcgT4haPsxH80BSRR7Sc8AQQvk34moDo9FsRclIPI5+n05soMhekvS3RlEPvLRGQcKUsIJQcv3hnFcSfT3+wj9M5zTG4Iuoc/4+fnojOt4LUEQvkL3+GGcgIQdR9hC83z4oveBsPhyCluOIKD5+fgQjAfi+VR60wPFIaIzXQjjXEFV1RS2HQuKD+9oUyqNfDSoHyPhvLrJoDEs+qB4JMaB4Ac7oYQmhkIY94NwxoS5m6ZQAYtKCIT7QzXzHa9lqQOLJgh+KB7JsTMyD/k6MJ2UupcMQNHToRm9OPz2F+jPNp/bUXxQtGycfKSdV4ev6RbSJew6AA1EAkcULsDmz8UP4EzB7UQQvFC8H3PhmNP/l/Cr0npCVdMBJywjn6soCpS2X2pCQnW4Dyg+KHJzFIVB/B51CprkdzhPRmHZMEfU98D56Y0Ov/EwHIcGMLUAQyGNbunEh0Ovw3Eu1DOPjGTX5Tq6Trf0J6VxtzCOc6E+BVXmat3mJG2Ibulmsfwu6FCoX1/wxly3quTsolUY3dLrpcaa4mco1LfDNcgI20Ul5zJJBRw6PdaLZWND8TMA9XXGK0ZlYzHpQlBYCpz3xXJjkkIc1xeChjyXrK0sCsYkhOkc77mMJGnbdEu3fyxXjIMAE4SwdGvRPhpeSJk7ME1zR+vQLa2JJnSIGwhhBllkF6KVrQK0n0+pCTWrSV+MryW5EKiGK0LNWnEPJCir5+b+bhsK68ATZPJg4zQMOl8z1s6t9gJkGE5pq6a526Yrn4MZoFy9yg2ERLxIk5jMsDUXKoZRMWhGDNpts/shnR3c6WkYNGtBdMmxVG6Uy41VigpKZn/3DT0abAZxPaM3RCdqsVQsll7ARhDplv4hYRfWx/FAYheiG0DX3jYTzeaeptEHa02jhZ0NcLoQXSoGGQzStVSC3UrT2To87I+l2JQe4NiQteJJgAzD2MGavt1Ru5HOnqXYlJaUEKg7KjLgVBpjei5L00k0C2mLStCP+UGFUcgdXMlZ41ajXMqfses79bd5rZ61LLalBzkccuefgheBKa4X2JUp62uQpuWptVkYsPI21HVE/LxRKr5nGUzlgIE/OVY2zOGQ68Buaa+ztUrXGWNPELBgroQ4MvIO9u3XrMkvNeeuxfluXYMcL2RvHVaVd5KGO7LsQqKY63SbzNLhooYs+yBc2EyoiayTzpCMDcGgUHDOU9XQDIWsDkBK7TycT1EYwpE9gZ7YvYScxJGaY8U36ETwx0hMTG4h9D8wsZh8BVWfcJdmYnKsishDbjjkIgPQY3iBUKUHYUTGcWK34Vs2QZxwKQagR+QvRKZJ6zJVUae1NM1e+1S3LsPE5JtV50XUH1ujM+DchqoYNE2qrVGZmPx1lTrOO7alhyP0GBQ59miJOQ5EyG8nQ/cGPjz+m/jf+lF1CbW2hsgmdrN1pWqnQwj5D/i9NMVu20JSAAAAAElFTkSuQmCC"
+LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAB4FBMVEVgl5QeJjRebJ4mEy0yMlceIzIxTlg0i6leo9kUKTMsLEI7MGA9d5oywedAM19AMWZhTitGR19wa8Bhk3m6kSynmXeBkp2artC/0eLq3r8JChVMOYwUFyoTRlgSOEouJFQ5KmgPJzQAAABEMXo2N3AMEhxHQY4mHUb8/PssRXJBLnVxSOlpV+ohGzkVTWBQiekaKEU6RYRjZeoOMT0oJS8AAQKVeCxVVspZeOpcSMhOZ8ppWCsQDiEtNU0yNjJQRy1Ids1LlutVOLEYUGF5Pu0CAgNEOiiHaysoKC02mM45tOdpO9GohSzn6u06iMgICQs0p8x1Yy+EhpTwtyT/wRxebOiTmsvGmyvDxssAADw0KlRJKpJIhcp3eoiwtbvYpynLzeTO1ej+vhn7wi0TExkUFBwcHEA8PDw+PoEmQ1o4ZaY2drVVQrWegTCzuM3L09cOFRkSFhsbGykUJCwmJTUkITU8WatlQM/76bEAAFUYMzsnJzQiIDQvKUQwKEg2LFU7M1w9RDkzVY0qZIo9dso3pbs+ruUytNpcLrJKTWlbUjVHUrFUaXtdnMJCoKhlaoFtdcVxgcR7qsiOiFaPk3aDmLmdvdGgfSuiqKuzyNfd5+/7zVb602n84JIODhIKEBJ86sXcAAAAoHRSTlP/kf8bnF3w///cF8j//zvf//////////////7//v7+/v7+A/7+/f/+///////9///////+/S7///////////////////9M//8N////////aP///////////wTT////////////qNX/BP//////////cZHRrmy3////A9Q30ypwrmX//////////////////////////////////////4tf5giXCAAABclJREFUeNqd2IdT20gUB+ClpFzvTcgSVmxYU4wBSw4yrjkTA8GUUHKhpBcgkN6TS++X3q/+q/e2SFoVjJM3MMnOSN/89u2qIKTxOgK/XzY2fhXZ4q9IpLlZdSpJ62zd5TI7jRbi//6mla9/pjYL1dbWJowY0QrV2SlbdeVMWXNDFzXt+m5ypIO0kShtgmZTgiR3niEZbOiI9uk1N+NMy6ECJflsWWuwoCPaVSGOi3FRgZB85TLNhEi0q6rXabKLUe5MbqmzgUgAXWzY7UAexqY8kuySyjRRWbvmdpp8RSgBUj2QfBYQVNZ+V1urO+tLZ7Qy0hpUO9BaDpUi4uQ8kKzD1JxAaztMighQJ9ncTtPrAHI6XcUhUkSQQMkODGTBYtApDW2oKZBHSiYHcl+n0+ncQDLJpA2o0YGqOgwCikDZXHp8u2FsH0/nskyqQ/bM1gkEEoUicHQmlwbm7Vug0jk2u1NIXLKm2qDMADg7vt+zZ2YHSAMsEhJbVB1qsqHcuLFj5sDk/smdIOWyHwllMpmHEGjn/r//OTC5xzB4pPWgFl7w36McUrNpw5jZ/xfGF3ZCpNqgFqEYpGYWN6a3r8xMEuiAF1pr1USnpTtG8twau/MEvTQMz9TCDtS8DtRNoVtf3Bt7gpDxwwWn2WEv5JdcTncMpMGhe2N30HevMP5lBpZ/xYCNZEFV5uZyKDQ2NDQ2tgmNYPzSWFkxjHHY2l4oQHI5BIoNDoG06TjGr2DpDHqJhMNhDq0tuRyAYgS6u+kNxu/gahtPP2QOSG6o2XvD9jkA3R18gfH7bPZGLncjm82GeSG1c12pW4Q2Dz7G+M/PFdjgmWy2N+yG3NIWF9QtOrHBQdLox8sKr0QiwaGk7Jaat4hUiwVYVansw/hFpaI4RaUEgazJcYm/jxDnKL++Ija0/B7jN5WCCFFJQXBbsiNZkrtuLi3dtCTlNcY/VwqFSkhRQiJFIZ/kopYLUMvc+QMaPddVKMyFlBCUIzGIScGhzhW6oApLJFM8Bo2emyvYkBCKQaxPrc6j0pHyXbTyBFrchfHm20TOh3g5kPUiIEiqJamqA5GJvcP4p9tsGPJKSA6SwCK3sPmnmYRpQwrCeGGpywNxKoSEtxM3lXgAEzk+UW/mt1KINPr4oumHKCVCXLKoCcxq73QerLwCjR7ZqOS30nJDQAHU76KIBYsofwNx8MTTBVgmPLL63DyXgVtHvRIzGWQGQf2eV5TWSHeMxNn1AC6k2PQ+Emvf61WMf4QlF6B4XKSQLHmk1kfmM3LyRCJBOnXOfL46Que4oMSrQx4pYk6TCPVyQoVEqjllpszpvRCQbEHF3Do1BT8MinsgkByqvx5OwtOpR4SBSvX09EylUvXziySQYvbQ4lDcAzmh+uV5slDPUj2pRNiGoFIJdnFZQy8U5xBPJWVWaZwUOVMOhwUoEwjZ0jYbkiRZis5DW/d+29fR09FBIaBSHbRSZNPBzrOGFhQPgKTkAsSZP8aO7TssEynRFwzBIL5tWyAUlWDz7Mr0H2OH9pGWOVBf7RBJNAETFCGQBIiUPSTQWlOjjZKPtdNikBzu48MEh/hQ8SybD5LkIjv0PN9XVSCx/FA/h4Y5ZLnrQHEfJM22DwPTXowyqKn9PDmzGGYQd4teKISiXkge/hVq+DCHDrOhyiGFDSM1QJI8e//+rCzJljRbLM7CM7CXS0UoxeeE/FOz91U0al/J9OkuPlxDfuiUVINEod5q0EZ0UKpBCnukkO9O24hORKtBURFypJDvIbIB6Yekj5BsyxrpSD8pfZzk6n2djrRS9IOkYKoEkH7yg6QAqlepI39l69W6FCz1epxLJQJpetXJBUjUsgv69p/Ovtboox8sWRjd8Sd0/tlHry5F15As8IRuQUQ6FK1J8lG9l0apwz+N6XrpYI2hPNTpEnPsj3V6abRmyrFOj5Z0z1c/Eqr078FD0cCSA9J8cvrkqBVH07T/ASDjD9xvPOqBAAAAAElFTkSuQmCC"
 try:
     import base64 as _b64, io as _io
     from PIL import Image as _Image
@@ -43,56 +44,124 @@ except Exception:
     _icon = "📈"
 st.set_page_config(page_title="短期トレード・ラボ", page_icon=_icon, layout="wide")
 st.markdown("""<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-html, body, [class*="css"], .stMarkdown, button, input, textarea, select {font-family: "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif;}
-/* 上の余白：Streamlitのヘッダー（透明）の下に隠れないように */
-header[data-testid="stHeader"] {background: transparent; height: 2.6rem;}
-.block-container {padding-top: 3.0rem; padding-bottom: 3rem; max-width: 1320px;}
-/* 上部のブランドバー */
-.tl-brand {display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 0 0 10px 0;}
-.tl-brand .logo {display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.15rem; color:#1f2430;}
-.tl-brand .logo img {width:30px; height:30px; border-radius:8px;}
-.tl-brand .meta {font-size:.82rem; color:#6b7280; text-align:right;}
-.tl-brand .meta b {color:#1f2430; font-variant-numeric: tabular-nums;}
-/* ページ切り替え：スクロールしても上に残る */
-.st-key-topnav {position: sticky; top: 2.6rem; z-index: 50; background: var(--tl-bg, #f6f7fb); padding: 6px 0 8px 0;
-  border-bottom: 1px solid rgba(31,36,48,.08); margin-bottom: 6px;}
-.st-key-topnav [data-testid="stButtonGroup"] {flex-wrap: wrap;}
-.st-key-topnav button {border-radius: 999px !important; padding: 4px 14px !important;}
-/* カード（枠つきコンテナ）を白いカードに */
-[data-testid="stVerticalBlockBorderWrapper"] {background:#ffffff; border-radius:14px !important; border-color: rgba(31,36,48,.08) !important;
-  box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 2px 8px rgba(16,24,40,.04);}
-[data-testid="stExpander"] details {background:#ffffff; border-radius:12px; border-color: rgba(31,36,48,.08);}
-[data-testid="stMetric"] {background:#ffffff; border:1px solid rgba(31,36,48,.08); border-radius:12px; padding:8px 14px;}
-[data-testid="stMetricValue"] {font-size: 1.3rem; font-weight:700;}
-[data-testid="stMetricLabel"] {color:#6b7280;}
-h1, h2 {letter-spacing: .01em; font-weight: 700 !important;}
-h2 {font-size: 1.75rem !important;}
-.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px;}
-[data-testid="stSidebar"] {background:#ffffff; border-right:1px solid rgba(31,36,48,.06);}
-[data-testid="stSidebar"] h1 {font-size: 1.15rem !important;}
-.stButton > button, .stDownloadButton > button {border-radius: 10px;}
-.plan-row {display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(128,128,128,.18); font-size:0.98rem;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+:root {
+  --bg:#07090f; --surface:rgba(255,255,255,.035); --surface2:rgba(255,255,255,.06); --line:rgba(255,255,255,.08);
+  --text:#e9ecf5; --muted:#8a93a8; --accent:#8b5cf6; --accent2:#22d3ee; --up:#ff5a6a; --down:#4c8dff; --gold:#fbbf24;
+  --grad: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 100%);
+}
+html, body, .stApp, .stMarkdown, button, input, textarea, select, [data-testid="stMetricValue"] {
+  font-family: "Inter", "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif !important; font-feature-settings: "tnum" 1, "palt" 1;}
+.stApp {background:
+  radial-gradient(900px 500px at 8% -10%, rgba(139,92,246,.18), transparent 60%),
+  radial-gradient(800px 480px at 100% 0%, rgba(34,211,238,.10), transparent 60%), var(--bg) !important;}
+header[data-testid="stHeader"] {background: transparent; height: 2.4rem;}
+.block-container {padding-top: 2.6rem; padding-bottom: 4rem; max-width: 1320px;}
+/* ブランドバー */
+.tl-brand {display:flex; align-items:center; justify-content:space-between; gap:12px; margin: 0 0 14px 0;}
+.tl-brand .logo {display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.08rem; letter-spacing:.02em; color:var(--text);}
+.tl-brand .logo img {width:34px; height:34px; border-radius:9px; box-shadow:0 0 0 1px var(--line), 0 6px 24px rgba(139,92,246,.35);}
+.tl-brand .logo small {display:block; font-weight:600; font-size:.62rem; letter-spacing:.22em; color:var(--muted);}
+.tl-brand .meta {display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+.chip {display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; background:var(--surface);
+  border:1px solid var(--line); font-size:.78rem; color:var(--muted); white-space:nowrap;}
+.chip b {color:var(--text); font-weight:600;}
+.dot {width:7px; height:7px; border-radius:50%; background:#5b6275; display:inline-block;}
+.dot.on {background:#34d399; box-shadow:0 0 0 3px rgba(52,211,153,.18);}
+/* ナビ（上に固定） */
+.st-key-topnav {position: sticky; top: 2.4rem; z-index: 50; padding: 8px 0 10px 0; margin-bottom: 8px;
+  background: rgba(7,9,15,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);}
+.st-key-topnav [data-testid="stButtonGroup"] > div {gap: 6px; flex-wrap: wrap;}
+.st-key-topnav button {border-radius: 12px !important; padding: 7px 15px !important; background: var(--surface) !important;
+  border: 1px solid var(--line) !important; color: var(--muted) !important; font-weight: 600 !important; transition: all .15s;}
+.st-key-topnav button:hover {color: var(--text) !important; border-color: rgba(139,92,246,.5) !important;}
+.st-key-topnav button[aria-checked="true"] {background: var(--grad) !important; color: #fff !important; border-color: transparent !important;
+  box-shadow: 0 6px 22px rgba(139,92,246,.35);}
+/* ページ見出し */
+.hero {margin: 4px 0 10px 0;}
+.hero .eyebrow {font-size:.7rem; font-weight:700; letter-spacing:.24em; background:var(--grad); -webkit-background-clip:text; color:transparent;}
+.hero h1 {font-size: 2.1rem !important; font-weight: 800 !important; margin: 2px 0 2px 0 !important; padding:0 !important; color: var(--text); letter-spacing:.01em;}
+.hero p {color: var(--muted); margin: 0; font-size: .92rem;}
+.hours {display:flex; flex-wrap:wrap; gap:6px 18px; font-size:.76rem; color:var(--muted); margin: 2px 0 14px 0;}
+.hours b {color:#c9cfdd; font-weight:600; margin-right:6px;}
+.rulebar {display:flex; align-items:center; gap:14px; padding:12px 16px; border-radius:14px; margin:6px 0 12px 0;
+  background:linear-gradient(90deg, rgba(52,211,153,.10), rgba(52,211,153,.02)); border:1px solid rgba(52,211,153,.28);}
+.rulebar .badge {font-size:.66rem; font-weight:800; letter-spacing:.16em; color:#04130d; background:#34d399; padding:4px 8px; border-radius:6px; flex:none;}
+.rulebar b {color:#d1fae5; font-size:.92rem;} .rulebar small {display:block; color:#86c9ad; font-size:.78rem; margin-top:2px;}
+h2 {font-size: 1.6rem !important; font-weight: 800 !important;}
+h3 {font-size: 1.2rem !important; font-weight: 700 !important;}
+h4 {font-size: 1.02rem !important; font-weight: 700 !important;}
+h3, h4 {color: var(--text);}
+/* カード */
+[class*="st-key-card_"] {background: var(--surface) !important; border: 1px solid var(--line) !important; border-radius: 18px !important;
+  padding: 18px 20px !important; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);}
+[class*="st-key-card_"]:hover {border-color: rgba(139,92,246,.35) !important;}
+[data-testid="stExpander"] details {background: var(--surface); border:1px solid var(--line) !important; border-radius: 14px;}
+[data-testid="stExpander"] summary:hover {color: var(--text);}
+[data-testid="stMetric"] {background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 16px;}
+[data-testid="stMetricValue"] {font-size: 1.35rem !important; font-weight: 700 !important; color: var(--text);}
+[data-testid="stMetricLabel"] p {color: var(--muted) !important; font-size:.78rem !important; letter-spacing:.04em;}
+[data-testid="stAlert"] > div {border-radius: 14px; border: 1px solid var(--line);}
+[data-testid="stSidebar"] {background: rgba(10,12,20,.85) !important; border-right: 1px solid var(--line); backdrop-filter: blur(12px);}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] strong {color: var(--text);}
+.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {border-radius: 12px; font-weight: 600; border:1px solid var(--line);}
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {background: var(--grad); border: none; box-shadow: 0 6px 22px rgba(139,92,246,.35);}
+[data-testid="stDataFrame"] {border-radius: 14px; overflow: hidden; border: 1px solid var(--line);}
+hr {border-color: var(--line) !important;}
+/* 狙い目カード */
+.pc-head {display:flex; align-items:center; gap:12px; margin-bottom:8px;}
+.pc-rank {width:34px; height:34px; border-radius:10px; display:grid; place-items:center; font-weight:800; color:#fff; background:var(--grad); flex:none;}
+.pc-name {font-size:1.12rem; font-weight:800; color:var(--text); line-height:1.2;}
+.pc-name span {font-size:.78rem; font-weight:500; color:var(--muted); margin-left:6px;}
+.pc-score {margin-left:auto; text-align:right; font-size:.72rem; color:var(--muted); letter-spacing:.08em;}
+.pc-score b {display:block; font-size:1.3rem; color:var(--text); letter-spacing:0;}
+.pc-bar {height:4px; border-radius:4px; background:var(--surface2); overflow:hidden; margin:2px 0 10px 0;}
+.pc-bar i {display:block; height:100%; background:var(--grad);}
+.ticket {border-radius:14px; border:1px solid var(--line); background:rgba(0,0,0,.25); overflow:hidden; margin-bottom:10px;}
+.ticket .row {display:flex; justify-content:space-between; align-items:baseline; padding:10px 14px; border-bottom:1px solid var(--line);}
+.ticket .row:last-child {border-bottom:none;}
+.ticket .k {font-size:.78rem; color:var(--muted); letter-spacing:.04em;}
+.ticket .v {font-size:1.12rem; font-weight:700; color:var(--text);}
+.ticket .v small {font-size:.75rem; font-weight:600; margin-left:6px;}
+.ticket .entry .v {color:var(--gold);} .ticket .stop .v small {color:var(--down);} .ticket .tgt .v small {color:var(--up);}
+.ticket .entry {background:rgba(251,191,36,.06);}
+.plan-row {display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:0.95rem;}
 .plan-row b {font-variant-numeric: tabular-nums;}
-.tag {display:inline-block; padding:1px 9px; border-radius:10px; font-size:0.8rem; margin-right:6px; background:rgba(128,128,128,.16);}
-.tag-setup {background:#fde7e8; color:#b4232a;}
-.stars {color:#f5a524; letter-spacing:1px;}
-.tag-warn {background:#fff4d6; color:#8a5a00;}
-.tag-fx {background:#e3f0ff; color:#1d5fbf;}
-/* Streamlit標準の英語メニュー（Deploy・⋮・Running表示）は使わないので隠す */
+.tag {display:inline-block; padding:2px 10px; border-radius:999px; font-size:0.74rem; font-weight:600; margin:0 6px 6px 0;
+  background:var(--surface2); color:#c9cfdd; border:1px solid var(--line);}
+.tag-setup {background:rgba(139,92,246,.16); color:#c4b5fd; border-color:rgba(139,92,246,.35);}
+.tag-short {background:rgba(76,141,255,.15); color:#9cc0ff; border-color:rgba(76,141,255,.35);}
+.stars {color:var(--gold); letter-spacing:1px;}
+.tag-warn {background:rgba(251,191,36,.10); color:#fcd34d; border-color:rgba(251,191,36,.3); white-space:normal; line-height:1.5;}
+.tag-fx {background:rgba(34,211,238,.10); color:#67e8f9; border-color:rgba(34,211,238,.3);}
+/* Streamlit標準の英語メニューは隠す */
 [data-testid="stToolbar"], [data-testid="stAppDeployButton"], [data-testid="stMainMenu"],
 [data-testid="stStatusWidget"], [data-testid="stDecoration"] {display:none !important;}
-/* スマホ向け：余白と文字を小さく */
 @media (max-width: 640px) {
-  .block-container {padding: 3.0rem 0.6rem 2rem 0.6rem;}
-  .tl-brand .meta {display:none;}
-  .st-key-topnav button {padding: 2px 10px !important; font-size: .85rem;}
-  h1 {font-size: 1.6rem !important;} h2 {font-size: 1.35rem !important;} h3 {font-size: 1.15rem !important;}
-  h4 {font-size: 1.05rem !important;}
-  [data-testid="stMetricValue"] {font-size: 1.1rem;}
-  .plan-row {font-size: 0.92rem;}
+  .block-container {padding: 2.8rem 0.7rem 2rem 0.7rem;}
+  .tl-brand .meta .chip:not(.keep) {display:none;}
+  .st-key-topnav [data-testid="stButtonGroup"] > div {flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;}
+  .st-key-topnav [data-testid="stButtonGroup"] > div::-webkit-scrollbar {display:none;}
+  .st-key-topnav button {padding: 6px 12px !important; font-size: .82rem; flex: none !important; white-space: nowrap;}
+  .hours {display:none;}
+  .hero h1 {font-size: 1.55rem !important;}
+  [class*="st-key-card_"] {padding: 14px 14px !important;}
+  [data-testid="stMetricValue"] {font-size: 1.1rem !important;}
 }
 </style>""", unsafe_allow_html=True)
+
+
+def hero(eyebrow: str, title: str, sub: str = "") -> None:
+    st.markdown(f"<div class='hero'><div class='eyebrow'>{eyebrow}</div><h1>{title}</h1>"
+                + (f"<p>{sub}</p>" if sub else "") + "</div>", unsafe_allow_html=True)
+
+
+_CARD_N = [0]
+
+
+def card():
+    _CARD_N[0] += 1
+    return st.container(border=False, key=f"card_{_CARD_N[0]}")
 
 # ---------------------------------------------------------------------------
 # パスワード（クラウドで公開するとき用：Secrets に app_password を設定すると有効）
@@ -113,7 +182,7 @@ def _password_gate():
         allowed = [e.strip().lower() for e in (sec["allowed_emails"] if isinstance(sec["allowed_emails"], (list, tuple))
                                                else str(sec["allowed_emails"]).split(","))]
         if not st.user.get("is_logged_in", False):
-            st.markdown("## 📈 短期トレード・ラボ")
+            hero("SHORT-TERM TRADE LAB", "短期トレード・ラボ")
             st.caption("登録したGoogleアカウントでログインしてください。スマホではFace IDや指紋（パスキー）でログインできます。")
             if st.button("Googleでログイン", type="primary"):
                 st.login()
@@ -126,7 +195,7 @@ def _password_gate():
         return
     if not pw or st.session_state.get("auth_ok"):
         return
-    st.markdown("## 📈 短期トレード・ラボ")
+    hero("SHORT-TERM TRADE LAB", "短期トレード・ラボ")
     with st.form("login"):
         v = st.text_input("パスワード", type="password")
         if st.form_submit_button("ログイン", type="primary"):
@@ -348,12 +417,21 @@ with st.sidebar:
 
 fx, fx_live = usdjpy(use_yahoo)
 _now = datetime.now(JST)
+_ms = su.market_status()
+_chip = lambda lbl, st_: f"<span class='chip'><span class='dot{' on' if '中' in st_ and '外' not in st_ else ''}'></span>{lbl} <b>{st_}</b></span>"
 st.markdown(
-    f"<div class='tl-brand'><div class='logo'><img src='data:image/png;base64,{LOGO_B64}'>短期トレード・ラボ</div>"
-    f"<div class='meta'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b>　ドル円 <b>{fx:,.2f}</b></div></div>",
+    f"<div class='tl-brand'><div class='logo'><img src='data:image/png;base64,{LOGO_B64}'>"
+    f"<div>短期トレード・ラボ<small>SHORT-TERM TRADE LAB</small></div></div>"
+    f"<div class='meta'>{_chip('東証', _ms['東証'])}{_chip('米国', _ms['米国'])}"
+    f"<span class='chip'>USD/JPY <b>{fx:,.2f}</b></span>"
+    f"<span class='chip keep'>{_now:%m/%d}（{'月火水木金土日'[_now.weekday()]}） <b>{_now:%H:%M}</b></span></div></div>",
     unsafe_allow_html=True)
+_ICONS = {P_PICK: ":material/target:", P_ENV: ":material/public:", P_AN: ":material/candlestick_chart:",
+          P_PAPER: ":material/sports_esports:", P_VAL: ":material/science:", P_LOG: ":material/menu_book:",
+          P_HELP: ":material/help:"}
 with st.container(key="topnav"):
-    page = st.segmented_control("ページ", PAGES, key="page", label_visibility="collapsed")
+    page = st.segmented_control("ページ", PAGES, key="page", label_visibility="collapsed",
+                                format_func=lambda x: f"{_ICONS[x]} {x.split(' ', 1)[1]}")
 if page is None:
     page = PAGES[0]
 if not use_yahoo:
@@ -452,15 +530,19 @@ def plan_card(rank, item, plan, style):
     tradable = data.is_tradable(t)
     lot = data.lot_of(t)
     stars = "★" * max(1, round(plan.score / 20)) + "☆" * (5 - max(1, round(plan.score / 20)))
-    with st.container(border=True):
+    with card():
         left, right = st.columns([1.25, 1])
         with left:
-            st.markdown(f"#### {rank}. {name} <span style='font-size:.8rem;color:gray'>{t}</span>", unsafe_allow_html=True)
-            st.markdown(f"<span class='stars'>{stars}</span> <span style='color:gray;font-size:.85rem'>スコア {plan.score}</span>　"
-                        f"<span class='tag tag-setup'>{'🔻空売り ' if plan.side == '売り' else ''}{plan.setup}</span><span class='tag'>{item['cat']}</span>"
-                        f"<span class='tag'>保有 {plan.hold}</span>"
-                        + (f"<span class='tag tag-fx'>💱 {item['fx']}</span>" if item.get("fx") else ""),
-                        unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='pc-head'><div class='pc-rank'>{rank}</div>"
+                f"<div class='pc-name'>{name}<span>{t}</span></div>"
+                f"<div class='pc-score'>SCORE<b>{plan.score}</b></div></div>"
+                f"<div class='pc-bar'><i style='width:{max(4, min(100, plan.score))}%'></i></div>"
+                + (f"<span class='tag tag-short'>空売り</span>" if plan.side == '売り' else "")
+                + f"<span class='tag tag-setup'>{plan.setup}</span><span class='tag'>{item['cat']}</span>"
+                f"<span class='tag'>保有 {plan.hold}</span>"
+                + (f"<span class='tag tag-fx'>{item['fx']}</span>" if item.get("fx") else ""),
+                unsafe_allow_html=True)
             st.caption(su.SETUP_HELP[plan.setup])
             warns = []
             ed = get_earnings(t, use_yahoo) if tradable and item["cat"] not in ("ETF", "原油", "金・貴金属") else None
@@ -475,7 +557,7 @@ def plan_card(rank, item, plan, style):
                 if hint:
                     warns.append(hint)
             for w in warns:
-                st.markdown(f"<span class='tag tag-warn'>⚠️ {w}</span>", unsafe_allow_html=True)
+                st.markdown(f"<span class='tag tag-warn'>⚠ {w}</span>", unsafe_allow_html=True)
             st.markdown("**狙い目の理由**")
             st.markdown("\n".join(f"- {r}" for r in plan.reasons))
             if plan.hist_n >= 3:
@@ -488,16 +570,17 @@ def plan_card(rank, item, plan, style):
                 st.markdown("**この銘柄の過去成績**：過去データ内に同じパターンなし")
         with right:
             short = plan.side == "売り"
-            rows = [("🟠 空売り" if short else "🟠 買い", fmtp(plan.entry, cur), ""),
-                    ("🔵 損切り（買い戻し）" if short else "🔵 損切り", fmtp(plan.stop, cur),
-                     f"{'+' if short else '-'}{plan.risk_pct:.1f}%"),
-                    ("🔴 利確（買い戻し）" if short else "🔴 利確", fmtp(plan.target, cur),
-                     f"{'-' if short else '+'}{plan.reward_pct:.1f}%"),
-                    ("リスクリワード", f"1 : {plan.rr:.1f}", "")]
-            st.markdown("".join(f"<div class='plan-row'><span>{a}</span><span><b>{b}</b> "
-                                f"<span style='color:gray;font-size:.85rem'>{c}</span></span></div>" for a, b, c in rows),
-                        unsafe_allow_html=True)
-            st.caption(f"📝 {plan.entry_how}")
+            k_e, k_s, k_t = ("空売り", "損切り（買い戻し）", "利確（買い戻し）") if short else ("買い", "損切り", "利確")
+            st.markdown(
+                "<div class='ticket'>"
+                f"<div class='row entry'><span class='k'>{k_e}</span><span class='v'>{fmtp(plan.entry, cur)}</span></div>"
+                f"<div class='row stop'><span class='k'>{k_s}</span><span class='v'>{fmtp(plan.stop, cur)}"
+                f"<small>{'+' if short else '−'}{plan.risk_pct:.1f}%</small></span></div>"
+                f"<div class='row tgt'><span class='k'>{k_t}</span><span class='v'>{fmtp(plan.target, cur)}"
+                f"<small>{'−' if short else '+'}{plan.reward_pct:.1f}%</small></span></div>"
+                f"<div class='row'><span class='k'>リスクリワード</span><span class='v'>1 : {plan.rr:.1f}</span></div>"
+                "</div>", unsafe_allow_html=True)
+            st.caption(plan.entry_how)
             if tradable:
                 pos = su.position(plan, t, capital, risk_pct, fx, lot)
                 if pos["qty"] > 0:
@@ -524,13 +607,10 @@ def plan_card(rank, item, plan, style):
 
 if page == P_PICK:
     ms = su.market_status()
-    c1, c2, c3 = st.columns([2, 1, 1])
-    c1.markdown("## 🎯 今日の狙い目")
-    c2.metric("東証", ms["東証"])
-    c3.metric("米国市場", ms["米国"], f"開始 {ms['米国_開始']}", delta_color="off")
+    hero("TODAY'S SETUPS", "今日の狙い目", "検証済みルールで、いま入れる銘柄だけを表示")
     st.markdown(
-        f"<div style='font-size:.85rem;color:gray;line-height:1.7'>🕘 <b>取引時間（日本時間）</b>　"
-        f"東証：{ms['東証_時間']}　｜　米国株：{ms['米国_時間']}　｜　原油・金の先物：{ms['先物_時間']}</div>",
+        f"<div class='hours'><span><b>東証</b>{ms['東証_時間']}</span><span><b>米国株</b>{ms['米国_時間']}"
+        f"（次の開始 {ms['米国_開始']}）</span><span><b>原油・金</b>{ms['先物_時間']}</span></div>",
         unsafe_allow_html=True)
 
     style_label = st.segmented_control("スタイル", ["スイング（数日〜2週間）", "デイトレ（当日中）"],
@@ -542,7 +622,7 @@ if page == P_PICK:
     if msum:
         w = mk.weather(msum)
         near = ev.upcoming(3)
-        with st.container(border=True):
+        with card():
             a, b = st.columns([1, 2])
             a.markdown(f"#### {w['icon']} 相場の天気：{w['label']}")
             a.caption(w["advice"])
@@ -582,7 +662,9 @@ if page == P_PICK:
         st.caption("毎日の終値で判定します。**夜や朝に見て、翌営業日に注文**する使い方を想定しています。")
         sr_ = load_rule(swing=True)
         if sr_:
-            st.success(f"✅ 検証済みルールを適用中：{pt.swing_rule_label(sr_)}（過去5年の実データで、学習・検証の両期間ともプラス）")
+            st.markdown(f"<div class='rulebar'><span class='badge'>VERIFIED</span><div><b>検証済みルールを適用中</b>"
+                        f"<small>{pt.swing_rule_label(sr_)} ・ 過去5年の実データで、学習・検証の両期間ともプラス</small></div></div>",
+                        unsafe_allow_html=True)
     else:
         st.caption("5分足で判定します（直近15分以内に出たシグナルのみ）。**取引時間中に開いて使う**想定です。")
         st.warning("🧪 検証結果：デイトレのパターンは、実データの過去60日では**勝てる設定が見つかっていません**。"
@@ -591,7 +673,7 @@ if page == P_PICK:
     key = (style, tuple(cats), tuple(extra), use_yahoo)
     n_targets = len(data.universe(cats)) + len([t for t in extra if t not in {x[2] for x in data.universe(cats)}])
     cols = st.columns([1, 4])
-    refresh = cols[0].button("🔄 最新に更新", width="stretch")
+    refresh = cols[0].button(":material/refresh: 最新に更新", width="stretch")
     if refresh or st.session_state.get("scan_key") != key or \
             (time.time() - st.session_state.get("scan_at", 0)) > (900 if style == "スイング" else 180):
         with st.spinner(f"{n_targets}銘柄をチェック中…（初回は30秒ほどかかります）"):
@@ -644,14 +726,14 @@ if page == P_PICK:
 # 🌏 相場環境
 # ===========================================================================
 if page == P_ENV:
-    st.markdown("## 🌏 相場環境")
+    hero("MARKET OVERVIEW", "相場環境", "為替・金利・指数・イベントから、今日の地合いを判断")
     with st.spinner("為替・金利・指数を取得中…"):
         msum, frames = macro(use_yahoo)
     if not msum:
         st.error("相場データを取得できませんでした。")
     else:
         w = mk.weather(msum)
-        with st.container(border=True):
+        with card():
             st.markdown(f"#### {w['icon']} 相場の天気：{w['label']}")
             st.markdown(w["advice"])
             st.markdown("\n".join(f"- {n}" for n in w["notes"]))
@@ -727,7 +809,7 @@ def symbol_picker():
 
 
 if page == P_AN:
-    st.markdown("## 📈 銘柄分析")
+    hero("ANALYSIS", "銘柄分析", "チャートと指標で、1銘柄を深く見る")
     ticker = symbol_picker()
     c1, c2, c3 = st.columns(3)
     iv_label = c1.selectbox("足", list(data.INTERVALS), index=4)
@@ -851,7 +933,7 @@ def run_forward_update(store):
 
 def forward_section():
     store = fw.Store()
-    with st.container(border=True):
+    with card():
         st.markdown("### 📅 毎日の成績記録（フォワードテスト）")
         st.caption(f"{store.start():%Y/%m/%d} から、採用中のルールで毎日仮想売買した結果を記録しています。"
                    "アプリを開くと、終わった取引日が自動で追加されます。後でルールを変えても、記録済みの日は書き換えません。"
@@ -927,7 +1009,7 @@ def forward_section():
 # 🎮 仮想売買（リプレイ）
 # ===========================================================================
 if page == P_PAPER:
-    st.markdown("## 🎮 仮想売買")
+    hero("PAPER TRADING", "仮想売買", "本物のデータでルールを試し、成績を毎日記録")
     forward_section()
     st.divider()
     st.markdown("### ⏪ デイトレのリプレイ（過去の日を再生）")
@@ -1187,7 +1269,7 @@ def pattern_table(style, use_yahoo):
 
 
 if page == P_VAL:
-    st.markdown("## 🧪 検証")
+    hero("BACKTEST", "検証", "過去データで、パターンと戦略の実力を確認")
     st.markdown("#### 狙い目パターンの過去成績（全銘柄）")
     st.caption("各パターンが出たあと、損切りより先に利確に届いたかを過去データで集計。"
                "**R** は「損切り幅＝1」としたときの損益（+2R＝損切り幅の2倍の利益）。平均Rがプラスなら、続けるほど増える傾向です。")
@@ -1263,7 +1345,7 @@ if page == P_VAL:
 # 📒 トレード記録
 # ===========================================================================
 if page == P_LOG:
-    st.markdown("## 📒 トレード記録")
+    hero("JOURNAL", "トレード記録", "実際の売買を記録して、勝ち方・負け方を振り返る")
     st.caption("実際に売買したら記録しましょう。勝率や「損切りを守れているか」を振り返るのが上達の近道です。")
     log = journal.load()
     stt = journal.stats(log)
