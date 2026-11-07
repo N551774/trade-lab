@@ -87,6 +87,56 @@ PRESETS: dict[str, dict[str, str]] = {
     },
 }
 
+
+# ---------------------------------------------------------------------------
+# 拡大した対象（約220銘柄）：売買が多く短期売買しやすい大型株・主要ETF
+# ---------------------------------------------------------------------------
+WIDE_EXTRA: dict[str, dict[str, str]] = {
+    "日本株": {
+        "伊藤忠商事": "8001.T", "三井物産": "8031.T", "住友商事": "8053.T", "丸紅": "8002.T", "豊田通商": "8015.T",
+        "JT": "2914.T", "信越化学": "4063.T", "武田薬品": "4502.T", "アステラス製薬": "4503.T", "中外製薬": "4519.T",
+        "第一三共": "4568.T", "リクルートHD": "6098.T", "ダイキン工業": "6367.T", "三菱電機": "6503.T", "ニデック": "6594.T",
+        "富士通": "6702.T", "パナソニックHD": "6752.T", "TDK": "6762.T", "デンソー": "6902.T", "ファナック": "6954.T",
+        "京セラ": "6971.T", "村田製作所": "6981.T", "ホンダ": "7267.T", "スズキ": "7269.T", "SUBARU": "7270.T",
+        "HOYA": "7741.T", "キヤノン": "7751.T", "バンダイナムコ": "7832.T", "オリックス": "8591.T", "野村HD": "8604.T",
+        "SOMPO HD": "8630.T", "MS&AD": "8725.T", "東京海上HD": "8766.T", "三井不動産": "8801.T", "三菱地所": "8802.T",
+        "JR東日本": "9020.T", "JR東海": "9022.T", "商船三井": "9104.T", "川崎汽船": "9107.T", "KDDI": "9433.T",
+        "ソフトバンク": "9434.T", "コナミG": "9766.T", "ニトリHD": "9843.T", "オリエンタルランド": "4661.T",
+        "セブン&アイ": "3382.T", "味の素": "2802.T", "花王": "4452.T", "富士フイルム": "4901.T", "ブリヂストン": "5108.T",
+        "住友電工": "5802.T", "ディスコ": "6146.T", "SMC": "6273.T", "コマツ": "6301.T", "クボタ": "6326.T",
+        "オリンパス": "7733.T", "川崎重工業": "7012.T", "IHI": "7013.T", "第一生命HD": "8750.T", "エムスリー": "2413.T",
+        "メルカリ": "4385.T", "楽天G": "4755.T", "日本郵政": "6178.T", "JAL": "9201.T", "ANA HD": "9202.T",
+        "INPEX": "1605.T", "ENEOS HD": "5020.T", "住友金属鉱山": "5713.T", "旭化成": "3407.T", "資生堂": "4911.T",
+    },
+    "米国株": {
+        "JPMorgan": "JPM", "Visa": "V", "Mastercard": "MA", "UnitedHealth": "UNH", "Eli Lilly": "LLY", "J&J": "JNJ",
+        "P&G": "PG", "Exxon Mobil": "XOM", "Chevron": "CVX", "Home Depot": "HD", "Costco": "COST", "Walmart": "WMT",
+        "Coca-Cola": "KO", "PepsiCo": "PEP", "Merck": "MRK", "AbbVie": "ABBV", "Bank of America": "BAC",
+        "Wells Fargo": "WFC", "Goldman Sachs": "GS", "Morgan Stanley": "MS", "Citigroup": "C", "Salesforce": "CRM",
+        "Oracle": "ORCL", "Adobe": "ADBE", "Cisco": "CSCO", "Intel": "INTC", "Qualcomm": "QCOM", "Texas Instruments": "TXN",
+        "IBM": "IBM", "Applied Materials": "AMAT", "Micron": "MU", "Lam Research": "LRCX", "Disney": "DIS",
+        "McDonald's": "MCD", "Nike": "NKE", "Starbucks": "SBUX", "Boeing": "BA", "Caterpillar": "CAT", "Deere": "DE",
+        "GE Aerospace": "GE", "Honeywell": "HON", "Lockheed Martin": "LMT", "RTX": "RTX", "UPS": "UPS",
+        "Union Pacific": "UNP", "AT&T": "T", "Verizon": "VZ", "Comcast": "CMCSA", "Thermo Fisher": "TMO",
+        "Abbott": "ABT", "Danaher": "DHR", "Pfizer": "PFE", "Amgen": "AMGN", "Gilead": "GILD", "Intuitive Surgical": "ISRG",
+        "Booking": "BKNG", "Uber": "UBER", "PayPal": "PYPL", "NextEra Energy": "NEE", "Duke Energy": "DUK",
+        "Southern Co": "SO", "Linde": "LIN", "Berkshire B": "BRK-B", "American Express": "AXP", "BlackRock": "BLK",
+        "Schwab": "SCHW", "Lowe's": "LOW", "Target": "TGT", "Medtronic": "MDT", "Bristol-Myers": "BMY", "CVS Health": "CVS",
+        "ConocoPhillips": "COP", "S&P Global": "SPGI", "ServiceNow": "NOW", "Intuit": "INTU", "Palo Alto Networks": "PANW",
+    },
+    "ETF": {
+        "SPDR ダウ (DIA)": "DIA", "iShares ラッセル2000 (IWM)": "IWM", "VanEck 半導体 (SMH)": "SMH",
+        "エネルギー (XLE)": "XLE", "金融 (XLF)": "XLF", "ヘルスケア (XLV)": "XLV", "公益 (XLU)": "XLU",
+        "テクノロジー (XLK)": "XLK", "資本財 (XLI)": "XLI", "生活必需品 (XLP)": "XLP", "一般消費財 (XLY)": "XLY",
+        "素材 (XLB)": "XLB", "不動産 (XLRE)": "XLRE", "通信 (XLC)": "XLC", "米国債20年超 (TLT)": "TLT",
+        "米国債7-10年 (IEF)": "IEF", "新興国株 (EEM)": "EEM", "日本株 (EWJ)": "EWJ",
+        "日経高配当50 (1489)": "1489.T", "東証銀行業 (1615)": "1615.T", "MAXIS NASDAQ100 (2631)": "2631.T",
+        "iShares S&P500 (1655)": "1655.T",
+    },
+    "金・貴金属": {"金鉱株 (GDX)": "GDX", "iShares 銀 (SLV)": "SLV"},
+}
+WIDE = False  # True のとき universe() が拡大した対象を返す（アプリの設定で切り替え）
+
 # 直接は売買できない（指数・先物）ものと、代わりに使える ETF
 PROXY = {
     "^N225": "1321.T（日経225連動）/ 1570.T（レバ）", "^GSPC": "SPY / VOO / 2558.T", "^IXIC": "QQQ",
@@ -101,14 +151,22 @@ def is_tradable(ticker: str) -> bool:
 
 def lot_of(ticker: str) -> int:
     """売買単位（日本株・国内ETF=100株 ※一部ETFは1口/10口）"""
-    if ticker in ("1540.T", "1326.T", "1306.T", "1321.T", "2558.T", "1671.T", "1699.T", "1570.T"):
+    if ticker in ("1540.T", "1326.T", "1306.T", "1321.T", "2558.T", "1671.T", "1699.T", "1570.T",
+                  "1489.T", "2631.T", "1655.T"):
         return 1
+    if ticker == "1615.T":
+        return 10
     return 100 if ticker.endswith(".T") else 1
 
 
-def universe(categories) -> list[tuple[str, str, str]]:
-    """(カテゴリ, 名前, ティッカー)"""
-    return [(c, n, t) for c in categories for n, t in PRESETS[c].items()]
+def universe(categories, wide: bool | None = None) -> list[tuple[str, str, str]]:
+    """(カテゴリ, 名前, ティッカー)。wide=True（または WIDE）なら拡大した対象も含める"""
+    wide = WIDE if wide is None else wide
+    out = [(c, n, t) for c in categories for n, t in PRESETS[c].items()]
+    if wide:
+        have = {t for _, _, t in out}
+        out += [(c, n, t) for c in categories for n, t in WIDE_EXTRA.get(c, {}).items() if t not in have]
+    return out
 
 
 # 足の種類と、Yahoo!Finance で取得可能な期間
@@ -136,7 +194,7 @@ def normalize_ticker(raw: str) -> str:
 
 
 def name_of(ticker: str) -> str:
-    for group in PRESETS.values():
+    for group in list(PRESETS.values()) + list(WIDE_EXTRA.values()):
         for name, t in group.items():
             if t == ticker:
                 return name
@@ -168,7 +226,41 @@ def _clean(df: pd.DataFrame) -> pd.DataFrame:
     return df.astype(float)
 
 
+# まとめて取得した結果（サーバー全体で共有。fetch_yahoo が先に見る）
+_BULK: dict = {}
+BULK_TTL = {"1d": 900, "1wk": 3600}
+
+
+def fetch_many(tickers: list[str], period: str, interval: str, chunk: int = 60) -> dict[str, pd.DataFrame]:
+    """多数の銘柄を yf.download でまとめて取得（1銘柄ずつより大幅に速い）"""
+    import time as _t
+    out = {}
+    if yf is None:
+        return out
+    for i in range(0, len(tickers), chunk):
+        part = tickers[i:i + chunk]
+        try:
+            raw = yf.download(part, period=period, interval=interval, group_by="ticker", auto_adjust=False,
+                              threads=True, progress=False, prepost=False)
+        except Exception:
+            continue
+        for t in part:
+            try:
+                sub = raw[t] if isinstance(raw.columns, pd.MultiIndex) else raw
+                df = _clean(sub.copy())
+                if len(df):
+                    out[t] = df
+                    _BULK[(t, period, interval)] = (_t.time(), df)
+            except Exception:
+                pass
+    return out
+
+
 def fetch_yahoo(ticker: str, period: str, interval: str) -> pd.DataFrame:
+    import time as _t
+    hit = _BULK.get((ticker, period, interval))
+    if hit and _t.time() - hit[0] < BULK_TTL.get(interval, 120):
+        return hit[1].copy()
     if yf is None:
         raise RuntimeError("yfinance がインストールされていません")
     df = yf.Ticker(ticker).history(period=period, interval=interval, auto_adjust=False, prepost=False)
