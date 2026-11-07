@@ -29,6 +29,8 @@ import market as mk
 import setups as su
 import strategies as strat
 import scalp
+import importlib as _il
+_il.reload(scalp)  # サーバーが古いまま残らないよう、毎回読み直す（小さいので速い）
 
 UP, DOWN = charts.UP, charts.DOWN
 # Streamlitのバージョン差を吸収（古い版は plotly_chart に width 指定ができない）
