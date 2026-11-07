@@ -1640,6 +1640,16 @@ def _us_scalp_targets():
             if data.is_tradable(t) and not t.endswith(".T")]
 
 
+def _jp_scalp_targets():
+    return [(n, t) for c_, n, t in data.universe(["日本株", "ETF"], wide=True)
+            if data.is_tradable(t) and t.endswith(".T")]
+
+
+def _scalp_label(r):
+    return (f"{r['パターン']}・{r['方向']}・{r['保有']}で手じまい・損切り{r['損切り']}"
+            f"・{r.get('対象', '全銘柄')}・{r.get('時間帯', '終日')}")
+
+
 if page == P_SCALP:
     hero("5〜30分で手じまい", "超短期トレード", "5分足でサインを探し、決めた時間がたったら必ず手じまいする売買")
     st.markdown(
@@ -1649,8 +1659,8 @@ if page == P_SCALP:
     srule = storage.get("scalp_rule")
     sres = storage.get("scalp_research")
     if srule:
-        st.markdown(f"<div class='rulebar'><span class='badge'>VERIFIED</span><div><b>採用中：{srule['パターン']}・{srule['方向']}・"
-                    f"{srule['保有']}で手じまい・損切り{srule['損切り']}</b><small>検証期間 {srule['検証_回数']}回・1回平均 "
+        st.markdown(f"<div class='rulebar'><span class='badge'>VERIFIED</span><div><b>採用中：{_scalp_label(srule)}"
+                    f"</b><small>検証期間 {srule['検証_回数']}回・1回平均 "
                     f"{srule['検証_平均R']:+.2f}R（1R＝5分足の平均値幅）</small></div></div>", unsafe_allow_html=True)
     else:
         st.info("まだ検証に合格したルールがありません。下の「超短期の検証」を実行すると、勝てる設定があるかを過去60日分の実データで確かめます。"
@@ -1684,12 +1694,18 @@ if page == P_SCALP:
 
     with card():
         st.markdown("#### 超短期の検証（過去60日・5分足）")
-        st.caption("4つのパターン×買い/売り×保有5/10/15/30分×損切りあり/なしの全組み合わせを、前半60%（学習）で選び、"
-                   "後半40%（検証）でも勝てるかを確かめます。売買コストは片道0.05%で計算します。")
+        st.caption("4つのパターン×買い/売り×保有5/10/15/30分×損切りあり/なし×「注目株に絞る/絞らない」×「寄り後60分に絞る/絞らない」"
+                   "の全組み合わせを、前半60%（学習）で選び、後半40%（検証）でも勝てるかを確かめます。売買コストは片道0.05%で計算します。"
+                   "注目株＝その日の窓が2%以上、または出来高が普段の2.5倍以上（プロのデイトレーダーが「動く銘柄」に絞るのと同じ考え方）。")
+        mkt_ = st.segmented_control("市場", ["米国", "日本"], default="米国", key="scalp_mkt", label_visibility="collapsed") or "米国"
+        skey_ = "scalp_research" if mkt_ == "米国" else "scalp_research_jp"
+        if mkt_ == "日本":
+            st.caption("日本株は過去データでの検証だけです（無料データが約20分遅れのため、実際の売買にはリアルタイムのデータが必要です）。")
+            sres = storage.get(skey_)
         for k_, v_ in scalp.PATTERNS.items():
             st.markdown(f"- **{k_}**：{v_}")
         if st.button("⚡ 超短期の検証を実行（1〜3分）"):
-            tks_ = _us_scalp_targets()
+            tks_ = _us_scalp_targets() if mkt_ == "米国" else _jp_scalp_targets()
             with st.spinner(f"{len(tks_)}銘柄の5分足（60日分）を取得中…"):
                 if use_yahoo:
                     fr_ = data.fetch_many([t for _, t in tks_], "60d", "5m")
@@ -1707,14 +1723,14 @@ if page == P_SCALP:
                      "split": f"{rs_['split']:%Y/%m/%d}" if b_ else None, "from": f"{rs_['from']:%Y/%m/%d}" if b_ else None,
                      "end": f"{rs_['end']:%Y/%m/%d}" if b_ else None, "n_symbols": rs_.get("n_symbols"),
                      "at": datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
-            storage.put("scalp_research", info_)
+            storage.put(skey_, info_)
             sres = info_
         if sres and sres.get("best"):
             b_ = sres["best"]
             st.caption(f"{sres['n_symbols']}銘柄　学習：{sres['from']}〜　検証：{sres['split']}〜{sres['end']}（実行 {sres['at']}）")
             kpis([("学習期間（1回平均）", f"{b_['学習_平均R']:+.2f}R", f"{b_['学習_回数']}回・勝率{b_['学習_勝率%']:.0f}%"),
                   ("検証期間（1回平均）", f"{b_['検証_平均R']:+.2f}R", f"{b_['検証_回数']}回・勝率{b_['検証_勝率%']:.0f}%")])
-            st.markdown(f"**選ばれた設定**：{b_['パターン']}・{b_['方向']}・{b_['保有']}で手じまい・損切り{b_['損切り']}")
+            st.markdown(f"**選ばれた設定**：{_scalp_label(b_)}")
             if sres.get("cum"):
                 fig_ = go.Figure(go.Scatter(x=sres["cum"]["d"], y=sres["cum"]["r"], mode="lines", line=dict(color="#c6f432", width=2)))
                 fig_.add_vline(x=sres["split"].replace("/", "-"), line=dict(color="#9a9a95", dash="dot"))
@@ -1722,7 +1738,7 @@ if page == P_SCALP:
                 st.plotly_chart(fig_, **PKW, config={"displaylogo": False})
             if sres["passed"]:
                 st.success("検証期間でもプラス。採用できます。")
-                if st.button("この超短期ルールを採用する"):
+                if mkt_ == "米国" and st.button("この超短期ルールを採用する"):
                     storage.put("scalp_rule", b_)
                     st.rerun()
             else:
@@ -1835,16 +1851,17 @@ if page == P_PERF:
             st.plotly_chart(f4, **PKW, config={"displaylogo": False})
             st.caption("学習・検証の両方で今の54銘柄がいちばん安定。候補を増やすと「どれを選ぶか」で成績が下がるため、今は54銘柄のままにしています。")
 
-    sr_ = storage.get("scalp_research")
     with card():
         st.markdown("#### 超短期（5〜30分）の検証")
-        if sr_ and sr_.get("best"):
-            b_ = sr_["best"]
-            st.markdown(f"選ばれた設定：{b_['パターン']}・{b_['方向']}・{b_['保有']}・損切り{b_['損切り']}　"
-                        f"学習 {b_['学習_平均R']:+.2f}R（{b_['学習_回数']}回）／ 検証 **{b_['検証_平均R']:+.2f}R**（{b_['検証_回数']}回）　"
-                        + ("✅ 合格" if sr_["passed"] else "❌ 不合格"))
-        else:
-            st.caption("まだ実行していません（「⚡ 超短期」ページで実行できます）。")
+        for lbl_, k_ in (("米国", "scalp_research"), ("日本", "scalp_research_jp")):
+            sr_ = storage.get(k_)
+            if sr_ and sr_.get("best"):
+                b_ = sr_["best"]
+                st.markdown(f"**{lbl_}**（{sr_['n_symbols']}銘柄・{sr_['at'][:10]}）：{_scalp_label(b_)}　"
+                            f"学習 {b_['学習_平均R']:+.2f}R（{b_['学習_回数']}回）／ 検証 **{b_['検証_平均R']:+.2f}R**（{b_['検証_回数']}回）　"
+                            + ("✅ 合格" if sr_["passed"] else "❌ 不合格"))
+            else:
+                st.caption(f"{lbl_}：まだ実行していません（「⚡ 超短期」ページで実行できます）。")
 
     with card():
         st.markdown("#### フォワードテスト（11/5〜・毎日自動で記録）")
