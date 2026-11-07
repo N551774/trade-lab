@@ -479,6 +479,17 @@ def scan_one(cat, name, t, style, use_yahoo, fxdf=None):
         if style == "スイング":
             df = fetch(t, "2y", "1d", use_yahoo)
             plans = su.find_plans(df, "スイング", cur)
+            out["raw"] = [p_.setup for p_ in plans]
+            out["block"] = []
+            try:
+                c_ = df["Close"]
+                out["m"] = {"終値": float(c_.iloc[-1]), "1週": float((c_.iloc[-1] / c_.iloc[-6] - 1) * 100),
+                            "1ヶ月": float((c_.iloc[-1] / c_.iloc[-22] - 1) * 100),
+                            "50日線比": float((c_.iloc[-1] / c_.rolling(50).mean().iloc[-1] - 1) * 100),
+                            "RSI": float(ind.rsi(c_, 14).iloc[-1]),
+                            "ATR%": float(ind.atr(df, 14).iloc[-1] / c_.iloc[-1] * 100)}
+            except Exception:
+                out["m"] = {}
             srule = load_rule(swing=True)
             if srule and plans:  # 検証で採用したスイングのルールを当てはめる
                 atr = ind.atr(df, 14)
@@ -489,11 +500,13 @@ def scan_one(cat, name, t, style, use_yahoo, fxdf=None):
                     if srule.get("avoid_earnings") and cat in ("日本株", "米国株", "マイ銘柄"):
                         ed_ = get_earnings(t, use_yahoo)
                         if ed_ and 0 <= (ed_ - datetime.now(JST).date()).days <= 18:
+                            out["block"].append("決算前")
                             continue  # 保有期間中に決算発表があるので見送り
                     if srule["filter"]:
                         try:
                             ix = fetch("^N225" if t.endswith(".T") else "^GSPC", "1y", "1d", use_yahoo)["Close"]
                             if not ix.iloc[-1] > ix.rolling(50).mean().iloc[-1]:
+                                out["block"].append("相場フィルター（" + ("日経" if t.endswith(".T") else "S&P500") + "が50日線の下）")
                                 continue
                         except Exception:
                             pass
@@ -753,6 +766,33 @@ if page == P_PICK:
                 "1日の値幅(ATR%)": round(w["ATR%"], 2), "出来高倍率": round(w["出来高倍率"], 2),
                 "前日高値": round(w["高値"], 2), "前日安値": round(w["安値"], 2), "前日終値": round(w["終値"], 2)}
                 for it, w in watch[:15]]), hide_index=True, width="stretch")
+    if style == "スイング":
+        rows_ = []
+        for it in results:
+            m_ = it.get("m") or {}
+            if not m_:
+                continue
+            if it["plans"]:
+                st_ = "狙い目あり"
+            elif it.get("raw"):
+                st_ = "見送り：" + "・".join(sorted(set(it.get("block") or ["ルール外"])))
+            else:
+                trend_ = "上昇" if m_.get("50日線比", 0) > 0 else "下落"
+                st_ = f"様子見（{trend_}基調・パターンなし）"
+            rows_.append({"区分": it["cat"], "銘柄": it["name"], "終値": round(m_["終値"], 2),
+                          "1週%": round(m_["1週"], 1), "1ヶ月%": round(m_["1ヶ月"], 1),
+                          "50日線比%": round(m_["50日線比"], 1), "RSI": round(m_["RSI"], 0),
+                          "値幅%": round(m_["ATR%"], 1), "パターン": "・".join(it.get("raw") or []) or "—", "判定": st_})
+        if rows_:
+            with card():
+                st.markdown("#### 全銘柄の状態")
+                st.caption("狙い目が出ていない銘柄も、なぜ見送りなのかが分かります。50日線比がプラス＝上昇基調、RSI 30以下＝売られすぎ・70以上＝買われすぎ。")
+                cat_sel = st.segmented_control("区分", ["すべて"] + ALL_CATS + ["マイ銘柄"], default="すべて", key="board_cat",
+                                               label_visibility="collapsed") or "すべて"
+                bdf = pd.DataFrame(rows_)
+                if cat_sel != "すべて":
+                    bdf = bdf[bdf["区分"] == cat_sel]
+                st.dataframe(bdf, hide_index=True, width="stretch", height=min(38 * (len(bdf) + 1), 640))
     if errs:
         with st.expander(f"⚠️ 取得できなかった銘柄（{len(errs)}件）"):
             st.write(", ".join(f"{e['name']}（{e['err']}）" for e in errs))
