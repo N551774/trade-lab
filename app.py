@@ -1722,7 +1722,8 @@ if page == P_SCALP:
                 g_ = rs_["trades"].groupby("日")["R"].sum().cumsum()
                 cum_ = {"d": [f"{x:%Y-%m-%d}" for x in g_.index], "r": [round(float(v), 3) for v in g_.values]}
             top_ = rs_["table"].head(15).round(3).to_dict("records") if len(rs_["table"]) else []
-            info_ = {"best": b_, "passed": scalp.passed(b_), "top": top_, "cum": cum_,
+            bp_ = rs_["by_pattern"].round(3).to_dict("records") if len(rs_.get("by_pattern", [])) else []
+            info_ = {"best": b_, "passed": scalp.passed(b_), "top": top_, "cum": cum_, "by_pattern": bp_,
                      "split": f"{rs_['split']:%Y/%m/%d}" if b_ else None, "from": f"{rs_['from']:%Y/%m/%d}" if b_ else None,
                      "end": f"{rs_['end']:%Y/%m/%d}" if b_ else None, "n_symbols": rs_.get("n_symbols"),
                      "at": datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
@@ -1746,6 +1747,9 @@ if page == P_SCALP:
                     st.rerun()
             else:
                 st.warning("検証期間では勝てる設定になりませんでした。超短期は、サインを参考に見るだけにしておくのが安全です。")
+            if sres.get("by_pattern"):
+                with st.expander("パターン別：それぞれ一番良かった設定"):
+                    st.dataframe(pd.DataFrame(sres["by_pattern"]), hide_index=True, width="stretch")
             with st.expander("上位15の設定（学習期間の成績順）"):
                 st.dataframe(pd.DataFrame(sres["top"]), hide_index=True, width="stretch")
         if srule and st.button("採用中の超短期ルールを取り消す"):
