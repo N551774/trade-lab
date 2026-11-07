@@ -875,7 +875,13 @@ if page == P_AN:
         dd = fetch(ticker, "2y", "1d", use_yahoo)
         found += [("スイング", p_, dd) for p_ in su.find_plans(dd, "スイング", cur)]
         di = fetch(ticker, "60d", "5m", use_yahoo)
-        found += [("デイトレ", p_, di) for p_ in su.find_plans(di, "デイトレ", cur)]
+        last_ = pd.Timestamp(di.index[-1])
+        last_ = last_.tz_localize("UTC") if last_.tzinfo is None else last_
+        live_ = (pd.Timestamp.now(tz="UTC") - last_) <= pd.Timedelta(minutes=30) or not use_yahoo
+        if live_:
+            found += [("デイトレ", p_, di) for p_ in su.find_plans(di, "デイトレ", cur)]
+        else:
+            st.caption(f"デイトレの判定は取引中のみ表示します（最後の5分足：{last_.tz_convert(JST):%m/%d %H:%M}・今は休場中）。")
     except Exception:
         pass
     if found:
@@ -893,8 +899,8 @@ if page == P_AN:
     ov_opts = ["移動平均", "ボリンジャー"] + (["VWAP"] if intraday else [])
     overlays = c1.multiselect("価格に重ねる", ov_opts, default=ov_opts[:1] + (["VWAP"] if intraday else []))
     lower = c2.multiselect("サブチャート", ["RSI", "MACD", "ストキャスティクス"], default=["RSI"])
-    mk = c3.selectbox("売買シグナル（検証用の戦略）", ["なし"] + list(strat.STRATEGIES))
-    markers = strat.entry_points(strat.run_strategy(mk, df)) if mk != "なし" else None
+    sig_name = c3.selectbox("売買シグナル（検証用の戦略）", ["なし"] + list(strat.STRATEGIES))
+    markers = strat.entry_points(strat.run_strategy(sig_name, df)) if sig_name != "なし" else None
     st.plotly_chart(charts.price_chart(d, p, overlays, lower, markers, intraday, iv["code"]), **PKW,
                     config={"scrollZoom": True, "displaylogo": False})
     if use_yahoo:
