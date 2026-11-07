@@ -1,0 +1,7 @@
+streamlit>=1.50
+yfinance>=0.2.54
+pandas>=2.1
+numpy>=1.26
+plotly>=5.20
+gspread>=6.0
+google-auth>=2.20
