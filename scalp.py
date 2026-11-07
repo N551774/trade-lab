@@ -4,6 +4,7 @@
 ・損切りは「なし」か「ATR1本分」。損切りに届いたらその値で決済（同じ足の中の順番は分からないので厳しめに扱う）
 ・1R ＝ ATR（5分足の平均値幅）1本分。損益はRと％で計算し、売買コスト（片道0.05%）を差し引く
 ・学習期間（前半60%）で一番良かった設定を選び、未使用の検証期間（後半40%）でも勝てるかを確かめる
+・プロのデイトレーダーにならい「注目株（窓が大きい・出来高が多い）」と「寄り付き直後」に絞る設定も比べる
 """
 from __future__ import annotations
 
@@ -22,6 +23,8 @@ PATTERNS = {
     "行き過ぎの戻り": "RSIが極端（20以下/80以上）になった直後の反発を取る",
 }
 SIDES = ["買いのみ", "売りのみ", "買い＋売り"]
+FOCUS = ["全銘柄", "注目株のみ"]  # 注目株＝窓2%以上 or 出来高が普段の2.5倍以上
+WINDOWS = ["終日", "寄り後60分"]
 STOPS = ["なし", "ATR1本"]
 COST_PCT = 0.05  # 片道
 
@@ -41,6 +44,15 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
     d["OR_H"] = d["High"].where(first3).groupby(day).transform("max")
     d["OR_L"] = d["Low"].where(first3).groupby(day).transform("min")
     d["LEFT"] = d.groupby(day).cumcount(ascending=False)  # その日の残り本数
+    # 「注目株」の判定：窓（前日終値からのすき間）が2%以上、または出来高が普段の2.5倍以上
+    day_open = d["Open"].groupby(day).transform("first")
+    prev_close = c.groupby(day).last().shift(1)
+    d["GAP"] = (day_open / day.map(prev_close) - 1) * 100
+    d["CUMV"] = d["Volume"].groupby(day).cumsum()
+    d["CUMV_AVG"] = d.groupby("BAR_NO")["CUMV"].transform(lambda s: s.shift(1).rolling(10, min_periods=5).mean())
+    d["RVOL"] = d["CUMV"] / d["CUMV_AVG"]
+    d["INPLAY"] = (d["GAP"].abs() >= 2) | (d["RVOL"] >= 2.5)
+    d["EARLY"] = d["BAR_NO"] < 12  # 寄り付きから60分以内
     return d
 
 
@@ -69,6 +81,8 @@ def trades_for(d: pd.DataFrame, sigs: dict, ticker: str) -> pd.DataFrame:
     o, h, l, c = (d[k].to_numpy() for k in ("Open", "High", "Low", "Close"))
     atr = d["ATR"].to_numpy()
     left = d["LEFT"].to_numpy()
+    inplay = d["INPLAY"].fillna(False).to_numpy()
+    early = d["EARLY"].to_numpy()
     idx = d.index
     rows = []
     for (pat, side), cond in sigs.items():
@@ -95,11 +109,11 @@ def trades_for(d: pd.DataFrame, sigs: dict, ticker: str) -> pd.DataFrame:
                     cost = entry * COST_PCT / 100 * 2
                     r = (gross - cost) / a
                     rows.append((ticker, idx[i], idx[i].normalize(), pat, side, hold_name, stop, r,
-                                 (gross - cost) / entry * 100))
-    return pd.DataFrame(rows, columns=["銘柄", "時刻", "日", "パターン", "方向", "保有", "損切り", "R", "損益%"])
+                                 (gross - cost) / entry * 100, bool(inplay[i]), bool(early[i])))
+    return pd.DataFrame(rows, columns=["銘柄", "時刻", "日", "パターン", "方向", "保有", "損切り", "R", "損益%", "注目株", "寄り後60分"])
 
 
-def research(frames: dict[str, pd.DataFrame], test_frac: float = 0.4, min_trades: int = 80) -> dict:
+def research(frames: dict[str, pd.DataFrame], test_frac: float = 0.4, min_trades: int = 60) -> dict:
     allt = []
     for t, df in frames.items():
         if df is None or len(df) < 300:
@@ -112,17 +126,11 @@ def research(frames: dict[str, pd.DataFrame], test_frac: float = 0.4, min_trades
     days = sorted(tr["日"].unique())
     split = days[int(len(days) * (1 - test_frac))]
     rows = []
-    for pat, side_name, hold, stop in itertools.product(list(PATTERNS) + ["すべて"], SIDES, HOLDS, STOPS):
-        m = (tr["保有"] == hold) & (tr["損切り"] == stop)
-        if pat != "すべて":
-            m &= tr["パターン"] == pat
-        if side_name == "買いのみ":
-            m &= tr["方向"] == 1
-        elif side_name == "売りのみ":
-            m &= tr["方向"] == -1
-        x = tr[m]
+    for pat, side_name, hold, stop, focus, win in itertools.product(list(PATTERNS) + ["すべて"], SIDES, HOLDS, STOPS,
+                                                                    FOCUS, WINDOWS):
+        x = select(tr, {"パターン": pat, "方向": side_name, "保有": hold, "損切り": stop, "対象": focus, "時間帯": win})
         a, b = x[x["日"] < split], x[x["日"] >= split]
-        rows.append({"パターン": pat, "方向": side_name, "保有": hold, "損切り": stop,
+        rows.append({"パターン": pat, "方向": side_name, "保有": hold, "損切り": stop, "対象": focus, "時間帯": win,
                      "学習_回数": len(a), "学習_勝率%": (a["R"] > 0).mean() * 100 if len(a) else np.nan,
                      "学習_平均R": a["R"].mean() if len(a) else np.nan,
                      "検証_回数": len(b), "検証_勝率%": (b["R"] > 0).mean() * 100 if len(b) else np.nan,
@@ -130,16 +138,24 @@ def research(frames: dict[str, pd.DataFrame], test_frac: float = 0.4, min_trades
     tb = pd.DataFrame(rows)
     ok = tb[tb["学習_回数"] >= min_trades].sort_values("学習_平均R", ascending=False)
     best = ok.iloc[0].to_dict() if len(ok) else None
-    cum = None
-    if best:
-        m = (tr["保有"] == best["保有"]) & (tr["損切り"] == best["損切り"])
-        if best["パターン"] != "すべて":
-            m &= tr["パターン"] == best["パターン"]
-        if best["方向"] != "買い＋売り":
-            m &= tr["方向"] == (1 if best["方向"] == "買いのみ" else -1)
-        cum = tr[m].sort_values("時刻")[["時刻", "日", "銘柄", "パターン", "方向", "R"]]
+    cum = select(tr, best).sort_values("時刻")[["時刻", "日", "銘柄", "パターン", "方向", "R"]] if best else None
     return {"best": best, "table": ok, "split": split, "from": days[0], "end": days[-1],
             "n_days": len(days), "n_symbols": tr["銘柄"].nunique(), "trades": cum}
+
+
+def select(tr: pd.DataFrame, rule: dict) -> pd.DataFrame:
+    m = (tr["保有"] == rule["保有"]) & (tr["損切り"] == rule["損切り"])
+    if rule["パターン"] != "すべて":
+        m &= tr["パターン"] == rule["パターン"]
+    if rule["方向"] == "買いのみ":
+        m &= tr["方向"] == 1
+    elif rule["方向"] == "売りのみ":
+        m &= tr["方向"] == -1
+    if rule.get("対象") == "注目株のみ":
+        m &= tr["注目株"]
+    if rule.get("時間帯") == "寄り後60分":
+        m &= tr["寄り後60分"]
+    return tr[m]
 
 
 def passed(best: dict | None) -> bool:
@@ -163,6 +179,10 @@ def live(df: pd.DataFrame, rule: dict, tz: str, fresh_min: int = 10) -> list[dic
             continue
         close_t = last_t.normalize() + pd.Timedelta(hours=16)  # 米国の引け（現地時間16:00）
         bars_left = int((close_t - last_t) / pd.Timedelta(minutes=5))
+        if rule.get("対象") == "注目株のみ" and not bool(d["INPLAY"].iloc[-1]):
+            continue
+        if rule.get("時間帯") == "寄り後60分" and not bool(d["EARLY"].iloc[-1]):
+            continue
         if bool(cond.iloc[-1]) and bars_left > HOLDS[rule["保有"]]:
             a = float(d["ATR"].iloc[-1])
             px = float(d["Close"].iloc[-1])
