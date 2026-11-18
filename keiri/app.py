@@ -18,6 +18,10 @@ sys.path.insert(0, str(Path(__file__).parent))  # リポジトリ直下から起
 import ledger as lg  # noqa: E402
 from content import (ACCOUNTS, ANNUAL, CAT_INFO, DRILL, DRILL_TAGS, LESSONS,  # noqa: E402
                      ROUTINE, TERMS)
+from content_jitsumu import (CAREER, DOCS, MATCH_ACTIONS, MATCH_SETS,  # noqa: E402
+                             PRACTICE_LESSONS, PROMOTE_RATIO, STORY_RANKS)
+
+LESSONS = LESSONS + PRACTICE_LESSONS
 
 st.set_page_config(page_title="経理ラボ", page_icon="📒", layout="centered")
 st.markdown("""<style>
@@ -52,6 +56,24 @@ header[data-testid="stHeader"] {background:transparent; height:2.4rem;}
 .muted {color:var(--muted); font-size:.85rem;}
 .bar {height:8px; border-radius:99px; background:var(--surface2); overflow:hidden;}
 .bar > div {height:100%; background:var(--lime);}
+.ladder {display:flex; gap:4px; flex-wrap:wrap; margin:4px 0 10px;}
+.ladder span {font-size:.72rem; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+.ladder span.done {color:var(--bg); background:#6f8a1c; border-color:#6f8a1c;}
+.ladder span.now {color:var(--bg); background:var(--lime); border-color:var(--lime); font-weight:800;}
+.who {display:flex; gap:12px; align-items:flex-start;}
+.who .ic {font-size:2rem; line-height:1;}
+.who .nm {font-size:.75rem; color:var(--muted);}
+.pts {font-family:var(--num); font-weight:800; font-size:1.2rem;}
+.point {border-left:3px solid var(--lime); padding:10px 14px; background:var(--surface2); border-radius:6px; margin:8px 0;}
+.paper {background:#f6f4ec; color:#1d1d1b; border-radius:6px; padding:18px 20px; margin:8px 0 14px;
+  box-shadow:0 6px 24px rgba(0,0,0,.45); font-family:"Noto Sans JP",sans-serif;}
+.paper .kind {font-size:1.25rem; font-weight:900; letter-spacing:.3em; text-align:center; border-bottom:2px solid #1d1d1b;
+  padding-bottom:6px; margin-bottom:4px;}
+.paper .sub {text-align:center; font-size:.8rem; color:#555; margin-bottom:10px;}
+.paper table {width:100%; border-collapse:collapse; font-size:.9rem;}
+.paper td {padding:6px 4px; border-bottom:1px solid #d8d4c6; vertical-align:top;}
+.paper td:first-child {color:#666; width:38%; white-space:nowrap;}
+.dep {font-family:var(--num); font-size:1.05rem;}
 </style>""", unsafe_allow_html=True)
 
 ACCT_NAMES = list(ACCOUNTS)
@@ -62,7 +84,13 @@ NONE = "（なし）"
 # 学習記録（セッション内に保持。JSONで書き出し／読み込み可能）
 # ─────────────────────────────────────────────
 def new_progress() -> dict:
-    return {"lessons": [], "drill": {}, "acct": {}, "terms": {}, "routine": {}, "journal": []}
+    return {"lessons": [], "drill": {}, "acct": {}, "terms": {}, "routine": {}, "journal": [],
+            "story": {}, "docs": {}, "match": {}, "career": new_career()}
+
+
+def new_career() -> dict:
+    # stage: 今のステージ / i: -1=導入, 0..n-1=イベント, n=評価 / picked: 選んだ選択肢
+    return {"stage": 0, "i": -1, "pts": 0, "total": 0, "picked": None, "done": False, "retries": 0, "best": None}
 
 
 if "prog" not in st.session_state:
@@ -135,7 +163,8 @@ def to_lines(dr: list, cr: list) -> list[dict]:
 # ─────────────────────────────────────────────
 st.markdown('<div class="brand"><b>経理<i>ラボ</i></b><small>仕訳から決算まで、手を動かして覚える</small></div>',
             unsafe_allow_html=True)
-PAGES = ["ホーム", "講座", "仕訳ドリル", "科目クイズ", "用語クイズ", "帳簿づくり", "経理カレンダー", "科目辞典"]
+PAGES = ["ホーム", "キャリア", "講座", "仕訳ドリル", "証憑チェック", "入金消込", "科目クイズ", "用語クイズ",
+         "帳簿づくり", "経理カレンダー", "科目辞典"]
 with st.container(key="topnav"):
     page = st.segmented_control("メニュー", PAGES, default="ホーム", key="page", label_visibility="collapsed") or "ホーム"
 
@@ -157,12 +186,15 @@ def page_home() -> None:
 
     st.markdown("#### おすすめの進め方")
     steps = [
+        ("キャリア", "新入社員から経理部長を目指すストーリーで、実務の判断を体験する", P["career"]["done"]),
         ("講座", "1〜3章で「5要素」と「借方・貸方」のルールを理解する", done_l >= 3),
         ("科目クイズ", "勘定科目が5要素のどれかを即答できるようにする", a_ok >= 20),
         ("仕訳ドリル", "「基本」タグの問題を全問正解する",
          all(P["drill"].get(p["id"], {}).get("last") for p in DRILL if p["tag"] == "基本")),
         ("仕訳ドリル", "給与・消費税・決算の仕訳に挑戦する", mastered >= len(DRILL) * 0.8),
         ("帳簿づくり", "自分で仕訳を入れて、試算表と決算書ができる流れを体験する", len(P["journal"]) >= 5),
+        ("証憑チェック・入金消込", "請求書の不備を見抜き、入金を正しく消し込めるようになる",
+         len([1 for v in P["docs"].values() if v["last"]]) >= 6),
         ("経理カレンダー", "毎月・毎年の締め切りを覚える", False),
     ]
     for i, (where, what, done) in enumerate(steps, 1):
@@ -474,13 +506,13 @@ def page_books() -> None:
         rows = lg.ledger(J, a)
         st.caption(f"{a}（{ACCOUNTS[a]['cat']}）— 増えたら{CAT_INFO[ACCOUNTS[a]['cat']]['side']}に記入")
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch",
-                     column_config={k: st.column_config.NumberColumn(format="%d") for k in ["借方", "貸方", "残高"]})
+                     column_config={k: st.column_config.NumberColumn(format="localized") for k in ["借方", "貸方", "残高"]})
     with tabs[2]:
         tb = lg.trial_balance(J)
         df = pd.DataFrame(tb)
         tot_dr, tot_cr = int(df["借方残高"].sum()), int(df["貸方残高"].sum())
         st.dataframe(df, hide_index=True, width="stretch",
-                     column_config={k: st.column_config.NumberColumn(format="%d") for k in ["借方残高", "貸方残高"]})
+                     column_config={k: st.column_config.NumberColumn(format="localized") for k in ["借方残高", "貸方残高"]})
         mark = "<span class='ok'>一致 ✓</span>" if tot_dr == tot_cr else "<span class='ng'>不一致</span>"
         st.markdown(f"借方合計 <b class='num'>{yen(tot_dr)}</b> ／ 貸方合計 <b class='num'>{yen(tot_cr)}</b>　{mark}",
                     unsafe_allow_html=True)
@@ -556,7 +588,224 @@ def page_dict() -> None:
                         unsafe_allow_html=True)
 
 
+# ─────────────────────────────────────────────
+# キャリアモード（新入社員 → 経理部長）
+# ─────────────────────────────────────────────
+def stage_max(stage: dict) -> int:
+    return sum(max(p for _, p, _ in e["choices"]) for e in stage["events"])
+
+
+CAREER_MAX = sum(stage_max(s) for s in CAREER)
+
+
+def page_career() -> None:
+    C = P["career"]
+    ranks = "".join(
+        f"<span class='{'done' if i < C['stage'] or C['done'] else 'now' if i == C['stage'] else ''}'>{s['icon']} {s['rank']}</span>"
+        for i, s in enumerate(CAREER))
+    st.markdown(f"<div class='ladder'>{ranks}</div>", unsafe_allow_html=True)
+
+    def restart() -> None:
+        P["career"] = new_career()
+
+    if C["done"]:
+        pct = C["total"] / CAREER_MAX * 100
+        title, msg = next((t, m) for th, t, m in STORY_RANKS if pct >= th)
+        st.markdown(f"<div class='card' style='text-align:center'><div class='muted'>キャリア達成！ 最終評価</div>"
+                    f"<div style='font-size:2rem;font-weight:900;margin:6px 0'>{title}</div>"
+                    f"<div class='pts'>信頼度 {C['total']} / {CAREER_MAX}</div><p>{msg}</p>"
+                    f"<span class='muted'>昇進見送り {C['retries']} 回</span></div>", unsafe_allow_html=True)
+        miss = [(k, v) for k, v in P["story"].items() if v["last"] is False]
+        if miss:
+            st.markdown("#### 判断を誤った論点（講座・証憑チェックで復習しよう）")
+            st.markdown("　".join(f"<span class='tag'>{k}</span>" for k, _ in miss), unsafe_allow_html=True)
+        st.button("もう一度、新入社員からやり直す", type="primary", width="stretch", on_click=restart)
+        return
+
+    stage = CAREER[C["stage"]]
+    evs = stage["events"]
+    need = int(stage_max(stage) * PROMOTE_RATIO)
+
+    # 導入
+    if C["i"] == -1:
+        st.markdown(f"<div class='card'><div class='muted'>{stage['years']}</div>"
+                    f"<div style='font-size:1.6rem;font-weight:900'>{stage['icon']} {stage['rank']}編</div>"
+                    f"<p>{stage['intro']}</p><span class='muted'>{len(evs)}つの場面で判断を下そう。"
+                    f"信頼度 {need} 以上で昇進！</span></div>", unsafe_allow_html=True)
+
+        def begin() -> None:
+            C.update(i=0, pts=0, picked=None)
+        st.button("業務を始める →", type="primary", width="stretch", on_click=begin)
+        if C["stage"] > 0 or C["total"]:
+            st.button("最初からやり直す", on_click=restart)
+        return
+
+    # 評価（昇進判定）
+    if C["i"] >= len(evs):
+        ok = C["pts"] >= need
+        st.markdown(f"<span class='muted'>{stage['rank']}編の評価</span>", unsafe_allow_html=True)
+        st.markdown(f"<div class='pts'>信頼度 {C['pts']} / {stage_max(stage)}（昇進ライン {need}）</div>"
+                    f"{bar(C['pts'] / stage_max(stage))}", unsafe_allow_html=True)
+        if ok:
+            last = C["stage"] == len(CAREER) - 1
+            if last:
+                st.markdown("<div class='card'><h4>🎉 経理部長として、数々の試練を乗り越えた！</h4></div>",
+                            unsafe_allow_html=True)
+            else:
+                nxt = CAREER[C["stage"] + 1]
+                st.markdown(f"<div class='card' style='text-align:center'><div class='muted'>辞令</div>"
+                            f"<div style='font-size:1.5rem;font-weight:900'>{stage['rank']} → {nxt['icon']} {nxt['rank']}</div>"
+                            f"<p>あなたの仕事ぶりが評価され、昇進が決まりました！</p></div>", unsafe_allow_html=True)
+            if st.session_state.get("_balloon") != (C["stage"], C["retries"]):
+                st.session_state._balloon = (C["stage"], C["retries"])
+                st.balloons()
+
+            def promote() -> None:
+                C["total"] += C["pts"]
+                if C["stage"] == len(CAREER) - 1:
+                    C["done"] = True
+                else:
+                    C.update(stage=C["stage"] + 1, i=-1, pts=0, picked=None)
+            st.button("結果を見る →" if last else "次のステージへ →", type="primary", width="stretch", on_click=promote)
+        else:
+            st.markdown("<div class='card'><h4>😣 今回は昇進見送り…</h4>"
+                        "<span class='muted'>上司からのひとこと：「判断の根拠をもう一度見直してみよう」"
+                        "解説の「実務ポイント」を思い出して再挑戦！</span></div>", unsafe_allow_html=True)
+
+            def retry() -> None:
+                C.update(i=-1, pts=0, picked=None, retries=C["retries"] + 1)
+            st.button("このステージに再挑戦", type="primary", width="stretch", on_click=retry)
+        return
+
+    # イベント
+    e = evs[C["i"]]
+    st.markdown(f"<span class='muted'>{stage['icon']} {stage['rank']}編　{C['i'] + 1}/{len(evs)}</span>"
+                f"{bar(C['pts'] / max(1, need))}<span class='muted'>信頼度 <b class='num'>{C['pts']}</b>"
+                f"（昇進ライン {need}）</span>", unsafe_allow_html=True)
+    st.markdown(f"<div class='card'><div class='who'><div class='ic'>{e['icon']}</div><div>"
+                f"<div class='nm'>{e['who']}　<span class='tag'>{e['tag']}</span></div>"
+                f"<div class='q'>{e['text']}</div></div></div></div>", unsafe_allow_html=True)
+    order = list(range(len(e["choices"])))
+    random.Random(e["tag"] + str(C["retries"])).shuffle(order)
+
+    if C["picked"] is None:
+        for k in order:
+            def pick(k: int = k) -> None:
+                pts = e["choices"][k][1]
+                C["picked"] = k
+                C["pts"] += pts
+                record("story", e["tag"], pts > 0 and pts == max(p for _, p, _ in e["choices"]))
+            st.button(e["choices"][k][0], key=f"cv_{C['stage']}_{C['i']}_{k}", width="stretch", on_click=pick)
+        return
+
+    text, pts, fb = e["choices"][C["picked"]]
+    best = max(p for _, p, _ in e["choices"])
+    color = "var(--ok)" if pts == best else "var(--ng)" if pts < 0 else "#f5b83d"
+    st.markdown(f"<div class='muted'>あなたの判断：{text}</div>"
+                f"<div class='pts' style='color:{color}'>信頼度 {pts:+d}</div><p>{fb}</p>", unsafe_allow_html=True)
+    if pts != best:
+        right = next(t for t, p, _ in e["choices"] if p == best)
+        st.markdown(f"<span class='muted'>ベストな判断：</span>{right}", unsafe_allow_html=True)
+    st.markdown(f"<div class='point'>📌 <b>実務ポイント</b><br>{e['point']}</div>", unsafe_allow_html=True)
+
+    def nxt() -> None:
+        C.update(i=C["i"] + 1, picked=None)
+    st.button("次へ →", type="primary", width="stretch", on_click=nxt)
+
+
+# ─────────────────────────────────────────────
+# 証憑チェック
+# ─────────────────────────────────────────────
+def page_docs() -> None:
+    st.markdown("<p class='muted'>回ってきた書類をチェックしよう。問題があるものをすべて選んでください（問題がない場合もあります）。</p>",
+                unsafe_allow_html=True)
+    done = sum(1 for d in DOCS if P["docs"].get(d["id"], {}).get("last"))
+    st.markdown(f"<span class='muted'>正解済み {done}/{len(DOCS)}</span>{bar(done / len(DOCS))}", unsafe_allow_html=True)
+    i = st.session_state.setdefault("doc_i", 0) % len(DOCS)
+    d = DOCS[i]
+    rows = "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in d["fields"])
+    st.markdown(f"<div class='paper'><div class='kind'>{d['kind']}</div><div class='sub'>{d['title']}</div>"
+                f"<table>{rows}</table></div>", unsafe_allow_html=True)
+    n = st.session_state.get("doc_n", 0)
+    picked = {j for j, iss in enumerate(d["issues"]) if st.checkbox(iss, key=f"doc_{d['id']}_{n}_{j}")}
+    shown = st.session_state.get("doc_shown") == (d["id"], n)
+    c1, c2 = st.columns(2)
+    if c1.button("判定する", type="primary", width="stretch", disabled=shown):
+        record("docs", d["id"], picked == d["answer"])
+        st.session_state.doc_shown = (d["id"], n)
+        st.rerun()
+
+    def go_next() -> None:
+        st.session_state.doc_i = i + 1
+        st.session_state.doc_n = n + 1
+    c2.button("次の書類 →", width="stretch", on_click=go_next)
+    if shown:
+        if picked == d["answer"]:
+            st.markdown("<p class='ok' style='font-size:1.2rem'>○ 見抜けました！</p>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p class='ng' style='font-size:1.2rem'>✕ おしい！</p>", unsafe_allow_html=True)
+        st.markdown("**正解：** " + " ／ ".join(d["issues"][j] for j in sorted(d["answer"])))
+        st.markdown(f"<div class='point'>📌 {d['exp']}</div>", unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────
+# 入金消込パズル
+# ─────────────────────────────────────────────
+def page_match() -> None:
+    st.markdown("<p class='muted'>通帳に入金がありました。どの請求書の入金かを特定し、処理方法を選ぼう。</p>",
+                unsafe_allow_html=True)
+    lv = st.selectbox("レベル", range(len(MATCH_SETS)), key="match_lv",
+                      format_func=lambda k: MATCH_SETS[k]["title"]
+                      + (f"（ベスト {P['match'][MATCH_SETS[k]['title']]}/{len(MATCH_SETS[k]['deposits'])}）"
+                         if MATCH_SETS[k]["title"] in P["match"] else ""))
+    S = MATCH_SETS[lv]
+    st.markdown("**未入金の請求（売掛金）**")
+    st.dataframe(pd.DataFrame([{"請求番号": a, "取引先": b, "請求額": c} for a, b, c in S["invoices"]]),
+                 hide_index=True, width="stretch", column_config={"請求額": st.column_config.NumberColumn(format="localized")})
+    inv_ids = [a for a, _, _ in S["invoices"]]
+    n = st.session_state.get("match_n", 0)
+    answers = []
+    st.markdown("**通帳の入金明細**")
+    for j, (name, amt, _, _, _) in enumerate(S["deposits"]):
+        st.markdown(f"<div class='card' style='margin-bottom:4px'>🏦 振込 <b class='dep'>{name}</b>　"
+                    f"<b class='dep'>¥{yen(amt)}</b></div>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        sel = c1.multiselect("対応する請求", inv_ids, key=f"m_{lv}_{n}_{j}_i", placeholder="請求番号を選ぶ（不明なら空欄）")
+        act = c2.selectbox("処理", MATCH_ACTIONS, key=f"m_{lv}_{n}_{j}_a", index=None, placeholder="処理を選ぶ")
+        if sel:
+            tot = sum(c for a, _, c in S["invoices"] if a in sel)
+            diff = amt - tot
+            st.caption(f"選んだ請求の合計 ¥{yen(tot)}　差額 {diff:+,}円")
+        answers.append((set(sel), act))
+    shown = st.session_state.get("match_shown") == (lv, n)
+    c1, c2 = st.columns(2)
+    if c1.button("答え合わせ", type="primary", width="stretch", disabled=shown):
+        st.session_state.match_shown = (lv, n)
+        st.rerun()
+
+    def reset() -> None:
+        st.session_state.match_n = n + 1
+    c2.button("やり直す", width="stretch", on_click=reset)
+    if shown:
+        score = 0
+        for (name, amt, right, act_i, exp), (sel, act) in zip(S["deposits"], answers):
+            want = MATCH_ACTIONS[act_i]
+            # 「確認」する入金は、候補の請求を選んでいても空欄でも可
+            ok_inv = sel == right or (act_i == 2 and (not sel or sel == right))
+            ok = ok_inv and act == want
+            score += ok
+            mark = "<span class='ok'>○</span>" if ok else "<span class='ng'>✕</span>"
+            right_txt = "・".join(sorted(right)) or "該当なし"
+            st.markdown(f"{mark} <b>{name}</b> ¥{yen(amt)} → 正解：{right_txt}／{want}<br>"
+                        f"<span class='muted'>{exp}</span>", unsafe_allow_html=True)
+        st.markdown(f"<div class='pts'>{score} / {len(S['deposits'])}</div>", unsafe_allow_html=True)
+        if score > P["match"].get(S["title"], -1):
+            P["match"][S["title"]] = score
+        if score == len(S["deposits"]):
+            st.balloons()
+
+
 {
-    "ホーム": page_home, "講座": page_lessons, "仕訳ドリル": page_drill, "科目クイズ": page_acct_quiz,
+    "ホーム": page_home, "キャリア": page_career, "証憑チェック": page_docs, "入金消込": page_match, "講座": page_lessons, "仕訳ドリル": page_drill, "科目クイズ": page_acct_quiz,
     "用語クイズ": page_terms, "帳簿づくり": page_books, "経理カレンダー": page_calendar, "科目辞典": page_dict,
 }[page]()
