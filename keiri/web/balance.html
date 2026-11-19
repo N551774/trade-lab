@@ -1,299 +1,422 @@
 <title>バランスシート</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700;800&display=swap">
 <style>
-/* Layout: 縦持ちスマホの1画面アプリ。上にHUD、中央に画面、下にタブ。物語・バトル・ランは全画面。
-   色：夜のオフィス（紺）を地に、金（報酬・★）、朱（経理の朱書き＝攻撃・警告）。 */
+/* Layout: 縦持ちスマホの1画面ゲーム。上にHUD、中央に画面、下に中央が浮いたタブ。物語・バトルは全画面。
+   質感：夜のオフィス（紺）にすりガラスのパネル、金（報酬・★）と朱（朱書き＝攻撃・判子）。数字は細身の太字。 */
 :root{
-  --bg:#0E1117; --bg2:#151A22; --panel:#1B212B; --panel2:#242B37; --line:#313A48; --ink:#EEF1F5; --muted:#98A2B3;
-  --gold:#E2B85C; --gold2:#F6D88E; --shu:#E2573D; --green:#4FC08F; --blue:#6FA0E6; --violet:#A98BE6;
-  --work:#6FA0E6; --family:#E79C5C; --health:#4FC08F; --money:#E2B85C;
-  --r3:#8FA3BF; --r4:#B98BEA; --r5:#E2B85C;
-  --f-head:"Noto Serif JP","Hiragino Mincho ProN",serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+  --bg:#080B12; --bg2:#0F1420; --glass:rgba(22,28,42,.72); --glass2:rgba(34,42,60,.78); --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.18);
+  --ink:#F1F3F8; --muted:#97A1B5; --gold:#F1C76A; --gold2:#FFE7A6; --gold3:#B88A2E; --shu:#FF5A3C; --shu2:#C7351E; --teal:#38D6A4; --blue:#7FB2FF; --violet:#A98BFF;
+  --work:#7FB2FF; --family:#FF9D5C; --health:#38D6A4; --money:#F1C76A;
+  --r3:#A9B7CC; --r4:#B98BFF; --r5:#F1C76A;
+  --f-head:"Noto Serif JP","Hiragino Mincho ProN",serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif; --f-num:"Barlow Condensed","Noto Sans JP",sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); overscroll-behavior:none; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none}
-button{font:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0}
+body{margin:0; background:radial-gradient(120% 80% at 50% -10%,#1A2440 0%,var(--bg) 60%); color:var(--ink); font-family:var(--f-body); overscroll-behavior:none; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0; position:relative}
 button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
-.app{max-width:480px; height:100%; margin:0 auto; position:relative; overflow:hidden; display:flex; flex-direction:column; background:var(--bg)}
+.app{max-width:480px; height:100%; margin:0 auto; position:relative; overflow:hidden; display:flex; flex-direction:column; background:var(--bg); box-shadow:0 0 60px rgba(0,0,0,.6)}
+#app > *:not(.modal):not(.toast):not(.ovl){animation:scrIn .34s var(--ease) backwards}
+@keyframes scrIn{from{opacity:0; transform:translateY(10px) scale(.985); filter:blur(3px)}}
+#fx{position:fixed; inset:0; pointer-events:none; z-index:100}
 .side{padding-left:max(14px,env(safe-area-inset-left,0px)); padding-right:max(14px,env(safe-area-inset-right,0px))}
 .scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch}
-.num{font-variant-numeric:tabular-nums}
+.num{font-family:var(--f-num); font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.02em}
 .serif{font-family:var(--f-head)}
 .muted{color:var(--muted)}
 .small{font-size:.78rem}
+.ripple{position:absolute; border-radius:50%; background:rgba(255,255,255,.35); transform:scale(0); animation:rip .5s ease-out forwards; pointer-events:none}
+@keyframes rip{to{transform:scale(1); opacity:0}}
+button{overflow:hidden}
+.tab,.rbtn,.ep{overflow:visible}
+.glass{background:var(--glass); backdrop-filter:blur(14px) saturate(1.2); -webkit-backdrop-filter:blur(14px) saturate(1.2); border:1px solid var(--line); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 10px 30px rgba(0,0,0,.35)}
 
 /* HUD */
-.hud{display:flex; align-items:center; gap:8px; padding-block:calc(8px + env(safe-area-inset-top,0px)) 8px; background:linear-gradient(var(--bg2),rgba(21,26,34,.85)); border-bottom:1px solid var(--line); position:relative; z-index:5}
+.hud{display:flex; align-items:center; gap:6px; padding-block:calc(8px + env(safe-area-inset-top,0px)) 8px; position:relative; z-index:6; background:linear-gradient(rgba(8,11,18,.92),rgba(8,11,18,.55)); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
 .lv{display:flex; align-items:center; gap:8px; min-width:0; flex:1}
-.lv .b{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#2B3446,#1A2030); border:1px solid var(--line); display:grid; place-items:center; font-weight:900; font-size:.8rem; line-height:1}
-.lv .b small{display:block; font-size:.55rem; color:var(--muted); font-weight:500}
+.lvring{width:40px; height:40px; flex:none; position:relative; display:grid; place-items:center}
+.lvring svg{position:absolute; inset:0; transform:rotate(-90deg)}
+.lvring b{font-family:var(--f-num); font-size:1.05rem; line-height:1}
+.lvring small{position:absolute; bottom:-3px; font-size:.5rem; letter-spacing:.1em; color:var(--gold); background:var(--bg); padding:0 3px; border-radius:3px}
 .lv .t{min-width:0}
-.lv .t b{display:block; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.lv .t i{display:block; height:4px; width:88px; border-radius:4px; background:var(--panel2); overflow:hidden; margin-top:3px}
-.lv .t i s{display:block; height:100%; background:var(--blue)}
-.cur{display:flex; align-items:center; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 4px; font-size:.78rem; font-weight:700}
-.cur .ic{width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:.62rem; font-weight:900; color:#1A1408}
-.cur.sta .ic{background:var(--green)} .cur.coin .ic{background:var(--gold)} .cur.so .ic{background:linear-gradient(135deg,#C9A6FF,#7B5CE0); color:#fff}
+.lv .t b{display:block; font-size:.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.lv .t span{display:inline-block; font-size:.6rem; letter-spacing:.08em; color:#1A1408; background:linear-gradient(90deg,var(--gold2),var(--gold)); padding:1px 8px; clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.cur{display:flex; align-items:center; gap:4px; background:rgba(0,0,0,.4); border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 3px; font-family:var(--f-num); font-size:.95rem; font-weight:700; line-height:1}
+.cur .ic{width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-family:var(--f-body); font-size:.6rem; font-weight:900; color:#1A1408; box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+.cur.sta .ic{background:linear-gradient(#7CF2C6,var(--teal))} .cur.coin .ic{background:linear-gradient(var(--gold2),var(--gold))} .cur.so .ic{background:linear-gradient(135deg,#D9C4FF,#7B5CE0); color:#fff}
+.cur.so::after{content:"+"; margin-left:3px; width:14px; height:14px; border-radius:50%; background:var(--violet); color:#fff; display:grid; place-items:center; font-size:.7rem}
 
-/* タブ */
-.tabs{display:grid; grid-template-columns:repeat(5,1fr); background:var(--bg2); border-top:1px solid var(--line); padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
-.tab{display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.64rem; color:var(--muted); padding:5px 0; border-radius:10px; position:relative}
-.tab svg{width:24px; height:24px}
-.tab.on{color:var(--gold); background:rgba(226,184,92,.1)}
-.dot{position:absolute; top:3px; right:22%; width:8px; height:8px; border-radius:50%; background:var(--shu); box-shadow:0 0 0 2px var(--bg2)}
+/* タブ（中央が浮く） */
+.tabs{position:relative; display:grid; grid-template-columns:repeat(5,1fr); align-items:end; background:linear-gradient(rgba(15,20,32,.6),rgba(8,11,18,.98)); border-top:1px solid var(--line); padding:4px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px)); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:6}
+.tab{display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.62rem; color:var(--muted); padding:6px 0 2px; transition:color .2s}
+.tab svg{width:24px; height:24px; transition:transform .25s var(--ease)}
+.tab.on{color:var(--gold)} .tab.on svg{transform:translateY(-2px) scale(1.12); filter:drop-shadow(0 0 6px rgba(241,199,106,.6))}
+.tab.mid{margin-top:-26px}
+.tab.mid .orb{width:62px; height:62px; border-radius:50%; display:grid; place-items:center; background:radial-gradient(circle at 35% 30%,var(--gold2),var(--gold) 45%,var(--gold3)); color:#2A1D05; box-shadow:0 0 0 4px var(--bg),0 0 0 5px rgba(241,199,106,.4),0 8px 22px rgba(241,199,106,.35); animation:orb 2.6s ease-in-out infinite}
+.tab.mid .orb svg{width:28px; height:28px}
+.tab.mid span{color:var(--gold); font-weight:700}
+@keyframes orb{50%{box-shadow:0 0 0 4px var(--bg),0 0 0 7px rgba(241,199,106,.25),0 8px 30px rgba(241,199,106,.55)}}
+.dot{position:absolute; top:4px; right:24%; min-width:9px; height:9px; border-radius:9px; background:var(--shu); box-shadow:0 0 0 2px var(--bg); animation:dotp 1.6s infinite}
+@keyframes dotp{50%{transform:scale(1.3)}}
 
-/* 共通 */
-.btn{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; letter-spacing:.04em; transition:transform .08s; flex-direction:column; line-height:1.3}
+/* ボタン */
+.btn{display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2px; width:100%; padding:14px; font-weight:900; font-size:1rem; letter-spacing:.06em; line-height:1.3; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); transition:transform .1s, filter .2s}
 .btn:active{transform:scale(.97)}
-.btn.gold{background:linear-gradient(180deg,var(--gold2),var(--gold)); color:#2A1D05; box-shadow:0 4px 0 #9C7A2C}
-.btn.shu{background:linear-gradient(180deg,#F07A5E,var(--shu)); color:#fff; box-shadow:0 4px 0 #973522}
-.btn.dark{background:var(--panel2); border:1px solid var(--line); color:var(--ink)}
-.btn.so{background:linear-gradient(135deg,#B48CFF,#6C4BD8); color:#fff; box-shadow:0 4px 0 #43308E}
-.btn:disabled{filter:grayscale(1); opacity:.45}
-.card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
-.sec{font-family:var(--f-head); font-weight:900; font-size:1rem; margin:18px 0 8px; display:flex; align-items:center; gap:8px}
+.btn.gold{background:linear-gradient(180deg,var(--gold2),var(--gold) 50%,#D9A84A); color:#2A1D05; box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.btn.gold::after,.shine::after{content:""; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.65) 50%,transparent 65%); transform:translateX(-120%); animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{0%,60%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+.btn.shu{background:linear-gradient(180deg,#FF8A6E,var(--shu) 55%,var(--shu2)); color:#fff}
+.btn.dark{background:var(--glass2); border:1px solid var(--line2); color:var(--ink)}
+.btn.so{background:linear-gradient(135deg,#C6A8FF,#7C5CE8 60%,#5A3EC0); color:#fff}
+.btn:disabled{filter:grayscale(1) brightness(.7); opacity:.6}
+.card{background:var(--glass); border:1px solid var(--line); border-radius:16px; padding:14px; box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.sec{font-family:var(--f-head); font-weight:900; font-size:1.02rem; margin:20px 0 10px; display:flex; align-items:center; gap:8px}
+.sec::before{content:""; width:4px; height:16px; background:linear-gradient(var(--gold2),var(--gold3)); transform:skewX(-14deg)}
 .sec small{font-family:var(--f-body); font-weight:500; color:var(--muted); font-size:.72rem}
-.chip{display:inline-flex; align-items:center; gap:4px; font-size:.7rem; padding:2px 8px; border-radius:999px; background:var(--panel2); color:var(--muted)}
-.new{font-size:.6rem; font-weight:900; color:#fff; background:var(--shu); padding:1px 6px; border-radius:6px; letter-spacing:.06em}
+.chip{display:inline-flex; align-items:center; gap:4px; font-size:.7rem; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--muted); border:1px solid var(--line)}
+.new{display:inline-block; font-family:var(--f-num); font-size:.7rem; font-weight:800; color:#fff; background:var(--shu); padding:1px 7px; letter-spacing:.08em; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%); animation:dotp 1.6s infinite}
 
 /* ホーム */
-.home{flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column}
-.home .bgx{position:absolute; inset:0; background:
-  linear-gradient(180deg,rgba(14,17,23,0) 40%,rgba(14,17,23,.95) 78%),
-  repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 60px),
-  linear-gradient(180deg,#22304A 0%,#141A26 70%)}
-.home .stand{position:absolute; left:0; right:0; bottom:190px; top:12px; display:flex; justify-content:center; align-items:flex-end; pointer-events:none}
-.home .stand img,.home .stand svg{height:100%; width:auto; max-width:none; filter:drop-shadow(0 10px 30px rgba(0,0,0,.6)); animation:breathe 5s ease-in-out infinite; transform-origin:bottom center}
-@keyframes breathe{50%{transform:scale(1.008) translateY(-2px)}}
-.home .tapzone{position:absolute; left:15%; right:15%; top:40px; bottom:220px}
-.bubble{position:absolute; left:50%; top:24px; transform:translateX(-50%); max-width:86%; background:rgba(245,242,234,.96); color:#1B1B1B; border-radius:14px; padding:10px 14px; font-size:.86rem; line-height:1.6; box-shadow:0 8px 24px rgba(0,0,0,.4); animation:pop .25s; z-index:3}
-.bubble b{display:block; font-size:.7rem; color:#8A6A2A}
-@keyframes pop{from{transform:translate(-50%,6px) scale(.92); opacity:0}}
-.home .bottom{position:relative; margin-top:auto; display:grid; gap:8px; padding-bottom:10px}
-.cta{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; background:linear-gradient(135deg,#3A2E14,#22201A); border:1px solid #6E5826; text-align:left; box-shadow:0 0 0 1px rgba(226,184,92,.15), 0 8px 24px rgba(0,0,0,.4)}
-.cta .k{font-size:.66rem; color:var(--gold); letter-spacing:.12em}
-.cta b{display:block; font-family:var(--f-head); font-size:1.05rem}
-.cta .go{margin-left:auto; flex:none; background:var(--gold); color:#2A1D05; font-weight:900; border-radius:10px; padding:8px 12px; font-size:.85rem; animation:glow 1.8s infinite}
-@keyframes glow{50%{box-shadow:0 0 18px rgba(246,216,142,.7)}}
-.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
-.tile{background:rgba(27,33,43,.92); border:1px solid var(--line); border-radius:14px; padding:10px 6px; text-align:center; position:relative}
-.tile b{display:block; font-size:.82rem}
-.tile span{font-size:.64rem; color:var(--muted)}
-.tile .ic{font-size:1.3rem; line-height:1.3}
-.bsmini{display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:.66rem; color:var(--muted)}
-.bsmini div{display:grid; grid-template-columns:2.2em 1fr; gap:6px; align-items:center}
-.bsmini i{height:4px; border-radius:4px; background:var(--panel2); overflow:hidden}
-.bsmini i s{display:block; height:100%}
+.home{flex:1; position:relative; overflow:hidden}
+.home .bgx{position:absolute; inset:-20px; background:
+  radial-gradient(60% 40% at 70% 20%,rgba(127,178,255,.18),transparent 70%),
+  radial-gradient(50% 35% at 20% 60%,rgba(241,199,106,.10),transparent 70%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 64px),
+  repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 48px),
+  linear-gradient(180deg,#1C2945 0%,#0E1424 55%,#080B12 100%); animation:bgdrift 18s ease-in-out infinite alternate}
+@keyframes bgdrift{to{transform:translate(10px,-8px) scale(1.03)}}
+.dust{position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(2px 2px at 20% 30%,rgba(255,231,166,.7),transparent),radial-gradient(1.5px 1.5px at 70% 60%,rgba(255,255,255,.6),transparent),radial-gradient(2px 2px at 40% 80%,rgba(241,199,106,.5),transparent),radial-gradient(1.5px 1.5px at 85% 25%,rgba(255,255,255,.5),transparent),radial-gradient(2.5px 2.5px at 55% 15%,rgba(127,178,255,.5),transparent); background-size:100% 100%; animation:dust 12s linear infinite; opacity:.8}
+@keyframes dust{from{transform:translateY(20px)}to{transform:translateY(-40px)}}
+.home .stand{position:absolute; left:0; right:0; bottom:150px; top:4px; display:flex; justify-content:center; align-items:flex-end; pointer-events:none; transition:transform .4s var(--ease)}
+.home .stand img,.home .stand svg{height:100%; width:auto; max-width:none; filter:drop-shadow(0 18px 40px rgba(0,0,0,.65)); animation:breathe 5s ease-in-out infinite, standIn .7s var(--ease) backwards; transform-origin:bottom center; -webkit-mask-image:linear-gradient(#000 80%,transparent); mask-image:linear-gradient(#000 80%,transparent)}
+@keyframes breathe{50%{transform:scale(1.01) translateY(-3px)}}
+@keyframes standIn{from{opacity:0; transform:translateX(30px)}}
+.home .tapzone{position:absolute; left:18%; right:22%; top:30px; bottom:240px; z-index:2}
+.bubble{position:absolute; left:36%; right:76px; top:96px; z-index:4; background:rgba(250,247,240,.97); color:#1B1B1B; border-radius:16px; padding:10px 14px; font-size:.88rem; line-height:1.6; box-shadow:0 10px 30px rgba(0,0,0,.45); animation:bub .35s var(--ease)}
+.bubble::after{content:""; position:absolute; left:30%; bottom:-9px; border:10px solid transparent; border-top-color:rgba(250,247,240,.97); border-bottom:0}
+.bubble b{display:block; font-size:.66rem; letter-spacing:.1em; color:#9A6A1A}
+@keyframes bub{from{opacity:0; transform:translateY(8px) scale(.94)}}
+.hm-right{position:absolute; right:max(10px,env(safe-area-inset-right,0px)); top:12px; display:grid; gap:12px; z-index:3}
+.rbtn{width:52px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.58rem; color:var(--ink); text-shadow:0 1px 4px #000; overflow:visible}
+.rbtn .o{width:48px; height:48px; border-radius:50%; display:grid; place-items:center; background:var(--glass2); border:1px solid var(--line2); box-shadow:0 6px 16px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.15); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px)}
+.rbtn svg{width:24px; height:24px}
+.rbtn .dot{top:0; right:2px}
+.hm-left{position:absolute; left:max(10px,env(safe-area-inset-left,0px)); top:12px; display:grid; gap:10px; z-index:3; width:118px}
+.lbanner{border-radius:12px; overflow:hidden; height:70px; text-align:left; padding:8px 10px; background:linear-gradient(135deg,var(--c1),var(--c2)); border:1px solid var(--line2); box-shadow:0 8px 20px rgba(0,0,0,.45); display:flex; flex-direction:column; justify-content:flex-end}
+.lbanner img{position:absolute; right:-14px; bottom:-6px; height:120%; width:auto; opacity:.85; -webkit-mask-image:linear-gradient(90deg,transparent,#000 40%); mask-image:linear-gradient(90deg,transparent,#000 40%)}
+.lbanner b{position:relative; font-family:var(--f-head); font-size:.86rem; line-height:1.2; text-shadow:0 2px 6px rgba(0,0,0,.8)}
+.lbanner span{position:relative; font-size:.58rem; color:var(--gold2); letter-spacing:.06em; text-shadow:0 1px 4px #000}
+.hm-bottom{position:absolute; left:0; right:0; bottom:0; padding-bottom:10px; display:grid; gap:8px; z-index:3; background:linear-gradient(transparent,rgba(8,11,18,.85) 40%)}
+.bsstrip{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px 10px; border-radius:12px}
+.bsstrip div{font-size:.58rem; color:var(--muted); display:grid; gap:3px}
+.bsstrip i{height:4px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden; display:block}
+.bsstrip i s{display:block; height:100%; border-radius:4px; transition:width .8s var(--ease)}
+.story-cta{display:flex; align-items:center; gap:12px; padding:12px 14px; text-align:left; background:linear-gradient(110deg,rgba(60,44,14,.95),rgba(30,24,14,.92) 60%,rgba(20,18,16,.9)); border:1px solid rgba(241,199,106,.5); clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px); box-shadow:inset 0 0 30px rgba(241,199,106,.12)}
+.story-cta .k{font-size:.62rem; letter-spacing:.14em; color:var(--gold)}
+.story-cta b{display:block; font-family:var(--f-head); font-size:1.08rem; line-height:1.4}
+.story-cta .go{margin-left:auto; flex:none; display:grid; place-items:center; width:54px; height:54px; border-radius:50%; background:radial-gradient(circle at 35% 30%,var(--gold2),var(--gold) 50%,var(--gold3)); color:#2A1D05; font-weight:900; font-size:.72rem; animation:orb 2.2s ease-in-out infinite}
 
 /* ミッション */
-.mis{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line)}
+.mis{display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line)}
 .mis:last-child{border-bottom:0}
-.mis .t{flex:1; min-width:0; font-size:.85rem}
-.mis .t i{display:block; height:5px; border-radius:5px; background:var(--panel2); overflow:hidden; margin-top:5px}
-.mis .t i s{display:block; height:100%; background:var(--gold)}
-.claim{flex:none; font-size:.75rem; font-weight:900; padding:7px 10px; border-radius:10px; background:var(--gold); color:#2A1D05}
-.claim:disabled{background:var(--panel2); color:var(--muted)}
+.mis .t{flex:1; min-width:0; font-size:.86rem}
+.mis .t i{display:block; height:6px; border-radius:6px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:6px}
+.mis .t i s{display:block; height:100%; background:linear-gradient(90deg,var(--gold3),var(--gold2))}
+.claim{flex:none; font-size:.75rem; font-weight:900; padding:8px 12px; background:linear-gradient(var(--gold2),var(--gold)); color:#2A1D05; clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.claim:disabled{background:rgba(255,255,255,.08); color:var(--muted)}
 
-/* 物語（ノベル） */
+/* ノベル */
 .vn{flex:1; display:flex; flex-direction:column; position:relative; overflow:hidden}
-.vn .stage{flex:1; position:relative; overflow:hidden; background:var(--scene,linear-gradient(#1A2130,#0E1117))}
-.vn .stage::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 60%, rgba(0,0,0,.6)); pointer-events:none}
-.vn .place{position:absolute; top:calc(10px + env(safe-area-inset-top,0px)); left:max(14px,env(safe-area-inset-left,0px)); z-index:3; font-size:.7rem; letter-spacing:.1em; color:rgba(255,255,255,.8); background:rgba(0,0,0,.4); padding:4px 10px; border-radius:6px; max-width:55%}
+.vn .stage{flex:1; position:relative; overflow:hidden; background:var(--scene,linear-gradient(#1A2130,#080B12))}
+.vn .stage::before{content:""; position:absolute; inset:0; background:radial-gradient(80% 60% at 50% 30%,transparent,rgba(0,0,0,.55)); z-index:2; pointer-events:none}
+.vn .stage::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 55%,rgba(8,11,18,.85)); pointer-events:none; z-index:2}
+.vn .dust{z-index:1}
+.vn .place{position:absolute; top:calc(10px + env(safe-area-inset-top,0px)); left:0; z-index:4; font-size:.68rem; letter-spacing:.12em; color:var(--ink); background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,0)); padding:6px 30px 6px max(14px,env(safe-area-inset-left,0px)); max-width:70%; border-left:3px solid var(--gold); animation:placeIn .6s var(--ease)}
 .vn .place:empty{display:none}
-.vn .ctl{position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); right:max(10px,env(safe-area-inset-right,0px)); z-index:4; display:flex; gap:6px}
-.vn .ctl button{font-size:.68rem; font-weight:900; letter-spacing:.08em; padding:6px 10px; border-radius:8px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2)}
+@keyframes placeIn{from{transform:translateX(-30px); opacity:0}}
+.vn .ctl{position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); right:max(10px,env(safe-area-inset-right,0px)); z-index:5; display:flex; gap:6px}
+.vn .ctl button{font-family:var(--f-num); font-size:.78rem; font-weight:800; letter-spacing:.1em; padding:5px 10px; border-radius:999px; background:rgba(0,0,0,.45); border:1px solid var(--line2)}
 .vn .ctl button.on{background:var(--gold); color:#2A1D05; border-color:var(--gold)}
-.vn .who{position:absolute; inset:auto 0 0 0; height:90%; display:flex; justify-content:center; align-items:flex-end; z-index:1}
-.vn .who img,.vn .who svg{height:100%; width:auto; max-width:none; animation:in .4s cubic-bezier(.2,.8,.2,1)}
+.vn .who{position:absolute; inset:auto 0 0 0; height:92%; display:flex; justify-content:center; align-items:flex-end; z-index:1}
+.vn .who img,.vn .who svg{height:100%; width:auto; max-width:none; animation:whoIn .5s var(--ease), breathe 5s ease-in-out .5s infinite; transform-origin:bottom center}
 .vn .who img.cg{-webkit-mask-image:radial-gradient(70% 62% at 50% 42%,#000 55%,transparent 100%); mask-image:radial-gradient(70% 62% at 50% 42%,#000 55%,transparent 100%)}
-@keyframes in{from{opacity:0; transform:translateY(14px)}}
-.box{position:relative; min-height:168px; background:linear-gradient(rgba(27,33,43,.97),var(--panel)); border-top:1px solid var(--line); padding-block:12px calc(14px + env(safe-area-inset-bottom,0px))}
-.name{display:inline-block; font-family:var(--f-head); font-weight:900; font-size:.98rem; padding:0 10px; border-left:4px solid var(--c,var(--gold)); margin-bottom:4px}
-.name small{font-family:var(--f-body); font-weight:400; color:var(--muted); font-size:.68rem; margin-left:6px}
-.text{font-size:1rem; line-height:1.85; min-height:3.6em; white-space:pre-wrap}
-.text.narr{font-family:var(--f-head); color:#CDD3DE}
-.nx{position:absolute; right:max(16px,env(safe-area-inset-right,0px)); bottom:calc(10px + env(safe-area-inset-bottom,0px)); color:var(--gold); font-size:.8rem; animation:bob 1.2s infinite}
-@keyframes bob{50%{transform:translateY(3px)}}
-.choices{display:grid; gap:8px; margin-top:4px}
-.choice{text-align:left; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:11px 13px; line-height:1.55; font-size:.9rem}
-.choice small{display:block; color:var(--gold); font-size:.68rem; margin-top:2px; letter-spacing:.06em}
+@keyframes whoIn{from{opacity:0; transform:translateY(18px) scale(.98); filter:brightness(1.6) blur(2px)}}
+.box{position:relative; z-index:3; min-height:172px; margin:-30px 10px 0; padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px)); background:linear-gradient(rgba(16,21,33,.88),rgba(10,13,22,.96)); border:1px solid var(--line2); border-bottom:0; border-radius:16px 16px 0 0; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 -10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(241,199,106,.35)}
+.name{position:absolute; top:-14px; left:14px; display:inline-flex; align-items:baseline; gap:8px; font-family:var(--f-head); font-weight:900; font-size:.98rem; padding:4px 16px 4px 12px; background:linear-gradient(90deg,var(--c,var(--gold)),rgba(0,0,0,.85)); clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%); box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.name small{font-family:var(--f-body); font-weight:500; color:rgba(255,255,255,.75); font-size:.66rem}
+.text{font-size:1.02rem; line-height:1.9; min-height:3.8em; white-space:pre-wrap; padding-top:6px; text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.text.narr{font-family:var(--f-head); color:#D7DCE6; text-align:center}
+.nx{position:absolute; right:18px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); width:0; height:0; border:7px solid transparent; border-top:9px solid var(--gold); border-bottom:0; animation:bob 1s infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+.choices{display:grid; gap:8px; margin-top:6px}
+.choice{text-align:left; padding:12px 14px 12px 18px; line-height:1.55; font-size:.9rem; background:linear-gradient(90deg,rgba(241,199,106,.12),rgba(34,42,60,.9) 30%); border:1px solid var(--line2); border-left:3px solid var(--gold); animation:choiceIn .35s var(--ease) backwards}
+.choice:nth-child(2){animation-delay:.06s} .choice:nth-child(3){animation-delay:.12s}
+.choice:active{background:linear-gradient(90deg,rgba(241,199,106,.35),rgba(34,42,60,.9) 60%)}
+.choice small{display:block; color:var(--gold); font-size:.66rem; margin-top:2px; letter-spacing:.08em}
+@keyframes choiceIn{from{opacity:0; transform:translateX(-14px)}}
 .fx{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
-.fx span{font-size:.72rem; padding:2px 8px; border-radius:6px; background:var(--panel2)}
-.fx .up{color:var(--green)} .fx .dn{color:var(--shu)}
-.point{margin-top:6px; font-size:.84rem; line-height:1.7; background:rgba(226,184,92,.09); border-left:3px solid var(--gold); padding:8px 10px; border-radius:6px; color:#E9E1CB}
-.chap{position:absolute; inset:0; z-index:6; display:grid; place-items:center; text-align:center; background:#000; animation:fade 2.6s forwards; pointer-events:none}
-.chap span{display:block; color:var(--muted); font-size:.8rem; letter-spacing:.2em}
-.chap b{display:block; font-family:var(--f-head); font-size:2.2rem; letter-spacing:.2em; margin:6px 0}
-@keyframes fade{0%,70%{opacity:1}100%{opacity:0}}
+.fx span{font-size:.74rem; font-weight:700; padding:3px 9px; background:rgba(255,255,255,.07); clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%); animation:fxIn .4s var(--ease) backwards}
+.fx span:nth-child(2){animation-delay:.08s} .fx span:nth-child(3){animation-delay:.16s}
+.fx .up{color:var(--teal)} .fx .dn{color:var(--shu)}
+@keyframes fxIn{from{opacity:0; transform:translateY(6px) scale(.9)}}
+.point{margin-top:4px; font-size:.84rem; line-height:1.75; background:linear-gradient(90deg,rgba(241,199,106,.14),rgba(241,199,106,.03)); border-left:3px solid var(--gold); padding:9px 11px; color:#EFE6CE}
+.chap{position:absolute; inset:0; z-index:8; display:grid; place-items:center; text-align:center; background:#000; animation:chapOut 2.6s forwards; pointer-events:none}
+.chap span{display:block; color:var(--gold); font-size:.78rem; letter-spacing:.4em}
+.chap b{display:block; font-family:var(--f-head); font-size:2.6rem; letter-spacing:.3em; margin:8px 0; animation:chapB 1.4s var(--ease)}
+.chap i{display:block; height:1px; width:0; margin:0 auto; background:linear-gradient(90deg,transparent,var(--gold),transparent); animation:chapL 1.2s .3s var(--ease) forwards}
+@keyframes chapB{from{letter-spacing:1em; opacity:0; filter:blur(6px)}}
+@keyframes chapL{to{width:220px}}
+@keyframes chapOut{0%,75%{opacity:1}100%{opacity:0}}
 
 /* バトル */
-.bt{flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative}
-.bt-top{padding-block:calc(8px + env(safe-area-inset-top,0px)) 8px; background:radial-gradient(120% 100% at 50% 0%,#2C2232,var(--bg) 75%); border-bottom:1px solid var(--line); position:relative}
-.enemy{display:flex; gap:10px; align-items:center}
-.enemy .doc{flex:1; min-width:0; background:#F2EEE3; color:#1B1B1B; border-radius:6px; padding:8px 12px; transform:rotate(-1deg); box-shadow:0 8px 20px rgba(0,0,0,.5)}
-.enemy .doc .k{font-size:.58rem; letter-spacing:.18em; color:#7A6F5A}
-.enemy .doc b{display:block; font-family:var(--f-head); font-size:1.05rem; line-height:1.35}
-.enemy .doc p{margin:0; font-size:.68rem; color:#5A5448}
-.enemy .doc.hit{animation:hit .35s}
-@keyframes hit{25%{transform:translateX(-9px) rotate(-4deg); filter:brightness(1.5)}60%{transform:translateX(7px) rotate(2deg)}}
-.cd{flex:none; text-align:center; font-size:.6rem; color:var(--muted); width:52px}
-.cd b{display:block; font-family:var(--f-head); font-size:1.5rem; color:var(--shu); line-height:1.1}
-.cd.warn b{animation:warn .8s infinite}
-@keyframes warn{50%{transform:scale(1.2)}}
-.hpbar{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; font-size:.66rem; color:var(--muted); margin-top:8px}
-.hpbar i{height:9px; border-radius:9px; background:var(--panel2); overflow:hidden; display:block}
-.hpbar i s{display:block; height:100%; transition:width .45s; border-radius:9px}
-.bt-q{flex:1; overflow-y:auto; padding-block:12px}
-.qk{font-size:.66rem; letter-spacing:.14em; color:var(--gold)}
-.qt{font-family:var(--f-head); font-weight:700; font-size:1.05rem; line-height:1.65; margin:4px 0 12px}
-.opt{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:7px; line-height:1.5; font-size:.92rem}
-.opt.sel{border-color:var(--gold); background:#2E2A1E}
-.opt.gone{opacity:.2; text-decoration:line-through; pointer-events:none}
-.cats{display:grid; grid-template-columns:1fr 1fr; gap:7px}
-.cats .opt{margin:0; text-align:center; font-weight:700}
-.acct{font-family:var(--f-head); font-size:1.7rem; font-weight:900; text-align:center; padding:18px 0; background:#F2EEE3; color:#1B1B1B; border-radius:6px; margin-bottom:12px}
-.je{display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:8px}
-.zone{min-height:80px; border:1px dashed var(--line); border-radius:12px; padding:7px; display:flex; flex-direction:column; gap:5px; align-items:flex-start}
-.zone.on{border-style:solid; border-color:var(--gold); background:#221F17}
-.zone h4{margin:0; font-size:.7rem; color:var(--muted); font-weight:500}
+.bt{flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; background:radial-gradient(90% 50% at 50% 0%,var(--bt1,#3A1E2A),transparent 70%),linear-gradient(#120E18,#080B12)}
+.bt::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(115deg,rgba(255,255,255,.02) 0 2px,transparent 2px 22px); pointer-events:none}
+.bt-top{position:relative; padding-block:calc(10px + env(safe-area-inset-top,0px)) 8px}
+.foe{display:flex; gap:12px; align-items:center}
+.foe-card{flex:1; min-width:0; position:relative; background:linear-gradient(#FBF8EF,#E9E2D0); color:#1B1B1B; padding:9px 12px 8px; transform:rotate(-1.2deg); box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.08); clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.foe-card::after{content:""; position:absolute; right:0; top:0; width:14px; height:14px; background:linear-gradient(225deg,transparent 50%,#CFC6AF 50%)}
+.foe-card .k{display:inline-block; font-family:var(--f-num); font-size:.66rem; font-weight:800; letter-spacing:.16em; color:#fff; background:var(--shu); padding:0 7px; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.foe-card b{display:block; font-family:var(--f-head); font-size:1.08rem; line-height:1.35; margin-top:3px}
+.foe-card p{margin:0; font-size:.68rem; color:#5A5448}
+.foe-card.hit{animation:hit .4s}
+.foe-card.aura{box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 26px rgba(255,90,60,.45)}
+@keyframes hit{20%{transform:translateX(-10px) rotate(-5deg); filter:brightness(1.8) saturate(.4)}55%{transform:translateX(8px) rotate(2deg)}}
+.cdring{width:58px; height:58px; flex:none; position:relative; display:grid; place-items:center; text-align:center}
+.cdring svg{position:absolute; inset:0; transform:rotate(-90deg)}
+.cdring circle{transition:stroke-dashoffset .5s var(--ease)}
+.cdring b{font-family:var(--f-num); font-size:1.6rem; line-height:1; color:var(--shu)}
+.cdring span{position:absolute; bottom:-12px; font-size:.56rem; color:var(--muted); white-space:nowrap}
+.cdring.warn b{animation:warn .7s infinite}
+@keyframes warn{50%{transform:scale(1.25); color:#fff}}
+.hpx{position:relative; height:12px; margin-top:16px; background:rgba(0,0,0,.5); border:1px solid var(--line2); transform:skewX(-14deg); overflow:hidden}
+.hpx i{position:absolute; left:0; top:0; bottom:0; display:block}
+.hpx .lag{background:#fff; transition:width .9s .35s ease-out}
+.hpx .cur{background:linear-gradient(#FF8A6E,var(--shu) 60%,var(--shu2)); transition:width .2s}
+.hpx span{position:absolute; right:6px; top:50%; transform:translateY(-50%) skewX(14deg); font-family:var(--f-num); font-size:.72rem; font-weight:700; text-shadow:0 1px 3px #000}
+.combo-big{position:absolute; right:max(14px,env(safe-area-inset-right,0px)); top:132px; z-index:7; text-align:right; pointer-events:none; font-family:var(--f-num); font-weight:800; line-height:.9}
+.combo-big b{display:block; font-size:2.6rem; background:linear-gradient(var(--gold2),var(--gold) 60%,var(--gold3)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.combo-big span{font-size:.8rem; letter-spacing:.2em; color:var(--gold)}
+.combo-big.pop{animation:cpop .35s var(--ease)}
+@keyframes cpop{from{transform:scale(1.6); opacity:.2}}
+.bt-q{flex:1; overflow-y:auto; padding-block:6px 12px; position:relative}
+.qbar{display:flex; align-items:center; gap:8px; margin-bottom:6px}
+.qk{font-size:.64rem; letter-spacing:.14em; color:var(--gold); white-space:nowrap}
+.timer{flex:1; height:6px; background:rgba(255,255,255,.08); overflow:hidden; transform:skewX(-14deg)}
+.timer s{display:block; height:100%; background:linear-gradient(90deg,var(--gold3),var(--gold2)); transform-origin:left; box-shadow:0 0 10px rgba(241,199,106,.6)}
+.timer.low s{background:linear-gradient(90deg,var(--shu2),#FF8A6E); box-shadow:0 0 12px rgba(255,90,60,.8); animation:tlow .5s infinite}
+@keyframes tlow{50%{opacity:.5}}
+.qt{font-family:var(--f-head); font-weight:700; font-size:1.06rem; line-height:1.7; margin:2px 0 12px; animation:qIn .35s var(--ease)}
+@keyframes qIn{from{opacity:0; transform:translateY(8px)}}
+.opt{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--glass2); border:1px solid var(--line2); padding:12px 14px; margin-bottom:8px; line-height:1.5; font-size:.92rem; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); animation:optIn .3s var(--ease) backwards; transition:background .15s, transform .1s}
+.opt:nth-of-type(2){animation-delay:.04s} .opt:nth-of-type(3){animation-delay:.08s} .opt:nth-of-type(4){animation-delay:.12s}
+.opt:active{transform:scale(.98)}
+.opt .lt{flex:none; width:24px; height:24px; display:grid; place-items:center; font-family:var(--f-num); font-weight:800; font-size:.85rem; background:rgba(241,199,106,.15); color:var(--gold); clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}
+.opt.sel{border-color:var(--gold); background:linear-gradient(90deg,rgba(241,199,106,.25),var(--glass2))}
+.opt.good{border-color:var(--teal); background:linear-gradient(90deg,rgba(56,214,164,.35),var(--glass2)); animation:good .4s}
+.opt.bad{border-color:var(--shu); background:linear-gradient(90deg,rgba(255,90,60,.35),var(--glass2)); animation:shk .35s}
+@keyframes good{40%{transform:scale(1.03)}}
+.opt.gone{opacity:.18; text-decoration:line-through; pointer-events:none}
+@keyframes optIn{from{opacity:0; transform:translateX(16px)}}
+.cats{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.cats .opt{margin:0; justify-content:center; font-weight:900; font-size:1rem; padding:16px 10px; background:linear-gradient(160deg,var(--cc),rgba(20,26,40,.95) 75%); border-color:color-mix(in srgb,var(--cc) 60%,transparent)}
+.cats .opt:last-child{grid-column:1/-1}
+.acct{font-family:var(--f-head); font-size:1.9rem; font-weight:900; text-align:center; padding:22px 0; background:linear-gradient(#FBF8EF,#E9E2D0); color:#1B1B1B; margin-bottom:12px; box-shadow:0 10px 24px rgba(0,0,0,.45); transform:rotate(-1deg); animation:qIn .35s var(--ease)}
+.je{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px}
+.zone{min-height:84px; border:1px dashed var(--line2); padding:8px; display:flex; flex-direction:column; gap:5px; align-items:flex-start; transition:background .2s, border-color .2s}
+.zone.on{border:1px solid var(--gold); background:linear-gradient(rgba(241,199,106,.12),transparent); box-shadow:inset 0 0 20px rgba(241,199,106,.12)}
+.zone h4{margin:0; font-size:.68rem; color:var(--muted); font-weight:500; letter-spacing:.1em}
 .zone.on h4{color:var(--gold)}
-.ch{display:inline-block; padding:8px 11px; border-radius:10px; background:var(--panel2); border:1px solid var(--line); font-size:.86rem; margin:3px}
+.ch{display:inline-block; padding:8px 12px; background:var(--glass2); border:1px solid var(--line2); font-size:.86rem; margin:3px; clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%); animation:fxIn .25s var(--ease) backwards}
+.zone .ch{background:linear-gradient(90deg,rgba(241,199,106,.3),var(--glass2))}
 .ch.used{visibility:hidden}
 .bank{text-align:center}
-.paper{background:#F2EEE3; color:#1B1B1B; border-radius:6px; padding:10px 12px; margin-bottom:10px}
+.paper{background:linear-gradient(#FBF8EF,#EAE3D2); color:#1B1B1B; padding:10px 12px; margin-bottom:10px; box-shadow:0 10px 24px rgba(0,0,0,.4)}
 .paper .pk{font-family:var(--f-head); font-weight:900; text-align:center; letter-spacing:.3em; border-bottom:1.5px solid #1B1B1B; padding-bottom:3px}
 .paper table{width:100%; border-collapse:collapse; font-size:.78rem; margin-top:4px}
 .paper td{padding:3px 2px; vertical-align:top}
 .paper td:first-child{color:#6A6455; width:36%}
-.ans{position:sticky; bottom:0; padding-top:8px; background:linear-gradient(transparent,var(--bg) 30%)}
-.exp{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:.84rem; line-height:1.7; margin-bottom:8px}
-.exp b.ng{color:var(--shu)}
+.ans{position:sticky; bottom:0; padding-top:10px; background:linear-gradient(transparent,#0A0D15 28%)}
+.exp{background:var(--glass2); border:1px solid var(--line2); border-left:3px solid var(--shu); padding:10px 12px; font-size:.84rem; line-height:1.75; margin-bottom:8px; animation:qIn .3s var(--ease)}
+.exp b.ng{color:var(--shu); font-family:var(--f-num); letter-spacing:.06em}
 table.ent{width:100%; border-collapse:collapse; font-size:.8rem; margin:4px 0}
 table.ent td,table.ent th{padding:3px 5px; border-bottom:1px solid var(--line); text-align:left}
-table.ent td.a{text-align:right; font-variant-numeric:tabular-nums}
-.bt-bot{border-top:1px solid var(--line); background:var(--bg2); padding-block:8px calc(10px + env(safe-area-inset-bottom,0px))}
-.timer{height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin-bottom:8px}
-.timer s{display:block; height:100%; background:var(--gold); transform-origin:left}
-.party{display:flex; gap:8px; align-items:center}
-.mem{position:relative; width:58px; height:58px; flex:none; border-radius:50%; padding:4px; background:conic-gradient(var(--gold) calc(var(--g)*1%), var(--panel2) 0)}
-.mem .f{width:100%; height:100%; border-radius:50%; background:var(--panel) center 12%/cover; display:grid; place-items:center; font-family:var(--f-head); font-weight:900}
-.mem.full{animation:ready 1s infinite}
-.mem.full::after{content:"TAP"; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); font-size:.55rem; font-weight:900; background:var(--gold); color:#2A1D05; padding:1px 6px; border-radius:6px}
-@keyframes ready{50%{box-shadow:0 0 16px rgba(246,216,142,.8)}}
-.team{flex:1; min-width:0}
-.team b{font-size:.72rem}
-.combo{font-family:var(--f-head); font-weight:900; color:var(--gold); font-size:.8rem}
-.item{flex:none; width:50px; height:50px; border-radius:12px; background:var(--panel2); border:1px solid var(--line); font-size:.58rem; display:grid; place-items:center; line-height:1.15; text-align:center}
-.item:disabled{opacity:.4}
-.dmg{position:absolute; left:50%; top:46%; font-family:var(--f-head); font-weight:900; font-size:2.2rem; color:var(--gold2); text-shadow:0 2px 10px #000; animation:dmg .9s forwards; pointer-events:none; z-index:9; white-space:nowrap}
-.dmg.crit{color:#FF7A5C; font-size:2.6rem}
-@keyframes dmg{0%{transform:translate(-50%,0) scale(.5); opacity:0}25%{transform:translate(-50%,-14px) scale(1.15); opacity:1}100%{transform:translate(-50%,-50px); opacity:0}}
+table.ent td.a{text-align:right; font-family:var(--f-num)}
+.bt-bot{position:relative; padding-block:8px calc(10px + env(safe-area-inset-bottom,0px)); background:linear-gradient(rgba(8,11,18,0),rgba(8,11,18,.95) 30%); border-top:1px solid var(--line)}
+.teamhp{display:flex; align-items:center; gap:8px; font-size:.62rem; color:var(--muted); margin-bottom:8px}
+.teamhp i{flex:1; height:8px; background:rgba(0,0,0,.5); border:1px solid var(--line2); transform:skewX(-14deg); overflow:hidden; display:block}
+.teamhp i s{display:block; height:100%; background:linear-gradient(#7CF2C6,var(--teal) 60%,#1E9C74); transition:width .4s}
+.teamhp b{font-family:var(--f-num); font-size:.9rem; color:var(--ink)}
+.party{display:flex; gap:8px; align-items:stretch}
+.pc{flex:1; max-width:96px; height:84px; position:relative; overflow:hidden; background:var(--glass2) center 14%/cover; border:1px solid var(--line2); clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.pc .g{position:absolute; left:0; right:0; bottom:0; height:calc(var(--g)*1%); background:linear-gradient(transparent,rgba(241,199,106,.55)); transition:height .4s var(--ease); mix-blend-mode:screen}
+.pc .nm{position:absolute; left:0; right:0; bottom:0; padding:12px 6px 4px; font-size:.6rem; font-weight:700; background:linear-gradient(transparent,rgba(0,0,0,.85)); text-align:left; white-space:nowrap; overflow:hidden}
+.pc .ini{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--f-head); font-size:2rem; font-weight:900; color:rgba(255,255,255,.3)}
+.pc.full{border-color:var(--gold); animation:ready .9s infinite}
+.pc.full::after{content:"必殺"; position:absolute; top:4px; right:4px; font-size:.6rem; font-weight:900; color:#2A1D05; background:var(--gold); padding:1px 6px; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+@keyframes ready{50%{box-shadow:inset 0 0 22px rgba(241,199,106,.7); filter:brightness(1.2)}}
+.item{flex:none; width:64px; display:grid; place-items:center; align-content:center; gap:2px; background:var(--glass2); border:1px solid var(--line2); font-size:.58rem; text-align:center; line-height:1.2; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.item svg{width:24px; height:24px; color:var(--gold)}
+.item:disabled{opacity:.35}
+.dmg{position:absolute; left:50%; top:46%; z-index:9; font-family:var(--f-num); font-weight:800; font-size:2.6rem; color:#fff; -webkit-text-stroke:2px #3A1A08; paint-order:stroke; text-shadow:0 4px 14px rgba(0,0,0,.6); animation:dmg 1s var(--ease) forwards; pointer-events:none; white-space:nowrap}
+.dmg.crit{color:var(--gold2); font-size:3.2rem}
+.dmg.crit::before{content:"CRITICAL"; position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:.8rem; letter-spacing:.2em; color:var(--shu); -webkit-text-stroke:0}
+@keyframes dmg{0%{transform:translate(-50%,10px) scale(.3); opacity:0}20%{transform:translate(-50%,-8px) scale(1.25); opacity:1}35%{transform:translate(-50%,-6px) scale(1)}100%{transform:translate(-50%,-46px); opacity:0}}
 .flash{position:absolute; inset:0; pointer-events:none; z-index:8; animation:fl .45s forwards}
 @keyframes fl{from{opacity:1}to{opacity:0}}
 .shake{animation:shk .35s}
 @keyframes shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
-.cutin{position:absolute; inset:0; z-index:20; display:flex; align-items:center; overflow:hidden; background:rgba(0,0,0,.55); animation:fade 1.5s forwards}
-.cutin .band{position:relative; width:100%; height:44%; background:linear-gradient(100deg,var(--c) 0 55%,transparent 55.2%), linear-gradient(100deg,rgba(0,0,0,.3),rgba(0,0,0,.6)); animation:band .5s cubic-bezier(.2,.8,.2,1)}
-.cutin .band img{position:absolute; right:-6%; bottom:0; height:130%; width:auto; animation:slide .6s cubic-bezier(.2,.8,.2,1)}
-.cutin .band b{position:absolute; left:6%; top:50%; transform:translateY(-50%); font-family:var(--f-head); font-weight:900; font-size:1.8rem; color:#fff; text-shadow:0 3px 12px rgba(0,0,0,.6); max-width:60%; line-height:1.3}
-.cutin .band b small{display:block; font-family:var(--f-body); font-size:.75rem; letter-spacing:.14em; opacity:.9}
+.ovl{position:absolute; inset:0; z-index:30}
+.cutin{display:flex; align-items:center; overflow:hidden; background:rgba(0,0,0,.6); animation:fade 1.6s forwards}
+.cutin::before{content:""; position:absolute; inset:-50%; background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.07) 0 4deg,transparent 4deg 12deg); animation:spin 1.6s linear}
+.cutin .band{position:relative; width:100%; height:46%; background:linear-gradient(100deg,var(--c) 0 58%,rgba(0,0,0,.2) 58.3%); animation:band .45s var(--ease); box-shadow:0 0 40px rgba(0,0,0,.6)}
+.cutin .band::after{content:""; position:absolute; inset:0; background:repeating-linear-gradient(100deg,rgba(255,255,255,.12) 0 2px,transparent 2px 14px); animation:lines .4s linear infinite}
+.cutin .band img{position:absolute; right:-8%; bottom:0; height:135%; width:auto; z-index:1; animation:slide .55s var(--ease); filter:drop-shadow(-10px 0 20px rgba(0,0,0,.5))}
+.cutin .band b{position:absolute; left:6%; top:50%; transform:translateY(-50%); z-index:2; font-family:var(--f-head); font-weight:900; font-size:2rem; color:#fff; text-shadow:0 3px 14px rgba(0,0,0,.7); max-width:58%; line-height:1.25; animation:cutT .5s .15s var(--ease) backwards}
+.cutin .band b small{display:block; font-family:var(--f-body); font-size:.74rem; letter-spacing:.16em; opacity:.9}
 @keyframes band{from{transform:scaleY(0)}}
-@keyframes slide{from{transform:translateX(60%); opacity:0}}
-.tip{position:absolute; left:50%; transform:translateX(-50%); z-index:15; background:var(--gold); color:#2A1D05; font-weight:900; font-size:.85rem; padding:8px 14px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.5); white-space:nowrap; animation:pop .3s; pointer-events:none}
-.tip::after{content:""; position:absolute; left:50%; margin-left:-7px; border:7px solid transparent; top:100%; border-top-color:var(--gold)}
+@keyframes slide{from{transform:translateX(70%); opacity:0}}
+@keyframes lines{to{background-position:28px 0}}
+@keyframes cutT{from{transform:translate(-30px,-50%); opacity:0; letter-spacing:.4em}}
+@keyframes spin{to{transform:rotate(30deg)}}
+@keyframes fade{0%,75%{opacity:1}100%{opacity:0}}
+.splash{display:grid; place-items:center; background:rgba(0,0,0,.55); animation:fade 1.5s forwards}
+.splash .bars{position:absolute; left:0; right:0; top:50%; height:120px; transform:translateY(-50%) skewY(-6deg); background:linear-gradient(90deg,var(--shu2),var(--shu) 40%,#2A0E08); animation:barsIn .4s var(--ease)}
+.splash .t{position:relative; text-align:center; animation:cutT .5s .1s var(--ease) backwards}
+.splash .t span{display:block; font-family:var(--f-num); letter-spacing:.4em; font-weight:800; color:var(--gold2); font-size:.9rem}
+.splash .t b{display:block; font-family:var(--f-head); font-size:1.7rem; font-weight:900; text-shadow:0 3px 10px rgba(0,0,0,.5)}
+@keyframes barsIn{from{transform:translateY(-50%) skewY(-6deg) scaleX(0)}}
+.hanko{display:grid; place-items:center; background:rgba(0,0,0,.35); pointer-events:none}
+.hanko .s{width:170px; height:170px; border-radius:50%; border:9px solid var(--shu); color:var(--shu); display:grid; place-items:center; font-family:var(--f-head); font-weight:900; font-size:5rem; transform:rotate(-14deg); animation:stamp .55s cubic-bezier(.2,1.6,.4,1) both; background:rgba(255,90,60,.06); text-shadow:0 0 1px var(--shu)}
+.hanko .s.gray{border-color:#8A93A3; color:#8A93A3}
+.hanko p{position:absolute; bottom:22%; font-family:var(--f-num); font-size:1.1rem; letter-spacing:.4em; color:var(--gold2); animation:fxIn .4s .4s backwards}
+@keyframes stamp{0%{transform:scale(3) rotate(-30deg); opacity:0}60%{transform:scale(.92) rotate(-14deg); opacity:1}100%{transform:scale(1) rotate(-14deg)}}
+.tip{position:absolute; left:50%; transform:translateX(-50%); z-index:15; background:linear-gradient(var(--gold2),var(--gold)); color:#2A1D05; font-weight:900; font-size:.85rem; padding:9px 16px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap; animation:tipb 1.2s ease-in-out infinite; pointer-events:none}
+.tip::after{content:""; position:absolute; left:50%; margin-left:-8px; border:8px solid transparent; top:100%; border-top-color:var(--gold)}
+@keyframes tipb{50%{transform:translate(-50%,-4px)}}
 
 /* 結果 */
-.res{flex:1; overflow-y:auto; text-align:center; padding-block:calc(26px + env(safe-area-inset-top,0px)) 20px; background:radial-gradient(100% 60% at 50% 0%,#3A3018,var(--bg) 70%)}
-.res h1{font-family:var(--f-head); font-weight:900; font-size:2rem; margin:6px 0; letter-spacing:.1em}
-.stars{font-size:2.2rem; letter-spacing:.2em; color:var(--panel2)}
+.res{flex:1; overflow-y:auto; text-align:center; position:relative; padding-block:calc(30px + env(safe-area-inset-top,0px)) 20px}
+.res::before{content:""; position:absolute; left:50%; top:120px; width:900px; height:900px; margin:-450px 0 0 -450px; background:repeating-conic-gradient(from 0deg,rgba(241,199,106,.10) 0 8deg,transparent 8deg 22deg); animation:rays 30s linear infinite; pointer-events:none; -webkit-mask-image:radial-gradient(circle,#000 20%,transparent 60%); mask-image:radial-gradient(circle,#000 20%,transparent 60%)}
+@keyframes rays{to{transform:rotate(360deg)}}
+.res > *{position:relative}
+.res h1{font-family:var(--f-head); font-weight:900; font-size:2.1rem; margin:6px 0; letter-spacing:.12em; background:linear-gradient(var(--gold2),var(--gold) 55%,var(--gold3)); -webkit-background-clip:text; background-clip:text; color:transparent; animation:chapB .8s var(--ease)}
+.res .sub{display:inline-block; font-size:.72rem; letter-spacing:.14em; color:var(--muted); border-bottom:1px solid var(--line2); padding-bottom:3px}
+.stars{font-size:2.6rem; letter-spacing:.15em; color:rgba(255,255,255,.12); margin:4px 0}
 .stars span{display:inline-block}
-.stars span.on{color:var(--gold); animation:star .5s backwards}
-@keyframes star{from{transform:scale(2.4) rotate(-20deg); opacity:0}}
-.rew{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:14px 0}
-.rew div{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 12px; font-size:.8rem}
-.rew b{display:block; font-size:1.05rem; color:var(--gold)}
-.miss{text-align:left; margin-top:12px}
-.miss details{background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:6px}
+.stars span.on{color:var(--gold); text-shadow:0 0 18px rgba(241,199,106,.7); animation:star .5s cubic-bezier(.2,1.6,.4,1) backwards}
+@keyframes star{from{transform:scale(3) rotate(-30deg); opacity:0}}
+.rank{font-family:var(--f-num); font-weight:800; font-size:5rem; line-height:1; background:linear-gradient(var(--gold2),var(--gold) 50%,var(--gold3)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 4px 16px rgba(241,199,106,.4)); animation:star .6s cubic-bezier(.2,1.6,.4,1) .2s backwards}
+.rew{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:16px 0}
+.rew div{min-width:76px; background:var(--glass2); border:1px solid var(--line2); padding:8px 10px; font-size:.7rem; color:var(--muted); clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); animation:fxIn .4s var(--ease) backwards}
+.rew div:nth-child(2){animation-delay:.1s} .rew div:nth-child(3){animation-delay:.2s} .rew div:nth-child(4){animation-delay:.3s} .rew div:nth-child(5){animation-delay:.4s}
+.rew b{display:block; font-family:var(--f-num); font-size:1.4rem; color:var(--gold2)}
+.lvup{display:inline-block; font-family:var(--f-num); font-weight:800; font-size:1.3rem; letter-spacing:.14em; padding:8px 22px; color:#2A1D05; background:linear-gradient(var(--gold2),var(--gold)); clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%); animation:star .6s cubic-bezier(.2,1.6,.4,1) .5s backwards}
+.miss{text-align:left; margin-top:14px}
+.miss details{background:var(--glass); border:1px solid var(--line); border-left:3px solid var(--shu); margin-bottom:6px}
 .miss summary{padding:10px 12px; font-size:.85rem; cursor:pointer}
 .miss details div{padding:0 12px 10px; font-size:.82rem; line-height:1.7}
 
 /* スカウト */
-.banner{border-radius:18px; overflow:hidden; position:relative; height:200px; background:linear-gradient(120deg,#3A1C14,#1A1222 60%); border:1px solid #6E3A2A; text-align:left}
-.banner img{position:absolute; right:-10px; bottom:0; height:118%; width:auto}
-.banner .t{position:absolute; left:14px; top:14px; right:46%}
-.banner .t span{font-size:.66rem; letter-spacing:.14em; color:var(--gold)}
-.banner .t b{display:block; font-family:var(--f-head); font-size:1.3rem; line-height:1.35; margin-top:2px}
-.banner .t p{font-size:.72rem; color:var(--muted); margin:6px 0 0}
+.banner{position:relative; height:210px; overflow:hidden; text-align:left; background:linear-gradient(120deg,#4A1E12,#1E1026 62%); border:1px solid rgba(241,199,106,.45); clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.banner::before{content:""; position:absolute; inset:0; background:repeating-linear-gradient(115deg,rgba(255,255,255,.04) 0 2px,transparent 2px 26px)}
+.banner img{position:absolute; right:-14px; bottom:0; height:120%; width:auto; filter:drop-shadow(-12px 0 24px rgba(0,0,0,.5))}
+.banner .t{position:absolute; left:16px; top:16px; right:44%}
+.banner .t span{display:inline-block; font-size:.62rem; font-weight:900; letter-spacing:.14em; color:#2A1D05; background:var(--gold); padding:1px 8px; clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+.banner .t b{display:block; font-family:var(--f-head); font-size:1.32rem; line-height:1.35; margin-top:6px; text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.banner .t p{font-size:.72rem; color:#D9CDBE; margin:8px 0 0}
 .rates{font-size:.76rem}
 .rates table{width:100%; border-collapse:collapse}
 .rates td{padding:5px 4px; border-bottom:1px solid var(--line)}
-.env-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding-block:16px}
-.env{aspect-ratio:3/4; border-radius:6px; background:#EDE6D4; position:relative; box-shadow:0 6px 14px rgba(0,0,0,.4); display:grid; place-items:center; animation:drop .4s backwards; overflow:hidden}
-.env::before{content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(160deg,#E2D8C0 50%,transparent 50.5%),linear-gradient(200deg,#E2D8C0 50%,transparent 50.5%)}
-.env i{width:32%; aspect-ratio:1; border-radius:50%; background:var(--seal); position:relative; z-index:1}
-.env.r5{box-shadow:0 0 22px rgba(246,216,142,.9)}
-.env.open{background:none; box-shadow:none; animation:none; display:block}
+.env-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding-block:16px; perspective:600px}
+.env{aspect-ratio:3/4; background:linear-gradient(#F3EDDD,#E2D8C0); position:relative; box-shadow:0 8px 18px rgba(0,0,0,.5); display:grid; place-items:center; animation:drop .5s cubic-bezier(.2,1.3,.4,1) backwards; overflow:hidden; border-radius:4px}
+.env::before{content:""; position:absolute; left:0; right:0; top:0; height:44%; background:linear-gradient(160deg,#E8DEC6 50%,transparent 50.5%),linear-gradient(200deg,#E8DEC6 50%,transparent 50.5%)}
+.env i{width:34%; aspect-ratio:1; border-radius:50%; background:var(--seal); position:relative; z-index:1; box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.env.r5{box-shadow:0 0 0 2px var(--gold),0 0 26px rgba(255,231,166,.95); animation:drop .5s cubic-bezier(.2,1.3,.4,1) backwards, gl 1s infinite}
+.env.r4{box-shadow:0 0 0 2px var(--r4),0 0 16px rgba(185,139,255,.6)}
+@keyframes gl{50%{filter:brightness(1.2)}}
+.env.open{background:none; box-shadow:none; animation:none; display:block; overflow:visible}
 .env.open::before{display:none}
-@keyframes drop{from{transform:translateY(-30px) rotate(-8deg); opacity:0}}
-.ccard{border-radius:10px; overflow:hidden; position:relative; aspect-ratio:3/4; background:var(--panel2) center 15%/cover; border:2px solid var(--rc); animation:flip .45s backwards; display:block; width:100%}
-.ccard .bar{position:absolute; left:0; right:0; bottom:0; padding:12px 5px 4px; background:linear-gradient(transparent,rgba(0,0,0,.85)); font-size:.56rem; line-height:1.25; text-align:left}
-.ccard .bar b{display:block; font-size:.62rem}
-.ccard .st{position:absolute; top:3px; left:4px; font-size:.6rem; color:var(--rc); text-shadow:0 1px 3px #000; letter-spacing:-.05em}
-.ccard.r5{box-shadow:0 0 16px rgba(246,216,142,.6)}
-.ccard .nw{position:absolute; top:3px; right:3px}
-@keyframes flip{from{transform:rotateY(90deg)}}
+@keyframes drop{from{transform:translateY(-60px) rotate(-12deg); opacity:0}}
+.ccard{border-radius:8px; overflow:hidden; position:relative; aspect-ratio:3/4; background:var(--glass2) center 15%/cover; border:2px solid var(--rc); animation:flip .5s var(--ease) backwards; display:block; width:100%; box-shadow:0 6px 16px rgba(0,0,0,.45)}
+.ccard .bar{position:absolute; left:0; right:0; bottom:0; padding:14px 6px 5px; background:linear-gradient(transparent,rgba(0,0,0,.9)); font-size:.56rem; line-height:1.25; text-align:left}
+.ccard .bar b{display:block; font-size:.64rem}
+.ccard .st{position:absolute; top:3px; left:5px; font-size:.62rem; color:var(--rc); text-shadow:0 1px 3px #000; letter-spacing:-.05em}
+.ccard.r5::after{content:""; position:absolute; inset:0; background:linear-gradient(115deg,transparent 25%,rgba(255,231,166,.35) 40%,rgba(169,139,255,.3) 50%,rgba(127,214,255,.3) 60%,transparent 75%); background-size:250% 100%; animation:holo 2.4s linear infinite; mix-blend-mode:screen; pointer-events:none}
+.ccard.r5{box-shadow:0 0 18px rgba(241,199,106,.6)}
+@keyframes holo{from{background-position:120% 0}to{background-position:-120% 0}}
+.ccard .nw{position:absolute; top:3px; right:3px; z-index:2}
+@keyframes flip{from{transform:rotateY(90deg) scale(.9); filter:brightness(3)}}
+.beam{position:absolute; left:50%; top:-40%; width:60%; height:180%; margin-left:-30%; background:linear-gradient(transparent,rgba(255,231,166,.55),transparent); filter:blur(14px); animation:beam 1.4s ease-out forwards; pointer-events:none; z-index:0}
+@keyframes beam{from{opacity:0; transform:scaleX(.2)}30%{opacity:1}to{opacity:0; transform:scaleX(1.4)}}
 
 /* 仲間 */
 .cgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
 .cgrid .ccard{animation:none}
 .pslot{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-width:280px}
-.modal{position:absolute; inset:0; z-index:30; background:rgba(5,7,10,.72); display:flex; align-items:flex-end; animation:fade2 .2s}
+.modal{position:absolute; inset:0; z-index:50; background:rgba(3,5,9,.72); display:flex; align-items:flex-end; animation:fade2 .2s; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px)}
 @keyframes fade2{from{opacity:0}}
-.sheet{width:100%; max-height:90%; overflow-y:auto; background:var(--bg2); border-radius:22px 22px 0 0; border-top:1px solid var(--line); padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px)); animation:up .3s cubic-bezier(.2,.8,.2,1)}
+.sheet{width:100%; max-height:90%; overflow-y:auto; background:linear-gradient(#141A28,#0B0F18); border-top:1px solid rgba(241,199,106,.4); border-radius:22px 22px 0 0; padding:20px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px)); animation:up .35s var(--ease); box-shadow:0 -20px 50px rgba(0,0,0,.5)}
 @keyframes up{from{transform:translateY(100%)}}
 .sheet h2{font-family:var(--f-head); margin:0 0 6px; font-size:1.2rem}
 
 /* チャット */
-.thread{display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); width:100%; text-align:left}
-.thread .av{width:46px; height:46px; border-radius:50%; background:var(--panel2) center 12%/cover; flex:none}
+.thread{display:flex; gap:10px; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); width:100%; text-align:left}
+.thread .av{width:48px; height:48px; border-radius:50%; background:var(--glass2) center 12%/cover; flex:none; border:2px solid var(--line2)}
 .thread .t{flex:1; min-width:0}
 .thread .t b{font-size:.9rem}
 .thread .t p{margin:2px 0 0; font-size:.76rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .msgs{display:flex; flex-direction:column; gap:10px; padding-block:12px}
-.msg{display:flex; gap:8px; align-items:flex-end; animation:in .3s}
-.msg .av{width:34px; height:34px; border-radius:50%; background:var(--panel2) center 12%/cover; flex:none}
-.msg .b{max-width:78%; background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 16px 4px; padding:9px 12px; font-size:.88rem; line-height:1.6}
+.msg{display:flex; gap:8px; align-items:flex-end; animation:bub .3s var(--ease) backwards}
+.msg .av{width:34px; height:34px; border-radius:50%; background:var(--glass2) center 12%/cover; flex:none}
+.msg .b{max-width:78%; background:var(--glass2); border:1px solid var(--line2); border-radius:18px 18px 18px 4px; padding:9px 13px; font-size:.88rem; line-height:1.6}
 .msg .tm{font-size:.6rem; color:var(--muted)}
 .msg.me{justify-content:flex-end}
-.msg.me .b{background:#2D5A8A; border-color:#2D5A8A; border-radius:16px 16px 4px 16px}
+.msg.me .b{background:linear-gradient(135deg,#3E7BD0,#2B5BA8); border-color:transparent; border-radius:18px 18px 4px 18px}
 
 /* 月次決算ラン */
 .run-h{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
-.run-h div{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; text-align:center}
-.run-h b{display:block; font-family:var(--f-head); font-size:1.2rem}
-.run-h span{font-size:.62rem; color:var(--muted)}
+.run-h div{background:var(--glass); border:1px solid var(--line); padding:9px 6px; text-align:center; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.run-h b{display:block; font-family:var(--f-num); font-size:1.6rem; line-height:1.1}
+.run-h span{font-size:.6rem; color:var(--muted)}
 .weeks{display:flex; gap:6px; margin:12px 0}
-.weeks i{flex:1; height:6px; border-radius:6px; background:var(--panel2)}
-.weeks i.on{background:var(--gold)} .weeks i.now{background:var(--shu)}
-.acts{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
-.act{background:linear-gradient(180deg,#F2EEE3,#E3DCC8); color:#1B1B1B; border-radius:10px; padding:10px 8px; text-align:left; min-height:150px; display:flex; flex-direction:column; gap:4px; box-shadow:0 6px 16px rgba(0,0,0,.4); animation:deal .4s backwards}
-.act .ic{font-size:1.4rem}
-.act b{font-family:var(--f-head); font-size:.92rem}
+.weeks i{flex:1; height:6px; background:rgba(255,255,255,.08); transform:skewX(-20deg)}
+.weeks i.on{background:var(--gold)} .weeks i.now{background:var(--shu); box-shadow:0 0 10px var(--shu)}
+.acts{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; perspective:800px}
+.act{background:linear-gradient(170deg,#FBF8EF,#E2D9C3); color:#1B1B1B; padding:12px 8px 10px; text-align:left; min-height:160px; display:flex; flex-direction:column; gap:4px; box-shadow:0 10px 24px rgba(0,0,0,.5); animation:deal .5s cubic-bezier(.2,1.2,.4,1) backwards; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%); transition:transform .15s}
+.act:active{transform:translateY(-6px) scale(1.03)}
+.act .ic{width:32px; height:32px; color:#9A4A2A}
+.act b{font-family:var(--f-head); font-size:.94rem}
 .act p{margin:0; font-size:.68rem; color:#4A4438; line-height:1.5; flex:1}
-.act em{font-style:normal; font-size:.64rem; font-weight:700; color:#8A4A2A}
-@keyframes deal{from{transform:translateY(30px) rotate(6deg); opacity:0}}
-.toast{position:absolute; left:50%; top:calc(60px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:40; background:rgba(238,241,245,.96); color:#111; font-weight:700; font-size:.84rem; padding:9px 14px; border-radius:12px; animation:toast 2.2s forwards; max-width:90%; text-align:center; pointer-events:none}
-@keyframes toast{0%{opacity:0; transform:translate(-50%,-8px)}10%,85%{opacity:1; transform:translate(-50%,0)}100%{opacity:0}}
-input.nm{width:100%; font:inherit; font-size:1.1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); margin:6px 0 10px; user-select:text; -webkit-user-select:text}
-.title{flex:1; display:grid; place-items:center; text-align:center; background:radial-gradient(90% 60% at 50% 35%,#2A3247,var(--bg))}
-.title h1{font-family:var(--f-head); font-weight:900; font-size:clamp(1.7rem,9vw,2.4rem); letter-spacing:.08em; margin:4px 0; white-space:nowrap; animation:slam .7s cubic-bezier(.2,1.4,.4,1)}
-@keyframes slam{from{transform:scale(2.4); opacity:0; letter-spacing:.6em}}
-.title .ln{font-family:var(--f-head); color:var(--muted); letter-spacing:.3em; font-size:.8rem}
+.act em{font-style:normal; font-size:.62rem; font-weight:900; color:#fff; background:#B4462A; padding:1px 6px; align-self:flex-start; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+@keyframes deal{from{transform:translateY(60px) rotate(10deg) rotateY(60deg); opacity:0}}
+.toast{position:absolute; left:50%; top:calc(66px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:8px; background:linear-gradient(rgba(30,36,52,.96),rgba(18,22,34,.96)); border:1px solid rgba(241,199,106,.45); color:var(--ink); font-weight:700; font-size:.84rem; padding:9px 16px; border-radius:999px; animation:toast 2.2s var(--ease) forwards; max-width:90%; text-align:center; pointer-events:none; box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold); flex:none}
+@keyframes toast{0%{opacity:0; transform:translate(-50%,-12px) scale(.95)}10%,85%{opacity:1; transform:translate(-50%,0)}100%{opacity:0; transform:translate(-50%,-6px)}}
+input.nm{width:100%; font:inherit; font-size:1.1rem; padding:12px 14px; border:1px solid var(--line2); background:rgba(0,0,0,.35); color:var(--ink); margin:6px 0 12px; user-select:text; -webkit-user-select:text; text-align:center; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.title{flex:1; display:grid; place-items:center; text-align:center; position:relative; overflow:hidden; background:radial-gradient(90% 60% at 50% 35%,#2A3657,var(--bg))}
+.title::before{content:""; position:absolute; left:50%; top:38%; width:900px; height:900px; margin:-450px 0 0 -450px; background:repeating-conic-gradient(from 0deg,rgba(241,199,106,.07) 0 6deg,transparent 6deg 18deg); animation:rays 40s linear infinite; -webkit-mask-image:radial-gradient(circle,#000 10%,transparent 55%); mask-image:radial-gradient(circle,#000 10%,transparent 55%)}
+.title > div{position:relative; width:100%}
+.title h1{font-family:var(--f-head); font-weight:900; font-size:clamp(1.8rem,10vw,2.6rem); letter-spacing:.1em; margin:6px 0; white-space:nowrap; background:linear-gradient(#fff,var(--gold2) 50%,var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 4px 20px rgba(241,199,106,.35)); animation:slam .8s cubic-bezier(.2,1.4,.4,1)}
+@keyframes slam{from{transform:scale(2.4); opacity:0; letter-spacing:.6em; filter:blur(8px)}}
+.title .ln{font-family:var(--f-num); color:var(--gold); letter-spacing:.4em; font-size:.8rem; font-weight:700}
 .title .bsl{display:flex; justify-content:center; margin:14px 0; font-family:var(--f-head); font-size:.85rem}
-.title .bsl span{padding:0 12px; border-left:1px solid var(--line)} .title .bsl span:first-child{border:0}
+.title .bsl span{padding:0 12px; border-left:1px solid var(--line2)} .title .bsl span:first-child{border:0}
+.timeline{position:relative; padding-left:22px}
+.timeline::before{content:""; position:absolute; left:8px; top:10px; bottom:10px; width:2px; background:linear-gradient(var(--gold),rgba(241,199,106,.1))}
+.ep{position:relative; display:flex; gap:12px; align-items:center; width:100%; text-align:left; margin-bottom:10px; padding:12px 14px; background:var(--glass); border:1px solid var(--line); border-radius:12px; overflow:visible}
+.ep::before{content:""; position:absolute; left:-19px; top:50%; width:12px; height:12px; margin-top:-6px; border-radius:50%; background:var(--bg); border:2px solid var(--gold)}
+.ep.done::before{background:var(--gold)}
+.ep.lock{opacity:.4}
+.ep .no{font-family:var(--f-num); font-size:.8rem; font-weight:800; color:var(--gold); width:3.2em; flex:none; letter-spacing:.06em}
+.chaphead{position:relative; height:120px; overflow:hidden; margin:16px 0 10px; padding:14px 16px; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(110deg,var(--c1),rgba(8,11,18,.6)); border:1px solid var(--line2); clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.chaphead img{position:absolute; right:-20px; top:-10px; height:170%; width:auto; -webkit-mask-image:linear-gradient(90deg,transparent,#000 50%); mask-image:linear-gradient(90deg,transparent,#000 50%); opacity:.9}
+.chaphead span{position:relative; font-family:var(--f-num); letter-spacing:.3em; font-size:.74rem; color:var(--gold2)}
+.chaphead b{position:relative; font-family:var(--f-head); font-size:1.5rem; text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.chaphead i{position:relative; display:block; height:4px; width:60%; background:rgba(255,255,255,.12); margin-top:6px}
+.chaphead i s{display:block; height:100%; background:var(--gold)}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important}}
 </style>
 
@@ -310,6 +433,37 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const yen = n => Number(n).toLocaleString('ja-JP');
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+
+/* ═════════ 演出（パーティクル・波紋・カウントアップ） ═════════ */
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FX = (() => {
+  const c = document.createElement('canvas'); c.id = 'fx'; document.body.append(c);
+  const x = c.getContext('2d'), P = []; let W, H, dpr, raf = 0;
+  const size = () => { dpr = Math.min(2, devicePixelRatio || 1); W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px'; };
+  size(); addEventListener('resize', size);
+  const loop = () => {
+    x.clearRect(0, 0, W, H);
+    for (let i = P.length - 1; i >= 0; i--) {
+      const p = P[i]; if (--p.life <= 0) { P.splice(i, 1); continue; }
+      p.vx *= p.drag; p.vy = p.vy * p.drag + p.g; p.x += p.vx; p.y += p.vy;
+      const a = Math.min(1, p.life / p.max * 1.5); x.globalAlpha = a; x.fillStyle = x.strokeStyle = p.col;
+      if (p.k === 'rect') { x.save(); x.translate(p.x, p.y); x.rotate(p.r += p.vr); x.fillRect(-p.s, -p.s / 2, p.s * 2, p.s); x.restore(); }
+      else if (p.k === 'ring') { x.lineWidth = 3 * dpr; x.beginPath(); x.arc(p.x, p.y, (p.max - p.life) * p.s, 0, 7); x.stroke(); }
+      else { x.shadowColor = p.col; x.shadowBlur = 8 * dpr; x.beginPath(); x.arc(p.x, p.y, p.s * (.4 + a * .6), 0, 7); x.fill(); x.shadowBlur = 0; }
+    }
+    x.globalAlpha = 1; raf = P.length ? requestAnimationFrame(loop) : 0;
+  };
+  const add = p => { P.push(p); if (!raf) raf = requestAnimationFrame(loop); };
+  return {
+    burst(px, py, col = '#F6D88E', n = 24, sp = 7) { if (REDUCE) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = (Math.random() * .8 + .2) * sp * dpr; add({ x:px * dpr, y:py * dpr, vx:Math.cos(a) * v, vy:Math.sin(a) * v, g:.12 * dpr, drag:.92, life:36 + Math.random() * 20, max:56, s:(2 + Math.random() * 3) * dpr, col }); } add({ x:px * dpr, y:py * dpr, vx:0, vy:0, g:0, drag:1, life:22, max:22, s:3.4 * dpr, col, k:'ring' }); },
+    confetti(n = 120) { if (REDUCE) return; const cs = ['#F1C76A','#FF5A3C','#38D6A4','#7FB2FF','#C9A6FF','#FFFFFF']; for (let i = 0; i < n; i++) add({ x:W / 2 + (Math.random() - .5) * W * .4, y:H * .3, vx:(Math.random() - .5) * 16 * dpr, vy:(-Math.random() * 14 - 5) * dpr, g:.4 * dpr, drag:.985, life:110 + Math.random() * 40, max:150, s:(3 + Math.random() * 4) * dpr, col:cs[i % cs.length], k:'rect', r:Math.random() * 6, vr:(Math.random() - .5) * .3 }); },
+    beam(a, b, col = '#F6D88E') { return new Promise(res => { if (REDUCE) return res(); const n = 16; for (let i = 0; i < n; i++) setTimeout(() => { const t = i / n, bend = Math.sin(t * Math.PI) * 40; add({ x:(a.x + (b.x - a.x) * t + bend) * dpr, y:(a.y + (b.y - a.y) * t) * dpr, vx:(Math.random() - .5) * dpr, vy:(Math.random() - .5) * dpr, g:0, drag:.9, life:16, max:16, s:(6 - t * 2) * dpr, col }); }, i * 11); setTimeout(res, n * 11 + 10); }); },
+  };
+})();
+const center = el => { const r = el.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height / 2 }; };
+function tickUp(el, to, ms = 900) { const t0 = performance.now(); const f = t => { const k = Math.min(1, (t - t0) / ms), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = '+' + yen(v); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+document.addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b || REDUCE) return; const r = b.getBoundingClientRect(), z = Math.max(r.width, r.height) * 1.3, d = document.createElement('span'); d.className = 'ripple'; d.style.cssText = `width:${z}px;height:${z}px;left:${e.clientX - r.left - z / 2}px;top:${e.clientY - r.top - z / 2}px`; b.append(d); setTimeout(() => d.remove(), 520); });
+function overlay(cls, html, ms) { const d = document.createElement('div'); d.className = 'ovl ' + cls; d.innerHTML = html; ($('.bt') || $('#app')).append(d); return new Promise(res => { const done = () => { d.remove(); res(); }; d.onclick = done; setTimeout(done, ms); }); }
 
 /* ═════════ 人物 ═════════ */
 const P = {
@@ -392,10 +546,11 @@ function sfx(k) {
   } catch (e) {}
 }
 const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
-function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; if (document.querySelector('.bt')) d.style.top = '36%'; $('#app').append(d); setTimeout(() => d.remove(), 2300); }
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; if (document.querySelector('.bt')) d.style.top = '42%'; $('#app').append(d); setTimeout(() => d.remove(), 2300); }
 
 /* ═════════ 問題 ═════════ */
 const A = DATA.accounts, CATS = ['資産','負債','純資産','収益','費用'];
+const CATC = { 資産:'#3E6FD0', 負債:'#C7432C', 純資産:'#1F9C74', 収益:'#C9922F', 費用:'#7B5CE0' };
 const drill = Object.fromEntries(DATA.drill.map(d => [d.id, d]));
 const docs = Object.fromEntries(DATA.docs.map(d => [d.id, d]));
 const Q = {
@@ -414,8 +569,8 @@ const POOLS = {
 };
 const TL = { cat:10, mcq:16, doc:32, je:32 }; // 制限時間（秒）
 function qBody(q, st) {
-  if (q.t === 'mcq') return `<div class="qk">判断</div><div class="qt">${esc(q.q)}</div>` + q.choices.map((c, i) => `<button class="opt ${st.gone.has(i) ? 'gone' : ''}" data-i="${i}">${esc(c)}</button>`).join('');
-  if (q.t === 'cat') return `<div class="qk">この勘定科目はどの区分？</div><div class="acct">${esc(q.acct)}</div><div class="cats">` + CATS.map(c => `<button class="opt ${st.gone.has(c) ? 'gone' : ''}" data-c="${c}">${c}</button>`).join('') + '</div>';
+  if (q.t === 'mcq') return `<div class="qk">判断</div><div class="qt">${esc(q.q)}</div>` + q.choices.map((c, i) => `<button class="opt ${st.gone.has(i) ? 'gone' : ''}" data-i="${i}"><span class="lt">${'ABCD'[i]}</span><span>${esc(c)}</span></button>`).join('');
+  if (q.t === 'cat') return `<div class="qk">この勘定科目はどの区分？</div><div class="acct">${esc(q.acct)}</div><div class="cats">` + CATS.map(c => `<button class="opt ${st.gone.has(c) ? 'gone' : ''}" data-c="${c}" style="--cc:${CATC[c]}">${c}</button>`).join('') + '</div>';
   if (q.t === 'doc') return `<div class="qk">証憑チェック　問題をすべて選ぶ（なければ選ばない）</div><div class="paper"><div class="pk">${esc(q.kind)}</div><div style="text-align:center; font-size:.66rem; color:#6A6455">${esc(q.title)}</div><table>${q.fields.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`
     + q.issues.map((s, i) => `<button class="opt ${st.picked.includes(i) ? 'sel' : ''}" data-t="${i}">${esc(s)}</button>`).join('');
   return `<div class="qk">仕訳を切る　借方・貸方を選んでから科目をタップ</div><div class="qt">${esc(q.q)}</div><div class="je">${['借方','貸方'].map(s => `<div class="zone ${st.side === s ? 'on' : ''}" data-z="${s}"><h4>${s}（${s === '借方' ? '左' : '右'}）</h4>${st.placed[s].map(a => `<button class="ch" data-p="${s}|${esc(a)}">${esc(a)}</button>`).join('')}</div>`).join('')}</div>`
@@ -447,19 +602,23 @@ function askIn(el, q, o = {}) {
       if (q.t === 'je') st.placed.借方.push(q.dr[0][0]);
     }
     const limit = (o.limit ?? TL[q.t]) * 1000, t0 = Date.now();
-    let done = false, timerId = null;
+    let done = false, timerId = null, lowId = null, lastBtn = null;
     const tbar = o.timerEl;
-    if (tbar) { tbar.style.transition = 'none'; tbar.style.transform = 'scaleX(1)'; void tbar.offsetWidth; tbar.style.transition = `transform ${limit}ms linear`; tbar.style.transform = 'scaleX(0)'; }
+    if (tbar) { tbar.parentElement.classList.remove('low'); tbar.style.transition = 'none'; tbar.style.transform = 'scaleX(1)'; void tbar.offsetWidth; tbar.style.transition = `transform ${limit}ms linear`; tbar.style.transform = 'scaleX(0)'; lowId = setTimeout(() => tbar.parentElement.classList.add('low'), limit * .7); }
     const needConfirm = q.t === 'je' || q.t === 'doc';
     const draw = () => {
       el.innerHTML = qBody(q, st) + (needConfirm ? `<div class="ans"><button class="btn gold" id="qgo" ${q.t === 'je' && !(st.placed.借方.length && st.placed.貸方.length) ? 'disabled' : ''}>${q.t === 'doc' && !st.picked.length ? '問題なし' : '決定'}</button></div>` : '');
       const g = $('#qgo', el); if (g) g.onclick = e => { e.stopPropagation(); finish(); };
     };
     const finish = (timeout = false) => {
-      if (done) return; done = true; clearTimeout(timerId); el.onclick = null;
-      if (tbar) { const cs = getComputedStyle(tbar).transform; tbar.style.transition = 'none'; tbar.style.transform = cs; }
+      if (done) return; done = true; clearTimeout(timerId); clearTimeout(lowId); el.onclick = null;
+      if (tbar) { const cs = getComputedStyle(tbar).transform; tbar.style.transition = 'none'; tbar.style.transform = cs; tbar.parentElement.classList.remove('low'); }
       const ok = !timeout && judge(q, st), fast = ok && Date.now() - t0 < limit * .45;
-      resolve({ ok, fast, timeout });
+      const src = lastBtn || $('#qgo', el);
+      if (lastBtn) lastBtn.classList.add(ok ? 'good' : 'bad');
+      if (!ok && q.t === 'mcq') { const g = el.querySelector(`[data-i="${q.a}"]`); if (g) g.classList.add('good'); }
+      if (!ok && q.t === 'cat') { const g = el.querySelector(`[data-c="${A[q.acct].cat}"]`); if (g) g.classList.add('good'); }
+      resolve({ ok, fast, timeout, from: src && src.isConnected ? center(src) : null });
     };
     el.onclick = e => {
       if (done) return;
@@ -467,8 +626,8 @@ function askIn(el, q, o = {}) {
       if (b && b.id === 'qgo') return;
       if (b) {
         sfx('tap');
-        if (b.dataset.i !== undefined) { st.sel = +b.dataset.i; b.classList.add('sel'); return finish(); }
-        if (b.dataset.c) { st.sel = b.dataset.c; b.classList.add('sel'); return finish(); }
+        if (b.dataset.i !== undefined) { st.sel = +b.dataset.i; lastBtn = b; return finish(); }
+        if (b.dataset.c) { st.sel = b.dataset.c; lastBtn = b; return finish(); }
         if (b.dataset.t !== undefined) { const i = +b.dataset.t; st.picked = st.picked.includes(i) ? st.picked.filter(x => x !== i) : [...st.picked, i]; }
         else if (b.dataset.b) { const a = b.dataset.b; if (!st.placed.借方.includes(a) && !st.placed.貸方.includes(a)) st.placed[st.side].push(a); }
         else if (b.dataset.p) { const [s, a] = b.dataset.p.split('|'); st.placed[s] = st.placed[s].filter(x => x !== a); }
@@ -491,31 +650,33 @@ function showExplain(el, q, r) {
 /* ═════════ バトル ═════════ */
 function battle(cfg) {
   return new Promise(resolve => {
-    let dbl = 0, hp = cfg.hp, team = cfg.teamHp || 100, cd = cfg.every, combo = 0, maxCombo = 0, qn = 0, hint = false, revived = false, stun = 0, ended = false, waitUlt = null;
-    const teamMax = team, missed = [], pool = [], gauge = cfg.party.map(() => 0);
-    $('#app').innerHTML = `<div class="bt"><div class="bt-top side" id="btTop"></div><div class="bt-q side" id="bq"></div><div class="bt-bot side" id="bb"></div></div>`;
+    let dbl = 0, hp = cfg.hp, team = cfg.teamHp || 100, cd = cfg.every, combo = 0, maxCombo = 0, qn = 0, hint = false, revived = false, stun = 0, ended = false, waitUlt = null, lagW = 100;
+    const teamMax = team, missed = [], pool = [], gauge = cfg.party.map(() => 0), boss = cfg.kind === 'ボス';
+    $('#app').innerHTML = `<div class="bt" style="--bt1:${boss ? '#5A1A22' : '#2A2450'}"><div class="bt-top side" id="btTop"></div><div class="combo-big" id="cmb"></div>
+      <div class="side" style="display:flex; align-items:center; gap:8px; padding-top:4px"><span class="qk">${boss ? 'BOSS' : 'MISSION'}　残り時間</span><div class="timer"><s id="tbar"></s></div></div>
+      <div class="bt-q side" id="bq"></div><div class="bt-bot side" id="bb"></div></div>`;
+    const RC = 2 * Math.PI * 24;
     const top = () => {
-      $('#btTop').innerHTML = `<div class="enemy"><div class="doc" id="edoc"><div class="k">${esc(cfg.kind)}</div><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
-        <div class="cd ${cd <= 1 && !stun ? 'warn' : ''}">${stun ? 'ひるみ中' : '反撃まで'}<b>${stun ? stun : cd}</b>ターン</div></div>
-        <div class="hpbar"><span>残り</span><i><s style="width:${hp / cfg.hp * 100}%; background:var(--shu)"></s></i><span class="num">${hp}/${cfg.hp}</span></div>`;
+      const warn = cd <= 1 && !stun, el = $('#btTop');
+      el.innerHTML = `<div class="foe"><div class="foe-card ${warn ? 'aura' : ''}" id="edoc"><span class="k">${esc(cfg.kind)}</span><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
+        <div class="cdring ${warn ? 'warn' : ''}"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="24" stroke="rgba(255,255,255,.1)" stroke-width="5" fill="none"/><circle cx="29" cy="29" r="24" stroke="${stun ? '#7FB2FF' : '#FF5A3C'}" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${RC}" stroke-dashoffset="${RC * (1 - (stun ? stun / 2 : cd / cfg.every))}"/></svg><b>${stun || cd}</b><span>${stun ? 'ひるみ中' : '反撃まで'}</span></div></div>
+        <div class="hpx"><i class="lag" style="width:${lagW}%"></i><i class="cur" style="width:${hp / cfg.hp * 100}%"></i><span>${hp} / ${cfg.hp}</span></div>`;
+      const now = hp / cfg.hp * 100; requestAnimationFrame(() => { const l = el.querySelector('.lag'); if (l) l.style.width = now + '%'; }); lagW = now;
     };
     const bot = () => {
-      $('#bb').innerHTML = `<div class="timer"><s id="tbar"></s></div><div class="party">${cfg.party.map((m, i) => `<button class="mem ${gauge[i] >= 100 ? 'full' : ''}" data-m="${i}" style="--g:${Math.min(100, gauge[i])}" aria-label="${esc(P[m.char].name)}の必殺技"><span class="f" ${avatarStyle(m.char)}>${face(m.char) ? '' : P[m.char].ch}</span></button>`).join('')}
-        <div class="team"><b>チームの元気</b> <span class="combo">${combo >= 2 ? combo + ' COMBO' : ''}</span><div class="hpbar" style="margin-top:3px"><span></span><i><s style="width:${team / teamMax * 100}%; background:var(--green)"></s></i><span class="num">${team}</span></div></div>
-        <button class="item" id="coffee" ${G.coins < 50 ? 'disabled' : ''}>缶コーヒー<br>50円</button></div>`;
+      $('#bb').innerHTML = `<div class="teamhp"><span>チームの元気</span><i><s style="width:${team / teamMax * 100}%"></s></i><b>${team}</b></div>
+        <div class="party">${cfg.party.map((m, i) => `<button class="pc ${gauge[i] >= 100 ? 'full' : ''}" data-m="${i}" style="--g:${Math.min(100, gauge[i])}; ${face(m.char) ? `background-image:url(${face(m.char)})` : `background:linear-gradient(160deg,${P[m.char].c},#151A22)`}" aria-label="${esc(P[m.char].name)}の必殺技"><span class="g"></span>${face(m.char) ? '' : `<span class="ini">${P[m.char].ch}</span>`}<span class="nm">${esc(SKILL[m.char].name)}</span></button>`).join('')}
+        <button class="item" id="coffee" ${G.coins < 50 ? 'disabled' : ''}>${ICON.coffee}缶コーヒー<br>50円</button></div>`;
       $('#bb').querySelectorAll('[data-m]').forEach(b => b.onclick = () => ult(+b.dataset.m));
-      $('#coffee').onclick = () => { if (G.coins < 50) return; G.coins -= 50; team = Math.min(teamMax, team + 25); sfx('ok'); toast('缶コーヒーで元気+25'); keepTimer(bot); };
+      $('#coffee').onclick = e => { if (G.coins < 50) return; G.coins -= 50; team = Math.min(teamMax, team + 25); sfx('ok'); const c = center(e.currentTarget); FX.burst(c.x, c.y, '#38D6A4', 18, 5); toast('缶コーヒーで元気+25'); bot(); };
     };
-    const keepTimer = fn => { const t = $('#tbar'), tr = t && t.style.transition, tf = t && getComputedStyle(t).transform; fn(); const n = $('#tbar'); if (n && tr) { n.style.transition = 'none'; n.style.transform = tf; void n.offsetWidth; n.style.transition = tr.replace(/transform \d+ms/, `transform ${Math.max(0, curEnd - Date.now())}ms`); n.style.transform = 'scaleX(0)'; } };
-    let curEnd = 0;
-    const pop = (t, crit) => { const d = document.createElement('div'); d.className = 'dmg' + (crit ? ' crit' : ''); d.textContent = t; $('#btTop').append(d); setTimeout(() => d.remove(), 900); };
+    const pop = (t, crit) => { const d = document.createElement('div'); d.className = 'dmg' + (crit ? ' crit' : ''); d.textContent = t; $('#btTop').append(d); setTimeout(() => d.remove(), 1000); };
     const hitEnemy = d => { hp = Math.max(0, hp - d); top(); const e = $('#edoc'); if (e) { e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); } };
+    const showCombo = () => { const cm = $('#cmb'); if (!cm) return; cm.innerHTML = combo >= 2 ? `<b>${combo}</b><span>COMBO</span>` : ''; cm.classList.remove('pop'); void cm.offsetWidth; cm.classList.add('pop'); };
     async function ult(i) {
       if (gauge[i] < 100 || ended) return;
       const m = cfg.party[i]; gauge[i] = 0; sfx('ult'); buzz([20, 30, 60]);
-      const ci = document.createElement('div'); ci.className = 'cutin'; ci.style.setProperty('--c', P[m.char].c);
-      ci.innerHTML = `<div class="band">${face(m.char) ? `<img src="${face(m.char)}" alt="">` : ''}<b><small>${esc(P[m.char].name)}</small>${esc(SKILL[m.char].name)}</b></div>`;
-      $('.bt').append(ci); await sleep(1150); ci.remove();
+      await overlay('cutin', `<div class="band" style="--c:${P[m.char].c}">${face(m.char) ? `<img src="${face(m.char)}" alt="">` : ''}<b><small>${esc(P[m.char].name)}</small>${esc(SKILL[m.char].name)}</b></div>`, 1250);
       let d = 0;
       if (m.char === 'akeno') { d = Math.round(30 * m.ult); hint = true; toast('次の問題、まちがいを消しておいた'); }
       if (m.char === 'sumiya') d = Math.round(80 * m.ult);
@@ -523,32 +684,40 @@ function battle(cfg) {
       if (m.char === 'kirishima') { d = Math.round(25 * m.ult); dbl = 2; toast('次の2問、正解ならダメージ2倍'); }
       if (m.char === 'nagisa') { const h = Math.round(40 * m.ult); team = Math.min(teamMax, team + h); toast(`元気が ${h} 回復した`); }
       if (m.char === 'amagi') { const r = Math.random(); d = r < .5 ? Math.round(150 * m.ult) : r < .8 ? Math.round(40 * m.ult) : 0; toast(d >= 150 ? '天城案件、大当たり！' : d ? 'まあまあの天城案件' : '……天城案件、空振り。'); }
-      if (d) { hitEnemy(d); pop(d, true); sfx('crit'); }
-      keepTimer(bot);
+      if (d) { const c = center($('#edoc')); FX.burst(c.x, c.y, P[m.char].c, 46, 11); FX.burst(c.x, c.y, '#FFE7A6', 30, 8); hitEnemy(d); pop(d, true); sfx('crit'); }
+      bot();
       if (waitUlt) { const w = waitUlt; waitUlt = null; w(); }
       if (hp <= 0) end(true);
     }
-    const tip = txt => { const t = document.createElement('div'); t.className = 'tip'; t.textContent = txt; t.style.bottom = '104px'; $('.bt').append(t); return t; };
-    function end(win) { if (ended) return; ended = true; setTimeout(() => resolve({ win, stars: win ? 1 + (team >= teamMax * .5 ? 1 : 0) + (missed.length === 0 ? 1 : 0) : 0, missed, qn, maxCombo }), 650); }
+    const tip = txt => { const t = document.createElement('div'); t.className = 'tip'; t.textContent = txt; t.style.bottom = '150px'; $('.bt').append(t); return t; };
+    async function end(win) {
+      if (ended) return; ended = true;
+      await sleep(350);
+      if (win) { sfx('win'); FX.confetti(110); await overlay('hanko', `<div class="s">済</div><p>COMPLETE</p>`, 1500); }
+      else await overlay('hanko', `<div class="s gray">未</div><p>FAILED</p>`, 1300);
+      resolve({ win, stars: win ? 1 + (team >= teamMax * .5 ? 1 : 0) + (missed.length === 0 ? 1 : 0) : 0, missed, qn, maxCombo });
+    }
     async function loop() {
+      await overlay('splash', `<div class="bars"></div><div class="t"><span>${boss ? 'BOSS BATTLE' : 'MISSION START'}</span><b>${esc(cfg.enemy)}</b></div>`, 1300);
       while (!ended) {
         if (!pool.length) pool.push(...shuffle(cfg.pool()));
         const q = pool.shift(); qn++;
         const t1 = cfg.tutorial && qn === 1 ? tip('時間内に答えると攻撃！速いほど大ダメージ') : null;
-        const limitS = cfg.tutorial ? 40 : TL[q.t]; curEnd = Date.now() + limitS * 1000;
-        const r = await askIn($('#bq'), q, { hint, timerEl:$('#tbar'), limit:limitS });
+        const r = await askIn($('#bq'), q, { hint, timerEl:$('#tbar'), limit: cfg.tutorial ? 40 : TL[q.t] });
         if (ended) return;
         if (t1) t1.remove(); hint = false;
         if (r.ok) {
           combo++; maxCombo = Math.max(maxCombo, combo); G.know++;
           const base = 16 + cfg.party.reduce((s, m) => s + m.atk, 0);
           const d = Math.round(base * (1 + .12 * Math.min(combo - 1, 5)) * (r.fast ? 1.5 : 1) * (dbl > 0 ? 2 : 1)); if (dbl > 0) dbl--;
-          hitEnemy(d); pop(d, r.fast); sfx(r.fast ? 'crit' : 'hit'); buzz(15);
-          if (r.fast) toast('速い！ クリティカル');
+          const to = center($('#edoc')), col = r.fast ? '#FFE7A6' : '#F1C76A';
+          if (r.from) await FX.beam(r.from, to, col);
+          FX.burst(to.x, to.y, col, r.fast ? 40 : 22, r.fast ? 10 : 7);
+          hitEnemy(d); pop(d, r.fast); sfx(r.fast ? 'crit' : 'hit'); buzz(15); showCombo();
           cfg.party.forEach((_, i) => gauge[i] = Math.min(100, gauge[i] + (cfg.tutorial ? 50 : 34)));
-          await sleep(550);
+          await sleep(520);
         } else {
-          combo = 0; sfx('ng'); buzz([30, 40, 30]);
+          combo = 0; showCombo(); sfx('ng'); buzz([30, 40, 30]);
           if (!missed.find(m => m.key === q.key)) missed.push(q);
           if (!G.mistakes.includes(q.key)) G.mistakes.push(q.key);
           await showExplain($('#bq'), q, r);
@@ -557,7 +726,7 @@ function battle(cfg) {
         bot();
         if (hp <= 0) return end(true);
         if (cfg.tutorial && gauge.some(g => g >= 100)) {
-          $('#bq').innerHTML = ''; const t2 = tip('ゲージが満タン！ 下の顔をタップして必殺技');
+          $('#bq').innerHTML = ''; const t2 = tip('ゲージが満タン！ 下の仲間をタップして必殺技');
           await new Promise(res => waitUlt = res); t2.remove(); if (ended) return;
           continue;
         }
@@ -566,8 +735,9 @@ function battle(cfg) {
         if (cd <= 0) {
           cd = cfg.every; const d = cfg.tutorial ? 6 : cfg.atk + Math.floor(Math.random() * 5);
           team = Math.max(0, team - d); sfx('hit'); buzz([40, 30, 60]);
-          const f = document.createElement('div'); f.className = 'flash'; f.style.background = 'rgba(226,87,61,.35)'; $('.bt').append(f); setTimeout(() => f.remove(), 450);
+          const f = document.createElement('div'); f.className = 'flash'; f.style.background = 'radial-gradient(circle,transparent 30%,rgba(255,90,60,.55))'; $('.bt').append(f); setTimeout(() => f.remove(), 450);
           $('.bt').classList.add('shake'); setTimeout(() => $('.bt') && $('.bt').classList.remove('shake'), 350);
+          const tb = $('.teamhp'); if (tb) { const c = center(tb); FX.burst(c.x, c.y, '#FF5A3C', 20, 6); }
           toast(`${rnd(cfg.taunts || ['反撃された'])}　元気 −${d}`);
           top(); bot();
           if (team <= 0) { const ok = await revive(); if (!ok) return end(false); team = Math.round(teamMax * .6); bot(); }
@@ -579,7 +749,7 @@ function battle(cfg) {
       return new Promise(res => {
         const free = !revived && cfg.freeRevive;
         modal(`<h2>元気が尽きた……</h2><p class="muted small">${esc(cfg.enemy)} を片づけきれなかった。</p>
-          <div style="display:grid; gap:8px; margin-top:10px"><button class="btn gold" id="rv1">${free ? '先輩に助けてもらう（無料）' : '栄養ドリンクで復活（SO 50）'}</button><button class="btn dark" id="rv2">あきらめる</button></div>`, m => {
+          <div style="display:grid; gap:8px; margin-top:12px"><button class="btn gold" id="rv1">${free ? '先輩に助けてもらう（無料）' : '栄養ドリンクで復活（SO 50）'}</button><button class="btn dark" id="rv2">あきらめる</button></div>`, m => {
           $('#rv1', m).onclick = () => { if (!free && G.so < 50) { toast('SOが足りません'); return; } if (!free) G.so -= 50; revived = true; m.remove(); save(); res(true); };
           $('#rv2', m).onclick = () => { m.remove(); res(false); };
         }, false);
@@ -595,14 +765,17 @@ function fixedParty(chars) { return chars.map(c => { const own = Object.keys(G.c
 function result(o) {
   return new Promise(res => {
     const up = gainExp(o.exp || 0); G.coins += o.coins || 0; G.mats += o.mats || 0; G.so += o.so || 0; save();
-    sfx(o.win === false ? 'ng' : 'win');
-    $('#app').innerHTML = `<div class="res side"><div class="small muted">${esc(o.sub || '')}</div><h1>${o.win === false ? '撤退' : esc(o.title || 'CLEAR')}</h1>
-      ${o.stars !== undefined && o.win !== false ? `<div class="stars">${[1,2,3].map(i => `<span class="${i <= o.stars ? 'on' : ''}" style="animation-delay:${.2 + i * .2}s">★</span>`).join('')}</div>` : ''}
-      ${o.rank ? `<div class="serif" style="font-size:3rem; font-weight:900; color:var(--gold)">${o.rank}</div>` : ''}
-      <div class="rew">${o.exp ? `<div>経験値<b>+${o.exp}</b></div>` : ''}${o.coins ? `<div>円<b>+${yen(o.coins)}</b></div>` : ''}${o.mats ? `<div>研修資料<b>+${o.mats}</b></div>` : ''}${o.so ? `<div>SO<b>+${o.so}</b></div>` : ''}${o.bond ? `<div>絆<b>${esc(o.bond)}</b></div>` : ''}</div>
-      ${up ? `<div class="card" style="border-color:var(--gold)"><b class="serif" style="color:var(--gold); font-size:1.2rem">レベルアップ！ Lv.${G.lv}</b><div class="small muted">気力が全回復した</div></div>` : ''}
+    const lose = o.win === false; sfx(lose ? 'ng' : 'win');
+    const rews = [['経験値', o.exp], ['円', o.coins], ['研修資料', o.mats], ['SO', o.so]].filter(([, v]) => v);
+    $('#app').innerHTML = `<div class="res side"><div class="sub">${esc(o.sub || '')}</div><h1>${lose ? '撤退' : esc(o.title || 'CLEAR')}</h1>
+      ${o.stars !== undefined && !lose ? `<div class="stars">${[1,2,3].map(i => `<span class="${i <= o.stars ? 'on' : ''}" style="animation-delay:${.15 + i * .22}s">★</span>`).join('')}</div>` : ''}
+      ${o.rank ? `<div class="rank">${o.rank}</div>` : ''}
+      <div class="rew">${rews.map(([l, v]) => `<div>${l}<b class="tk" data-v="${v}">+0</b></div>`).join('')}${o.bond ? `<div>絆<b style="font-size:.95rem">${esc(o.bond)}</b></div>` : ''}</div>
+      ${up ? `<div class="lvup">LEVEL UP!　Lv.${G.lv}</div><div class="small muted" style="margin-top:6px">気力が全回復した</div>` : ''}
       ${o.missed && o.missed.length ? `<div class="miss"><div class="sec">見直そう <small>まちがえた問題 ${o.missed.length}問</small></div>${o.missed.map(q => `<details><summary>${esc(String(qTitle(q)).slice(0, 60))}</summary><div>${explain(q)}</div></details>`).join('')}</div>` : ''}
-      <div style="height:16px"></div><button class="btn gold" id="resok">${esc(o.next || '次へ')}</button></div>`;
+      <div style="height:18px"></div><button class="btn gold" id="resok">${esc(o.next || '次へ')}</button></div>`;
+    setTimeout(() => document.querySelectorAll('.tk').forEach((el, i) => setTimeout(() => tickUp(el, +el.dataset.v), i * 120)), 350);
+    if (!lose) setTimeout(() => FX.confetti(up ? 160 : 80), 250);
     $('#resok').onclick = () => res();
   });
 }
@@ -613,7 +786,7 @@ let tapRes = null;
 const BG = { night:'linear-gradient(#0B0D12,#141822)', office:'linear-gradient(#24324A,#141A26)', hall:'linear-gradient(#3A3426,#16140F)', lunch:'linear-gradient(#3B2D22,#17120E)', dusk:'linear-gradient(#4A2E35,#16121A)', crisis:'linear-gradient(#3A1A1A,#120C0C)' };
 let curWho = null;
 function vnOpen(bg, place) {
-  $('#app').innerHTML = `<div class="vn"><div class="stage" id="stg" style="--scene:${BG[bg] || bg}"><div class="place" id="place">${esc(place || '')}</div>
+  $('#app').innerHTML = `<div class="vn"><div class="stage" id="stg" style="--scene:${BG[bg] || bg}"><div class="dust"></div><div class="place" id="place">${esc(place || '')}</div>
     <div class="ctl"><button id="cAuto" class="${VN.auto ? 'on' : ''}">AUTO</button><button id="cSkip">SKIP</button></div><div class="who" id="who"></div></div>
     <div class="box side" id="box"><div id="np"></div><div class="text" id="tx"></div><div id="ex"></div><div class="nx" id="nx" hidden>▼</div></div></div>`;
   $('#cAuto').onclick = e => { e.stopPropagation(); VN.auto = !VN.auto; e.currentTarget.classList.toggle('on', VN.auto); if (VN.auto && tapRes) tapRes(); };
@@ -622,7 +795,7 @@ function vnOpen(bg, place) {
   $('#stg').onclick = () => tapRes && tapRes();
   curWho = null;
 }
-function setScene(bg, place) { $('#place').textContent = place || ''; if (bg) $('#stg').style.setProperty('--scene', BG[bg] || bg); setWho(null); }
+function setScene(bg, place) { const pl = $('#place'); pl.textContent = place || ''; pl.style.animation = 'none'; void pl.offsetWidth; pl.style.animation = ''; if (bg) $('#stg').style.setProperty('--scene', BG[bg] || bg); setWho(null); }
 function setWho(id, expr) { const w = $('#who'); if (!w) return; if (id === null) { w.innerHTML = ''; curWho = null; return; } if (id === 'narr' || id === 'you') return; const k = id + expr; if (curWho !== k) { w.innerHTML = portrait(id, expr); curWho = k; } }
 const nm = s => s.replaceAll('{name}', G.name || 'あなた');
 async function say(id, text, expr = 'normal') {
@@ -651,7 +824,7 @@ function choose(opts) {
 }
 async function note(html) { VN.skip = false; $('#ex').innerHTML = html; $('#nx').hidden = false; await new Promise(res => { tapRes = () => { tapRes = null; res(); }; }); }
 async function run(lines) { for (const l of lines) await say(l[0], l[1], l[2]); }
-async function chapterCard(no, title, sub) { VN.skip = false; const d = document.createElement('div'); d.className = 'chap'; d.innerHTML = `<div><span>${no}</span><b>${title}</b><span>${sub}</span></div>`; $('#stg').append(d); await sleep(2300); d.remove(); }
+async function chapterCard(no, title, sub) { VN.skip = false; const d = document.createElement('div'); d.className = 'chap'; d.innerHTML = `<div><span>${no}</span><b>${title}</b><i></i><span style="margin-top:10px">${sub}</span></div>`; $('#stg').append(d); await sleep(2400); d.remove(); }
 function bump(fx) {
   for (const [k, v] of Object.entries(fx || {})) {
     if (k in G.stat) G.stat[k] = clamp(G.stat[k] + v);
@@ -871,7 +1044,7 @@ async function openEnvelopes(ids) {
     <p class="muted small">封筒をタップして開封　<button class="chip" id="all">すべて開く</button></p><div class="env-grid" id="eg">${ids.map((id, i) => `<button class="env r${CARD[id].r}" data-i="${i}" style="--seal:${CARD[id].r === 5 ? 'radial-gradient(#FFE6A0,#C9922A)' : CARD[id].r === 4 ? 'radial-gradient(#D8B8FF,#7B4FC9)' : 'radial-gradient(#E46A50,#9C2E1F)'}; animation-delay:${i * .06}s" aria-label="封筒${i + 1}"><i></i></button>`).join('')}</div>
     <div id="done" hidden><button class="btn gold" id="eok">OK</button></div></div>`;
   let opened = 0;
-  const open = b => { if (b.classList.contains('open')) return; const id = ids[+b.dataset.i]; b.classList.add('open'); b.innerHTML = cardHtml(id); if (isNew[id]) b.firstElementChild.insertAdjacentHTML('beforeend', '<span class="nw new">NEW</span>'); sfx(CARD[id].r === 5 ? 'r5' : 'env'); if (CARD[id].r === 5) buzz([30, 30, 80]); if (++opened === ids.length) $('#done').hidden = false; };
+  const open = b => { if (b.classList.contains('open')) return; const id = ids[+b.dataset.i], r = CARD[id].r, c = center(b); b.classList.add('open'); b.innerHTML = (r === 5 ? '<span class="beam"></span>' : '') + cardHtml(id); FX.burst(c.x, c.y, r === 5 ? '#FFE7A6' : r === 4 ? '#C9A6FF' : '#E8E2D2', r === 5 ? 50 : r === 4 ? 26 : 10, r === 5 ? 10 : 6); if (r === 5) FX.confetti(60); if (isNew[id]) b.querySelector('.ccard').insertAdjacentHTML('beforeend', '<span class="nw new">NEW</span>'); sfx(CARD[id].r === 5 ? 'r5' : 'env'); if (CARD[id].r === 5) buzz([30, 30, 80]); if (++opened === ids.length) $('#done').hidden = false; };
   $('#eg').onclick = e => { const b = e.target.closest('.env'); if (b) open(b); };
   $('#all').onclick = () => $('#eg').querySelectorAll('.env').forEach((b, i) => setTimeout(() => open(b), i * 90));
   await new Promise(res => $('#eok').onclick = res);
@@ -887,12 +1060,12 @@ async function tutorialScout() {
 
 /* ═════════ 月次決算ラン ═════════ */
 const ACTS = [
-  { id:'je', ic:'🧾', t:'仕訳処理', d:'2問。正解ごとに処理が進む', eff:'処理＋' },
-  { id:'doc', ic:'🔍', t:'証憑チェック', d:'1問。正解で処理と正確さが上がる', eff:'処理・正確さ＋' },
-  { id:'study', ic:'📘', t:'研修', d:'正確さ＋15、元気−8', eff:'正確さ＋' },
-  { id:'rest', ic:'☕', t:'定時で帰る', d:'元気＋25', eff:'元気＋' },
-  { id:'ot', ic:'🌙', t:'残業', d:'処理＋20、元気−20、家族−2', eff:'処理＋＋' },
-  { id:'ask', ic:'💬', t:'先輩に相談', d:'正確さ＋10、処理＋6、絆＋', eff:'正確さ・絆＋' },
+  { id:'je', ic:'je', t:'仕訳処理', d:'2問。正解ごとに処理が進む', eff:'処理＋' },
+  { id:'doc', ic:'doc', t:'証憑チェック', d:'1問。正解で処理と正確さが上がる', eff:'処理・正確さ＋' },
+  { id:'study', ic:'study', t:'研修', d:'正確さ＋15、元気−8', eff:'正確さ＋' },
+  { id:'rest', ic:'rest', t:'定時で帰る', d:'元気＋25', eff:'元気＋' },
+  { id:'ot', ic:'ot', t:'残業', d:'処理＋20、元気−20、家族−2', eff:'処理＋＋' },
+  { id:'ask', ic:'ask', t:'先輩に相談', d:'正確さ＋10、処理＋6、絆＋', eff:'正確さ・絆＋' },
 ];
 const RUN_EVENTS = [
   { who:'amagi', text:'月曜9時2分。「おはよう！ 今月、締めを2日早められない？」', opts:[
@@ -950,7 +1123,7 @@ async function playRun(sup) {
   };
   for (; R.week <= 4; R.week++) {
     const hand = shuffle(ACTS.filter(a => a.id !== 'ask' || R.chars.some(c => c === 'akeno' || c === 'sumiya'))).slice(0, 3);
-    view(`<div class="sec">今週の行動を1つ選ぶ</div><div class="acts">${hand.map((a, i) => `<button class="act" data-i="${i}" style="animation-delay:${i * .08}s"><span class="ic">${a.ic}</span><b>${a.t}</b><p>${a.d}</p><em>${a.eff}</em></button>`).join('')}</div>`);
+    view(`<div class="sec">今週の行動を1つ選ぶ</div><div class="acts">${hand.map((a, i) => `<button class="act" data-i="${i}" style="animation-delay:${i * .08}s"><span class="ic">${ICON[a.ic]}</span><b>${a.t}</b><p>${a.d}</p><em>${a.eff}</em></button>`).join('')}</div>`);
     const a = hand[await pick('.acts')];
     if (a.id === 'je') { const ok = await quiz(rnd([POOLS.basic, POOLS.expense, POOLS.close]), 2); R.prog += ok * (14 + Math.round(bonus / 3)); }
     if (a.id === 'doc') { const ok = await quiz(() => DATA.docs.map(d => Q.doc(d.id)), 1); R.prog += ok * 10; R.acc += ok * 12; }
@@ -1027,6 +1200,17 @@ function chatView(who) {
 
 /* ═════════ 画面の部品 ═════════ */
 const ICON = {
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5" stroke-linecap="round"/></svg>',
+  mission:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3M8.5 11l2 2 4-4M8.5 17h7"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke-linecap="round"/><path d="M12 13.2l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="currentColor" stroke="none"/></svg>',
+  coffee:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 7h10l-1 13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"/><path d="M6 4h12v3H6z"/><path d="M9 12h6" stroke-linecap="round"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3" stroke-linecap="round"/></svg>',
+  je:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18M7 8h3M14 8h3M7 12h3M14 12h3"/></svg>',
+  doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h8l4 4v6"/><path d="M6 3v18h6"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="M19 19l2.5 2.5"/></svg>',
+  study:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v14c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-14c-3-.5-6 0-8 1.5z"/><path d="M12 6v14"/></svg>',
+  rest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h12v4a6 6 0 0 1-6 6h0a6 6 0 0 1-6-6z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4"/></svg>',
+  ot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+  ask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h12v8H8l-4 3z"/><path d="M15 9h6v8l-3-2h-6v-1"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
   story:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 21a2 2 0 0 1 2-2h12v2"/></svg>',
   run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
@@ -1035,13 +1219,17 @@ const ICON = {
 };
 function hud() {
   regen();
-  return `<div class="hud side"><div class="lv"><span class="b">${G.lv}<small>Lv</small></span><span class="t"><b>${esc(G.name || '新人')}</b><span class="small muted">${RANKS[chapsCleared()]}</span><i><s style="width:${G.exp / expNext() * 100}%"></s></i></span></div>
-    <span class="cur sta"><span class="ic">気</span><span class="num">${G.sta}/${staMax()}</span></span><span class="cur coin"><span class="ic">円</span><span class="num">${yen(G.coins)}</span></span><button class="cur so" id="soBtn" aria-label="SOを手に入れる"><span class="ic">S</span><span class="num">${yen(G.so)}</span></button></div>`;
+  const C = 2 * Math.PI * 17;
+  return `<div class="hud side"><div class="lv"><span class="lvring"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" stroke="rgba(255,255,255,.12)" stroke-width="3" fill="none"/><circle cx="20" cy="20" r="17" stroke="#7FB2FF" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - G.exp / expNext())}"/></svg><b>${G.lv}</b><small>LV</small></span>
+    <span class="t"><b>${esc(G.name || '新人')}</b><span>${RANKS[chapsCleared()]}</span></span></div>
+    <span class="cur sta"><span class="ic">気</span><span>${G.sta}/${staMax()}</span></span><span class="cur coin"><span class="ic">円</span><span>${yen(G.coins)}</span></span><button class="cur so" id="soBtn" aria-label="SOを手に入れる"><span class="ic">S</span><span>${yen(G.so)}</span></button></div>`;
 }
 function tabs(on) {
   const free = Date.now() >= G.freeTs;
-  const T = [['home','ホーム'],['story','ストーリー'],['run','決算ラン'],['scout','スカウト'],['party','仲間']];
-  return `<nav class="tabs">${T.map(([k, l]) => `<button class="tab ${on === k ? 'on' : ''}" data-tab="${k}">${ICON[k]}${l}${(k === 'scout' && free && G.tutScout) || (k === 'story' && nextEp() && on !== 'story') ? '<span class="dot"></span>' : ''}</button>`).join('')}</nav>`;
+  const T = [['home','ホーム'],['run','決算ラン'],['story','ストーリー'],['scout','スカウト'],['party','仲間']];
+  return `<nav class="tabs">${T.map(([k, l]) => { const dot = (k === 'scout' && free && G.tutScout) || (k === 'story' && nextEp() && on !== 'story');
+    return k === 'story' ? `<button class="tab mid ${on === k ? 'on' : ''}" data-tab="${k}"><span class="orb">${ICON[k]}</span><span>${l}</span>${dot ? '<span class="dot" style="right:28%; top:-2px"></span>' : ''}</button>`
+      : `<button class="tab ${on === k ? 'on' : ''}" data-tab="${k}">${ICON[k]}${l}${dot ? '<span class="dot"></span>' : ''}</button>`; }).join('')}</nav>`;
 }
 function bindTabs() { document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sfx('tap'); go(b.dataset.tab); }); const so = $('#soBtn'); if (so) so.onclick = () => go('scout'); }
 function modal(html, bind, closable = true) { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="sheet">${html}</div>`; if (closable) m.onclick = e => { if (e.target === m) m.remove(); }; $('#app').append(m); bind && bind(m); return m; }
@@ -1072,22 +1260,32 @@ const MISSIONS = [{ k:'story', t:'ストーリーを1話クリア', n:1, so:50 }
 function viewHome() {
   const ep = nextEp(), hc = G.party[0] && CARD[G.party[0]] ? CARD[G.party[0]].char : G.home;
   const free = Date.now() >= G.freeTs, un = unreadChat(), canClaim = MISSIONS.filter(m => G.daily.m[m.k] >= m.n && !G.daily.claimed.includes(m.k)).length;
-  $('#app').innerHTML = hud() + `<div class="home"><div class="bgx"></div><div class="stand">${portrait(hc)}</div><button class="tapzone" id="tz" aria-label="${esc(P[hc].name)}に話しかける"></button>
-    <div class="bottom side">
-      <div class="bsmini card" style="padding:8px 12px">${STAT.map(([k, l, c]) => `<div><span>${l}</span><i><s style="width:${G.stat[k]}%; background:var(${c})"></s></i></div>`).join('')}</div>
-      ${ep ? `<button class="cta" id="cta"><span><span class="k">ストーリー　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」</span><b>${ep.no}「${ep.title}」</b><span class="small muted">${esc(ep.desc)}</span></span><span class="go">つづき</span></button>`
-           : `<button class="cta" id="cta"><span><span class="k">ストーリー</span><b>3章「連結」は制作中</b><span class="small muted">月次決算ランで仲間を育てよう</span></span><span class="go">決算ラン</span></button>`}
-      <div class="tiles"><button class="tile" data-go="run"><span class="ic">🧾</span><b>決算ラン</b><span>気力10</span></button>
-        <button class="tile" data-go="scout"><span class="ic">✉️</span><b>スカウト</b><span>${free ? '<span style="color:var(--gold)">無料1回</span>' : '無料まで ' + Math.ceil((G.freeTs - Date.now()) / 36e5) + '時間'}</span></button>
-        <button class="tile" id="chatBtn"><span class="ic">💬</span><b>社内チャット</b><span>${un ? `<span style="color:var(--shu)">未読 ${un}</span>` : 'Kasane Chat'}</span>${un ? '<span class="dot" style="right:12px"></span>' : ''}</button></div>
-      <button class="card" id="misBtn" style="display:flex; justify-content:space-between; align-items:center; padding:9px 12px"><b class="small">デイリーミッション</b><span class="small ${canClaim ? '' : 'muted'}" style="${canClaim ? 'color:var(--gold)' : ''}">${canClaim ? '受け取れる報酬あり' : `${G.daily.claimed.length}/3 受取済`}</span></button>
+  $('#app').innerHTML = hud() + `<div class="home"><div class="bgx"></div><div class="dust"></div><div class="stand" id="stand">${portrait(hc)}</div><button class="tapzone" id="tz" aria-label="${esc(P[hc].name)}に話しかける"></button>
+    <div class="hm-left">
+      <button class="lbanner" data-go="run" style="--c1:#24365A; --c2:#0F1626">${face('sumiya') ? `<img src="${face('sumiya')}" alt="">` : ''}<span>気力10</span><b>月次決算<br>ラン</b></button>
+      <button class="lbanner" data-go="scout" style="--c1:#5A2414; --c2:#1E1026">${face('akeno') ? `<img src="${face('akeno')}" alt="">` : ''}<span>${free ? '無料1回' : 'ピックアップ'}</span><b>辞令封筒</b>${free ? '<span class="dot" style="top:6px; right:6px"></span>' : ''}</button>
+    </div>
+    <div class="hm-right">
+      <button class="rbtn" id="chatBtn"><span class="o">${ICON.chat}</span>チャット${un ? '<span class="dot"></span>' : ''}</button>
+      <button class="rbtn" id="misBtn"><span class="o">${ICON.mission}</span>ミッション${canClaim ? '<span class="dot"></span>' : ''}</button>
+      <button class="rbtn" id="lbBtn"><span class="o">${ICON.cal}</span>ログボ</button>
+      <button class="rbtn" data-go="party"><span class="o">${ICON.gear}</span>設定</button>
+    </div>
+    <div class="hm-bottom side">
+      <div class="bsstrip glass">${STAT.map(([k, l, c]) => `<div><span>${l}</span><i><s style="width:0; background:var(${c})" data-w="${G.stat[k]}"></s></i></div>`).join('')}</div>
+      <button class="story-cta shine" id="cta"><span><span class="k">${ep ? `STORY　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」` : 'STORY'}</span><b>${ep ? `${ep.no}「${ep.title}」` : '3章「連結」は制作中'}</b><span class="small muted">${ep ? esc(ep.desc) : '月次決算ランで仲間を育てよう'}</span></span><span class="go">${ep ? 'PLAY' : 'RUN'}</span></button>
     </div></div>` + tabs('home');
   bindTabs();
+  requestAnimationFrame(() => document.querySelectorAll('.bsstrip s').forEach(e => e.style.width = e.dataset.w + '%'));
   $('#cta').onclick = () => { sfx('tap'); ep ? playEpisode(ep) : go('run'); };
-  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+  document.querySelectorAll('.home [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#chatBtn').onclick = () => chatView();
   $('#misBtn').onclick = () => missionModal();
-  $('#tz').onclick = () => { sfx('tap'); const old = $('.bubble'); if (old) old.remove(); const d = document.createElement('div'); d.className = 'bubble'; d.innerHTML = `<b>${esc(P[hc].name)}</b>${esc(rnd(HOME_LINES[hc] || ['……']))}`; $('.home').append(d); setTimeout(() => d.remove(), 3200); };
+  $('#lbBtn').onclick = () => modal(`<h2>ログインボーナス</h2><p class="muted small">通算 ${G.login.total}日　連続 ${G.login.streak}日。今日の分は受け取り済みです。</p>
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin:12px 0">${LB.map(([r, k], i) => `<div style="text-align:center; font-size:.6rem; padding:6px 0; border-radius:8px; background:${i < ((G.login.total - 1) % 7) + 1 ? 'rgba(241,199,106,.25)' : 'rgba(255,255,255,.05)'}; color:var(--muted)">${i + 1}日<br><b class="num" style="font-size:.9rem; color:var(--ink)">${r}</b><br>${k === '研修資料' ? '資料' : k}</div>`).join('')}</div><button class="btn dark" onclick="this.closest('.modal').remove()">閉じる</button>`);
+  const home = $('.home'), stand = $('#stand');
+  home.onpointermove = e => { const r = home.getBoundingClientRect(); const dx = (e.clientX - r.left) / r.width - .5, dy = (e.clientY - r.top) / r.height - .5; stand.style.transform = `translate(${-dx * 14}px,${-dy * 8}px)`; };
+  $('#tz').onclick = () => { sfx('tap'); const old = $('.bubble'); if (old) old.remove(); const d = document.createElement('div'); d.className = 'bubble'; d.innerHTML = `<b>${esc(P[hc].name)}</b><span></span>`; home.append(d); const t = rnd(HOME_LINES[hc] || ['……']); let k = 0; const sp = d.querySelector('span'); const iv = setInterval(() => { sp.textContent = t.slice(0, ++k); if (k >= t.length) clearInterval(iv); }, 35); setTimeout(() => d.remove(), 3600); };
   if (G.tutScout) loginBonus();
 }
 function missionModal() {
@@ -1098,12 +1296,14 @@ function missionModal() {
 }
 
 /* ストーリー一覧 */
+const CHAP_ART = { 1:{ face:'akeno', c1:'#4A2018' }, 2:{ face:'nagisa', c1:'#4A3818' } };
 function viewStory() {
-  $('#app').innerHTML = hud() + `<div class="scroll side">${CHAPS.map(c => `<div class="sec">${c.no}「${c.title}」 <small>${c.sub}</small></div>`
-    + EPISODES.filter(e => e.ch === c.ch).map(e => { const i = EPISODES.indexOf(e), done = epDone(e.id), open = i === 0 || epDone(EPISODES[i - 1].id);
-      return `<button class="card" data-e="${i}" style="display:flex; gap:12px; align-items:center; width:100%; text-align:left; margin-bottom:8px; ${open ? '' : 'opacity:.45'}"><span class="serif" style="font-size:.8rem; color:var(--gold); width:3.6em; flex:none">${e.no}</span><span style="flex:1; min-width:0"><b>${e.title}</b><br><span class="small muted">${esc(e.desc)}</span></span><span class="small" style="flex:none; color:${done ? 'var(--green)' : 'var(--muted)'}">${done ? 'クリア' : open ? '<span class="new">NEW</span>' : 'ロック'}</span></button>`; }).join('')).join('')}
-    <div class="sec">3章「連結」 <small>主任・28歳</small></div><div class="card small muted">制作中。後輩・新堂結の入社、志乃の8回目の挑戦、そして結婚。</div>
-    <p class="small muted" style="margin-top:12px">ストーリーは気力を使わずに読めます。</p><div style="height:12px"></div></div>` + tabs('story');
+  $('#app').innerHTML = hud() + `<div class="scroll side">${CHAPS.map(c => { const eps = EPISODES.filter(e => e.ch === c.ch), done = eps.filter(e => epDone(e.id)).length, art = CHAP_ART[c.ch];
+    return `<div class="chaphead" style="--c1:${art.c1}">${face(art.face) ? `<img src="${face(art.face)}" alt="">` : ''}<span>CHAPTER ${c.ch}</span><b>${c.no}「${c.title}」</b><span style="letter-spacing:.06em; font-family:var(--f-body)">${c.sub}　${done}/${eps.length}話</span><i><s style="width:${done / eps.length * 100}%"></s></i></div>
+      <div class="timeline">${eps.map(e => { const i = EPISODES.indexOf(e), d = epDone(e.id), open = i === 0 || epDone(EPISODES[i - 1].id);
+        return `<button class="ep ${d ? 'done' : ''} ${open ? '' : 'lock'}" data-e="${i}"><span class="no">EP.${String(i + 1).padStart(2, '0')}</span><span style="flex:1; min-width:0"><b>${e.title}</b><br><span class="small muted">${esc(e.desc)}</span></span><span class="small" style="flex:none; color:${d ? 'var(--teal)' : 'var(--muted)'}">${d ? 'CLEAR' : open ? '<span class="new">NEW</span>' : 'LOCK'}</span></button>`; }).join('')}</div>`; }).join('')}
+    <div class="chaphead" style="--c1:#1E2A44; opacity:.6"><span>CHAPTER 3</span><b>3章「連結」</b><span style="font-family:var(--f-body)">制作中　後輩・新堂結の入社、志乃の8回目の挑戦、そして結婚。</span></div>
+    <p class="small muted">ストーリーは気力を使わずに読めます。</p><div style="height:12px"></div></div>` + tabs('story');
   bindTabs();
   $('.scroll').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; const i = +b.dataset.e; if (i > 0 && !epDone(EPISODES[i - 1].id)) return toast('前の話をクリアすると読めます'); playEpisode(EPISODES[i]); };
 }
@@ -1158,6 +1358,6 @@ let VIEW = 'home';
 function go(v) { VIEW = v; daily(); regen(); save(); ({ home:viewHome, story:viewStory, run:runSetup, scout:viewScout, party:viewParty })[v](); }
 const render = () => go(VIEW);
 function boot() { daily(); if (!G.cold) return coldOpen(); if (!G.tutScout && epDone('e1')) return tutorialScout().then(() => go('home')); go('home'); }
-setInterval(() => { const b = document.querySelector('.cur.sta .num'); if (b) { regen(); b.textContent = `${G.sta}/${staMax()}`; } }, 30000);
+setInterval(() => { const b = document.querySelector('.cur.sta span:last-child'); if (b) { regen(); b.textContent = `${G.sta}/${staMax()}`; } }, 30000);
 boot();
 </script>
