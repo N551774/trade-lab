@@ -1099,7 +1099,7 @@ const OUTFITS = [
 const FUNDING = [
   { c:500, y:120, t:'創業資金', ic:'🌱', r:'' }, { c:1200, y:250, t:'増資', ic:'📈', r:'人気' }, { c:3000, y:480, t:'IPO（上場）', ic:'🔔', r:'いちばんお得' },
 ];
-const DEPOSIT = { amt:500, rate:.05, hours:24, wh:.20315 };
+const DEPOSIT = { amt:500, rate:.05, hours:24, wh:.15315 };
 function receipt({ title, rows, dr, cr, note }) {
   const n = Math.max(dr.length, cr.length);
   const lines = Array.from({length:n}, (_, i) => `<tr><td>${dr[i] ? esc(dr[i][0]) : ''}</td><td class="a">${dr[i] ? yen(dr[i][1]) : ''}</td><td>${cr[i] ? esc(cr[i][0]) : ''}</td><td class="a">${cr[i] ? yen(cr[i][1]) : ''}</td></tr>`).join('');
@@ -1122,7 +1122,7 @@ function depositCard() {
   const d = S.deposit;
   if (!d) return `<div class="card" style="display:grid; gap:8px">
       <div style="display:flex; gap:12px; align-items:center"><span style="font-size:2rem">🏦</span><div style="min-width:0"><b class="disp">定期預金</b>
-      <div class="small muted" style="line-height:1.6">${DEPOSIT.amt}コインを${DEPOSIT.hours}時間預けると、利息${DEPOSIT.amt*DEPOSIT.rate}コイン。<br>ただし利息からは税金 20.315% が源泉徴収されます。</div></div></div>
+      <div class="small muted" style="line-height:1.6">${DEPOSIT.amt}コインを${DEPOSIT.hours}時間預けると、利息${DEPOSIT.amt*DEPOSIT.rate}コイン。<br>ただし利息からは税金 15.315% が源泉徴収されます。</div></div></div>
       <button class="btn btn-gold" data-act="deposit" ${S.coins < DEPOSIT.amt ? 'disabled' : ''}>${DEPOSIT.amt} コインを預ける</button></div>`;
   const left = d.ts + DEPOSIT.hours * 36e5 - Date.now();
   return `<div class="card" style="display:grid; gap:8px"><div style="display:flex; gap:12px; align-items:center"><span style="font-size:2rem">🏦</span>
@@ -1190,9 +1190,9 @@ ACTIONS.withdraw = () => {
   const d = S.deposit; if (!d || Date.now() < d.ts + DEPOSIT.hours * 36e5) return;
   const interest = Math.round(d.amt * DEPOSIT.rate), tax = Math.floor(interest * DEPOSIT.wh), net = d.amt + interest - tax;
   S.coins += net; S.deposit = null; S.receipts = (S.receipts || 0) + 1; addBadge('interest'); save(); beep('win'); confetti(70);
-  receipt({ title:'利息計算書', rows:[['元本', `${yen(d.amt)} コイン`], ['利息', `${interest} コイン`], ['源泉徴収税（20.315%）', `△${tax} コイン`], ['お受取額', `<b>${yen(net)} コイン</b>`]],
+  receipt({ title:'利息計算書', rows:[['元本', `${yen(d.amt)} コイン`], ['利息', `${interest} コイン`], ['源泉徴収税（15.315%）', `△${tax} コイン`], ['お受取額', `<b>${yen(net)} コイン</b>`]],
     dr:[['普通預金', net], ['法人税等', tax]], cr:[['定期預金', d.amt], ['受取利息', interest]],
-    note:'預金利息からは所得税・復興特別所得税15.315%と住民税5%（法人は所得税等のみの場合あり）が天引きされます。引かれた税金は法人税等（または仮払税金）で処理し、確定申告で精算します。' });
+    note:'会社の預金利息からは所得税・復興特別所得税 15.315% が源泉徴収されます（個人なら住民税5%も加わり20.315%）。天引きされた税金は法人税等で処理し、法人税の申告で差し引けます。' });
 };
 /* ───────── マイページ ───────── */
 const BADGES = [
