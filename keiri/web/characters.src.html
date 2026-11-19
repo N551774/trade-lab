@@ -1,0 +1,139 @@
+<title>経理ラボ キャラクター図鑑</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 設定資料集。上にキャラ集合の帯、下に1人1枚のプロフィールカード、モンスター図鑑、グッズの完成イメージ。 */
+:root{
+  --bg:#F4F2EC; --paper:#FFFFFF; --paper2:#F9F7F1; --line:#E2DDD0; --ink:#1E2420; --muted:#6C726B;
+  --green:#14A06B; --shu:#E5432F; --gold:#D9A21B;
+  --f-disp:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141815; --paper:#1D231F; --paper2:#242B26; --line:#323B35; --ink:#EEF2EE; --muted:#9AA39C; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141815; --paper:#1D231F; --paper2:#242B26; --line:#323B35; --ink:#EEF2EE; --muted:#9AA39C; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.6}
+.wrap{max-width:1080px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-disp); font-weight:800; margin:0; text-wrap:balance}
+.hero{padding-block:28px 8px}
+.eyebrow{font-size:.78rem; letter-spacing:.14em; color:var(--green); font-weight:800}
+.hero h1{font-size:clamp(1.8rem,5vw,2.8rem); margin-top:4px}
+.hero p{color:var(--muted); max-width:62ch; margin:8px 0 0}
+.lineup{display:flex; align-items:flex-end; gap:0; overflow-x:auto; padding:18px 0 8px; margin-top:12px;
+  background:linear-gradient(transparent 78%, color-mix(in srgb,var(--green) 14%,transparent) 78%); border-radius:20px}
+.lineup svg{height:200px; width:auto; flex:none; margin-right:-26px; transition:transform .2s}
+.lineup svg:hover{transform:translateY(-6px)}
+.lineup .mascot{height:110px; margin-right:0}
+section{margin-top:40px}
+.sec-h{display:flex; align-items:baseline; gap:12px; margin-bottom:14px; flex-wrap:wrap}
+.sec-h h2{font-size:1.5rem}
+.sec-h span{color:var(--muted); font-size:.85rem}
+.cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr)); gap:16px}
+.card{background:var(--paper); border:1px solid var(--line); border-radius:22px; overflow:hidden; display:grid; grid-template-columns:150px 1fr; min-width:0}
+.card .stand{background:var(--tint); display:flex; align-items:flex-end; justify-content:center; padding:10px 6px 0; position:relative}
+.card .stand svg{width:100%; height:auto; max-height:230px}
+.card .stand .num{position:absolute; top:10px; left:12px; font-family:var(--f-disp); font-weight:800; color:#fff; font-size:.8rem; opacity:.9}
+.card .body{padding:16px 16px 14px; min-width:0}
+.card .kana{font-size:.72rem; color:var(--muted); letter-spacing:.1em}
+.card h3{font-size:1.3rem}
+.card .role{font-size:.8rem; font-weight:700; color:var(--accent)}
+.bubble{position:relative; display:inline-block; background:var(--accent); color:#fff; font-family:var(--f-disp); font-weight:800; padding:6px 12px; border-radius:14px; margin:8px 0 6px; font-size:.92rem}
+.bubble::before{content:""; position:absolute; left:14px; top:-6px; border:7px solid transparent; border-bottom-color:var(--accent); border-top:0}
+dl{display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin:6px 0 0; font-size:.8rem}
+dt{color:var(--muted); white-space:nowrap}
+dd{margin:0; min-width:0}
+.chip{display:inline-flex; align-items:center; gap:6px; font-family:ui-monospace,monospace; font-size:.75rem}
+.chip i{width:14px; height:14px; border-radius:4px; background:var(--accent); display:inline-block}
+.faces{display:flex; gap:4px; margin-top:10px}
+.faces figure{margin:0; flex:1; min-width:0; text-align:center}
+.faces svg{width:100%; height:auto; background:var(--paper2); border-radius:10px}
+.faces figcaption{font-size:.62rem; color:var(--muted)}
+.mascot-card{grid-template-columns:150px 1fr}
+.monsters{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:14px}
+.mon{background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:14px; display:grid; grid-template-columns:96px 1fr; gap:12px; align-items:center}
+.mon svg{width:96px; height:96px}
+.mon h3{font-size:1.05rem}
+.mon p{margin:4px 0; font-size:.8rem; color:var(--muted)}
+.mon .weak{font-size:.72rem; font-weight:800; color:var(--green)}
+.boss{font-size:.66rem; background:var(--shu); color:#fff; padding:1px 7px; border-radius:6px; margin-left:6px; vertical-align:middle}
+/* グッズ */
+.goods{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:16px}
+.gbox{background:var(--paper); border:1px solid var(--line); border-radius:22px; padding:16px}
+.gbox h3{font-size:1rem; margin-bottom:10px}
+.sheet{background:repeating-linear-gradient(45deg,#E9EEF4 0 10px,#F1F4F8 10px 20px); border-radius:14px; padding:12px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.sheet svg{width:100%; height:auto; filter:url(#die) drop-shadow(0 3px 4px rgba(0,0,0,.18))}
+.keys{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:6px 0}
+.key{display:flex; flex-direction:column; align-items:center}
+.key .ring{width:22px; height:22px; border:4px solid #B8BEC6; border-radius:50%; margin-bottom:-4px; position:relative; z-index:1}
+.key .acry{width:96px; padding:10px 6px 6px; border-radius:22px; background:linear-gradient(140deg,rgba(255,255,255,.75),rgba(255,255,255,.25)); border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 6px 16px rgba(0,0,0,.15), inset 0 0 0 1px rgba(0,0,0,.05); position:relative; backdrop-filter:blur(2px)}
+.key .acry::before{content:""; position:absolute; top:6px; left:50%; width:10px; height:10px; margin-left:-5px; border-radius:50%; background:var(--bg); border:2px solid #C9CED6}
+.key .acry svg{width:100%; height:auto; margin-top:8px}
+.stamps{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.stamp{background:#fff; border-radius:14px; padding:6px 4px 8px; text-align:center; border:1px solid #E6E6E6; position:relative}
+.stamp svg{width:84%; height:auto}
+.stamp b{display:block; font-family:var(--f-disp); font-size:.72rem; line-height:1.25; color:#1E2420; -webkit-text-stroke:0; padding:0 2px}
+.note{font-size:.8rem; color:var(--muted); margin:36px 0 40px; padding:14px 16px; border:1px dashed var(--line); border-radius:14px; max-width:80ch}
+@media (max-width:560px){.card{grid-template-columns:118px 1fr} .card .stand svg{max-height:190px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="die" x="-15%" y="-15%" width="130%" height="130%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="5" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="o"/>
+    <feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs></svg>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">KEIRI LAB · CHARACTER BOOK</div>
+    <h1>経理ラボ キャラクター図鑑</h1>
+    <p>新入社員からCFOへの物語に登場する人たちと、月末に現れるモンスターたち。ひと目で誰か分かるように、全員に「経理の小道具」と「決めゼリフ」を持たせています。</p>
+    <div class="lineup" id="lineup"></div>
+  </header>
+
+  <section><div class="sec-h"><h2>職場のなかま</h2><span>ゲームでは仲間になってスキルを貸してくれる</span></div><div class="cards" id="work"></div></section>
+  <section><div class="sec-h"><h2>社外のライバル</h2><span>ボスとして立ちはだかり、のちに頼れる存在に</span></div><div class="cards" id="rival"></div></section>
+  <section><div class="sec-h"><h2>家族</h2><span>ライフステージの難題を一緒に乗り越える</span></div><div class="cards" id="family"></div></section>
+  <section><div class="sec-h"><h2>モンスター図鑑</h2><span>経理の「あるある」が実体化した敵キャラ</span></div><div class="monsters" id="mons"></div></section>
+  <section><div class="sec-h"><h2>グッズにすると</h2><span>デフォルメ全身はステッカーやアクスタ、表情はスタンプに</span></div>
+    <div class="goods">
+      <div class="gbox"><h3>ダイカットステッカー</h3><div class="sheet" id="stk"></div></div>
+      <div class="gbox"><h3>アクリルキーホルダー</h3><div class="keys" id="keys"></div></div>
+      <div class="gbox"><h3>チャットスタンプ</h3><div class="stamps" id="stamps"></div></div>
+    </div></section>
+  <p class="note">登場する人物・会社・モンスターはすべてオリジナルです。ここに載っている絵はコードで描いたデザイン案です。実際に商品化する場合は、この図鑑（色・モチーフ・決めゼリフ・性格）を設定資料にして、イラストレーターに清書を依頼してください。</p>
+</div>
+
+<script>
+/*__CHARS__*/
+const GROUP = { work:['shiraishi','onizuka','taiga','koharu','amano'], rival:['kirishima','saisho'], family:['nagisa','sora'] };
+const EXPR = [['normal','ふつう'],['happy','うれしい'],['angry','おこ'],['sad','しょんぼり'],['surprised','びっくり']];
+const tint = c => `color-mix(in srgb, ${c} 22%, var(--paper2))`;
+let n = 0;
+function card(id) {
+  const c = CHARS[id]; n++;
+  return `<article class="card" style="--accent:${c.color}; --tint:${tint(c.color)}">
+    <div class="stand"><span class="num" style="color:${c.color}">No.${String(n).padStart(2,'0')}</span>${charSVG(id, { mode:'full' })}</div>
+    <div class="body"><div class="kana">${c.kana}</div><h3>${c.name}</h3><div class="role">${c.role}・${c.age}</div>
+      <div class="bubble">「${c.line}」</div>
+      <dl><dt>モチーフ</dt><dd>${c.motif}</dd><dt>スキル</dt><dd><b>${c.skill}</b>：${c.skillDesc}</dd>
+        <dt>好き</dt><dd>${c.likes}</dd><dt>苦手</dt><dd>${c.dislikes}</dd><dt>人物</dt><dd>${c.bio}</dd>
+        <dt>イメージ色</dt><dd><span class="chip"><i></i>${c.color}</span></dd></dl>
+      <div class="faces">${EXPR.map(([e, l]) => `<figure>${charSVG(id, { expr:e })}<figcaption>${l}</figcaption></figure>`).join('')}</div></div></article>`;
+}
+const chobo = `<article class="card" style="--accent:#14A06B; --tint:${tint('#14A06B')}">
+  <div class="stand" style="align-items:center"><span class="num" style="color:#14A06B">No.00</span>${choboSVG(['armcover'], 'happy')}</div>
+  <div class="body"><div class="kana">ちょーぼ</div><h3>チョーボ</h3><div class="role">帳簿の妖精・ナビゲーター</div>
+    <div class="bubble">「貸借、ピッタリ！」</div>
+    <dl><dt>モチーフ</dt><dd>緑の表紙の帳簿そのもの。しおり紐がチャームポイント</dd><dt>スキル</dt><dd><b>道案内</b>：迷ったときにヒントをくれる</dd>
+      <dt>好き</dt><dd>貸借一致、新しいページ</dd><dt>苦手</dt><dd>雑損失、コーヒーのしみ</dd><dt>人物</dt><dd>主人公の机に住みついた帳簿の妖精。着せ替えが趣味。</dd>
+      <dt>イメージ色</dt><dd><span class="chip"><i></i>#14A06B</span></dd></dl>
+    <div class="faces">${[[[],'happy','ふつう'],[['glasses'],'happy','メガネ'],[['headband'],'happy','決算期'],[['goldcalc','tie'],'happy','CFO'],[[],'sad','しょんぼり']].map(([w, m, l]) => `<figure>${choboSVG(w, m)}<figcaption>${l}</figcaption></figure>`).join('')}</div></div></article>`;
+document.getElementById('work').innerHTML = chobo + GROUP.work.map(card).join('');
+document.getElementById('rival').innerHTML = GROUP.rival.map(card).join('');
+document.getElementById('family').innerHTML = GROUP.family.map(card).join('');
+document.getElementById('lineup').innerHTML = ['onizuka','shiraishi','taiga','koharu','amano','kirishima','saisho','nagisa','sora'].map(id => charSVG(id, { mode:'full' })).join('') + choboSVG([], 'happy');
+document.getElementById('mons').innerHTML = Object.entries(MONSTERS).map(([id, m]) => `<div class="mon">${monsterSVG(id)}<div><h3>${m.name}${m.boss ? '<span class="boss">BOSS</span>' : ''}</h3><p>${m.desc}</p><span class="weak">弱点：${m.weak}</span></div></div>`).join('');
+document.getElementById('stk').innerHTML = ['shiraishi','onizuka','taiga','koharu','sora'].map(id => charSVG(id, { mode:'full', expr:'happy' })).join('') + monsterSVG('refslime');
+document.getElementById('keys').innerHTML = [['onizuka','normal'],['shiraishi','happy'],['sora','happy']].map(([id, e]) => `<div class="key"><span class="ring"></span><div class="acry">${charSVG(id, { mode:'full', expr:e })}</div></div>`).join('');
+const ST = [['shiraishi','angry','証憑は？'],['onizuka','normal','数字は嘘をつかん'],['taiga','happy','これ、経費で落ちる？'],['koharu','happy','ダブルチェックしました！'],['kirishima','normal','根拠を示してください'],['saisho','calm','確認させてください'],['amano','happy','夢は上場だ！'],['sora','surprised','でんたく、ピピピ！'],['onizuka','angry','締め日はいつだ！']];
+document.getElementById('stamps').innerHTML = ST.map(([id, e, t]) => `<div class="stamp">${charSVG(id, { expr:e })}<b>${t}</b></div>`).join('');
+</script>

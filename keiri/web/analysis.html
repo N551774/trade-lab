@@ -1,0 +1,131 @@
+<title>スマホRPGヒット分析</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 調査レポート。結論→市場→ヒット作の共通パターン→バランスシートへの設計判断→冒頭5分の設計→出典。 */
+:root{ --bg:#F4F3EF; --paper:#FFFFFF; --paper2:#F6F4EE; --line:#DEDACF; --ink:#1D2026; --muted:#6A6F78; --accent:#B0452C; --accent-soft:#F6E4DD; --ok:#2F7A5B;
+  --f-head:"Noto Serif JP",serif; --f-body:"Noto Sans JP",system-ui,sans-serif }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#14161A; --paper:#1C1F25; --paper2:#23272E; --line:#333842; --ink:#ECEDF0; --muted:#9BA1AB; --accent:#EC8166; --accent-soft:#3A2520; --ok:#6CCB9F; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14161A; --paper:#1C1F25; --paper2:#23272E; --line:#333842; --ink:#ECEDF0; --muted:#9BA1AB; --accent:#EC8166; --accent-soft:#3A2520; --ok:#6CCB9F; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.85; font-size:15px}
+.wrap{max-width:820px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:28px 56px}
+h1,h2,h3{font-family:var(--f-head); font-weight:900; margin:0; text-wrap:balance}
+h1{font-size:clamp(1.6rem,5.5vw,2.2rem)}
+h2{font-size:1.25rem; margin:38px 0 12px; padding-top:14px; border-top:2px solid var(--ink)}
+h3{font-size:1rem; margin:18px 0 6px}
+p{margin:8px 0}
+.eyebrow{font-size:.74rem; letter-spacing:.16em; color:var(--accent); font-weight:700}
+.lead{color:var(--muted)}
+.verdict{background:var(--ink); color:var(--bg); border-radius:16px; padding:18px 20px; margin-top:18px}
+.verdict ol{margin:8px 0 0; padding-left:1.3em}
+.verdict li{margin:4px 0}
+.tw{overflow-x:auto; background:var(--paper); border:1px solid var(--line); border-radius:14px}
+table{border-collapse:collapse; width:100%; font-size:.86rem; min-width:560px}
+th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{background:var(--paper2); font-size:.78rem; color:var(--muted)}
+.cards{display:grid; gap:10px}
+.c{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px}
+.c h3{margin-top:0}
+.c .src{font-size:.78rem; color:var(--muted)}
+.c .to{margin-top:8px; background:var(--accent-soft); border-radius:10px; padding:8px 12px; font-size:.9rem}
+.c .to b{color:var(--accent)}
+ol.time{list-style:none; padding:0; margin:0; display:grid; gap:8px}
+ol.time li{display:grid; grid-template-columns:64px 1fr; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+ol.time b{font-family:var(--f-head); color:var(--accent)}
+.no{color:var(--muted); font-size:.9rem}
+.src-list{font-size:.8rem; color:var(--muted); padding-left:1.2em}
+.src-list a{color:inherit}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">経理ラボ『バランスシート』 設計のための調査</div>
+  <h1>ヒットしているスマホRPGは、何をしているか</h1>
+  <p class="lead">2025年の国内売上上位と、物語・キャラクター・育成で評価されているRPGを調べ、『バランスシート』に取り入れることと、取り入れないことを決めました。</p>
+
+  <div class="verdict">
+    <b>結論：今の『バランスシート』に足りないのは、次の5つ</b>
+    <ol>
+      <li><b>最初の1分で遊ばせる</b>。読ませてから遊ばせる順番を逆にする。</li>
+      <li><b>物語は無料で読めて、戦闘は流れを止めない</b>。物語の戦闘は編成固定にする。</li>
+      <li><b>何度も遊べる短い「育成ラン」</b>を中心の遊びにする。学習の反復はここに入れる。</li>
+      <li><b>キャラクターと距離が縮まる仕組み</b>（絆ランクと、チャットでのやりとり）。</li>
+      <li><b>1日2回、短時間でも開く理由</b>（時間で回復する無料の報酬、連続ログイン）。</li>
+    </ol>
+  </div>
+
+  <h2>市場：2025年の国内売上上位</h2>
+  <p>集計元によって順位は少し違いますが、上位はほぼ共通しています。RPG・キャラクター育成系では『Fate/Grand Order』『ウマ娘』『崩壊：スターレイル』が年間上位に入りました。上半期の収益・ダウンロード数のトップは『ポケポケ』です。</p>
+  <div class="tw"><table>
+    <tr><th>順位</th><th>タイトル</th><th>ジャンル</th><th>この企画に関係する点</th></tr>
+    <tr><td>1</td><td>ラストウォー：サバイバル</td><td>ストラテジー</td><td>参考にしない（4Xストラテジー）</td></tr>
+    <tr><td>2</td><td>Pokémon TCG Pocket（ポケポケ）</td><td>カード収集</td><td>1日2回の無料パック、短い対戦、開封の演出</td></tr>
+    <tr><td>3</td><td>モンスターストライク</td><td>アクションRPG</td><td>1回数分のクエスト、協力プレイ</td></tr>
+    <tr><td>4</td><td>Fate/Grand Order</td><td>RPG（物語）</td><td>物語の強さと、キャラクターへの愛着</td></tr>
+    <tr><td>6</td><td>ウマ娘 プリティーダービー</td><td>育成</td><td>ランダムなイベントと選択で毎回変わる育成ラン</td></tr>
+    <tr><td>8</td><td>崩壊：スターレイル</td><td>ターン制RPG</td><td>行動順が見えるターン制、ビジュアルの力</td></tr>
+  </table></div>
+  <p class="no">順位は4Gamer・Sensor Tower・日経クロストレンドの年間集計（2025年）にもとづく。</p>
+
+  <h2>ヒット作に共通するパターン</h2>
+  <div class="cards">
+    <div class="c"><h3>1. 物語は無料、戦闘で流れを止めない</h3>
+      <p>『ブルーアーカイブ』は、メインストーリーをスタミナを使わずに読めるようにし、物語の中の戦闘は編成を固定して流れが途切れないようにしています。人気に火がついたのは、物語と演出に力を入れた章からだと開発側も語っています。</p>
+      <div class="to"><b>→ 取り入れる</b>：ストーリーは無料。物語の中のバトルは、仲間を固定して短く。</div></div>
+    <div class="c"><h3>2. 絆が深まると、その人の物語が読める</h3>
+      <p>『ブルーアーカイブ』の「モモトーク」は、ゲーム内のチャットでキャラクターとやりとりし、絆ランクが上がると個別の絆ストーリーが解放される仕組みです。メインに出番の少ないキャラクターも掘り下げられます。</p>
+      <div class="to"><b>→ 取り入れる</b>：カサネは IT企業なので、<b>社内チャット</b>がそのまま舞台装置になる。社長の朝9時2分の無茶振りもチャットで届く。絆ランクで、志乃の試験の話や墨谷の過去の断片が読める。</div></div>
+    <div class="c"><h3>3. 何度も遊べる「育成ラン」</h3>
+      <p>『ウマ娘』は、ランダムなイベントと選択で毎回結果が変わる育成を何度も繰り返す作りです（1回30分〜1時間超）。選択肢の効果を見えるようにする改善もしています。『学園アイドルマスター』は、育成にデッキ構築ローグライクの要素を入れたことで、繰り返し遊べる点が評価されています。</p>
+      <div class="to"><b>→ 取り入れる（短く）</b>：<b>「月次決算ラン」</b>。1回5分で、1か月を4週＋締め日で進める。毎週3枚の行動カード（仕訳処理・照合・研修・休む）から1枚を選び、ランダムな事件（天城案件、請求書が届かない、など）に対応して、最後に「締め日」のボスに挑む。行動の中身が問題なので、遊ぶほど経理が身につく。</div></div>
+    <div class="c"><h3>4. 行動順が見えるターン制</h3>
+      <p>『崩壊：スターレイル』は、ターン制で行動順が見えることで、反射神経より事前の計画やチームの組み合わせを考える楽しさを出しています。</p>
+      <div class="to"><b>→ 取り入れる</b>：敵の「あと何ターンで反撃してくるか」を常に表示する。仲間の必殺技をいつ使うかの判断を生む。</div></div>
+    <div class="c"><h3>5. 1日2回開く理由と、短い1回</h3>
+      <p>『ポケポケ』は12時間ごとに無料パックを開けられ、対戦も短いので、少しの空き時間でも開く習慣が作られています。一方で、開封の演出を飛ばせないことは不満として指摘されています。Duolingo は連続記録とそれを守るアイテムで習慣を作っています。</p>
+      <div class="to"><b>→ 取り入れる</b>：12時間ごとに無料の「辞令封筒」（スカウト1回分）。連続ログインと「有給休暇届」（連続記録を守る）。<b>どの演出も必ず飛ばせる</b>ようにする。</div></div>
+    <div class="c"><h3>6. 最初は「やって覚える」</h3>
+      <p>オンボーディングについての解説では、読ませるより実際に操作させて覚えさせること、最初に機能を詰め込みすぎないことが繰り返し挙げられています。日本のスマホゲームでは、最初の数分で無料のガチャ（チュートリアルガチャ）を引かせるのが一般的です。</p>
+      <div class="to"><b>→ 取り入れる</b>：冒頭30秒でミニバトル。5分以内に無料の「辞令封筒10通」で仲間を手に入れる。機能はホーム画面で1つずつ解放する。</div></div>
+    <div class="c"><h3>7. ガチャは「表示」と「上限」を守る</h3>
+      <p>条件をそろえると景品がもらえる「コンプガチャ」は、景品表示法の「カード合わせ」に当たり禁止です。確率の表示は、業界団体（JOGA）のガイドラインで定められています。</p>
+      <div class="to"><b>→ 取り入れる</b>：提供割合を必ず表示し、天井（一定回数で確定）を付ける。コンプ要素は作らない。課金はデモのまま、請求は発生させない。</div></div>
+  </div>
+
+  <h2>取り入れないこと</h2>
+  <div class="cards">
+    <div class="c"><h3>オートバトル・放置</h3><p>多くのRPGは周回をオートで済ませられますが、この企画は「答えること」が攻撃であり学習そのものです。オートにすると学習が消えるので入れません。代わりに1回を短くして、作業感を減らします。</p></div>
+    <div class="c"><h3>長い育成（30分以上）</h3><p>通勤や昼休みに遊ぶ社会人が対象なので、1回5分で終わる長さに抑えます。</p></div>
+    <div class="c"><h3>スタミナでストーリーを止めること</h3><p>物語で続きが気になったところで止められるのは、離脱の原因になります。スタミナ（気力）は月次決算ランにだけ使います。</p></div>
+  </div>
+
+  <h2>冒頭5分の設計</h2>
+  <ol class="time">
+    <li><b>0:00</b><span>起動。いきなり「初めての月次決算の夜、締めまであと3時間」。志乃に急かされながら、3問のミニバトル（30秒）。答えるたびに攻撃の演出。</span></li>
+    <li><b>0:45</b><span>勝つとタイトル『バランスシート』。名前を入れる（あとで変更できる）。</span></li>
+    <li><b>1:00</b><span>「——1年前」。父の回想は3行だけ。入社式で天城社長の最初の無茶振り。最初の選択。</span></li>
+    <li><b>2:30</b><span>経理部で墨谷・志乃と出会う。「1円合わないのは、1円の問題じゃない」。第1話の終わりに引き。</span></li>
+    <li><b>3:00</b><span>入社祝いとして「辞令封筒10通」（無料スカウト）。★4以上を1通確定。封筒を開ける演出（飛ばせる）。</span></li>
+    <li><b>4:00</b><span>ホーム画面。好きな仲間が立っていて、社内チャットに天城社長から最初のメッセージが届く。「つづきから」と「月次決算ラン」が光っている。</span></li>
+  </ol>
+
+  <h2>出典</h2>
+  <ul class="src-list">
+    <li><a href="https://www.4gamer.net/games/266/G026651/20251222013/">4Gamer：スマホゲームのセルラン分析（2025年の年間収益ランキング）</a></li>
+    <li><a href="https://gamebiz.jp/news/418408">gamebiz：『ラストウォー』が25年ゲームアプリ売上ランキング首位</a></li>
+    <li><a href="https://xtrend.nikkei.com/atcl/contents/18/01276/00005/">日経クロストレンド：2025年の国内年間ゲームアプリ収益</a></li>
+    <li><a href="https://sensortower.com/ja/blog/state-of-mobile-games-2025h1-JP">Sensor Tower：2025年上半期の日本のモバイルゲーム</a></li>
+    <li><a href="https://www.famitsu.com/news/202307/24304254.html">ファミ通：ブルーアーカイブの人気の理由</a></li>
+    <li><a href="https://dengekionline.com/articles/63345/">電撃オンライン：ブルーアーカイブ 開発インタビュー</a></li>
+    <li><a href="https://gamebiz.jp/news/288900">gamebiz：ブルーアーカイブのサブストーリー</a></li>
+    <li><a href="https://automaton-media.com/articles/columnjp/20230508-246509/">AUTOMATON：崩壊：スターレイルのターン制について</a></li>
+    <li><a href="https://www.4gamer.net/games/778/G077853/20240703024/">4Gamer：学園アイドルマスターのローグライク要素</a></li>
+    <li><a href="https://dengekionline.com/article/202510/56178">電撃オンライン：ウマ娘 育成シナリオのレビュー</a></li>
+    <li><a href="https://automaton-media.com/articles/reportjp/umamusume-20250223-329398/">AUTOMATON：ウマ娘 The Twinkle Legends 先行プレイ</a></li>
+    <li><a href="https://www.blog.udonis.co/mobile-marketing/mobile-games/pokemon-tcg-pocket">Udonis：Pokémon TCG Pocket の分析</a></li>
+    <li><a href="https://comicbook.com/gaming/news/pokemon-tcg-pocket-slow-app-wastes-time">ComicBook：ポケポケの開封演出への不満</a></li>
+    <li><a href="https://www.lennysnewsletter.com/i/104096876/the-streak-vector">Lenny's Newsletter：Duolingo の成長施策</a></li>
+    <li><a href="https://www.wayline.io/blog/marketing-tutorials-onboarding-bad-retention">Wayline：オンボーディングと継続率</a></li>
+    <li><a href="https://japanonlinegame.org/wp-content/uploads/2024/06/JOGA_declaration_2024.pdf">JOGA：オンラインゲーム安心安全宣言・ガイドライン（2024）</a></li>
+  </ul>
+</div>

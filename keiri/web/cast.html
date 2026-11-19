@@ -1,0 +1,272 @@
+<title>バランスシート 登場人物設定</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: ドラマの設定資料（台本）。冒頭に物語の芯、人物ごとの章、最後に年表と関係の糸。秘密は「ネタバレ」で折りたたむ。 */
+:root{
+  --bg:#F3F1EC; --paper:#FFFFFF; --paper2:#F7F5F0; --line:#DCD6CB; --ink:#1C1F24; --muted:#666B72;
+  --navy:#22324A; --shu:#B8361F; --shu-soft:#F6E3DD; --gold:#9A7420;
+  --f-head:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13151A; --paper:#1B1E24; --paper2:#22262D; --line:#333841; --ink:#ECEDEF; --muted:#9CA1A9; --navy:#9FB4D6; --shu:#EE7A5F; --shu-soft:#3A2420; --gold:#D6AE55; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#13151A; --paper:#1B1E24; --paper2:#22262D; --line:#333841; --ink:#ECEDEF; --muted:#9CA1A9; --navy:#9FB4D6; --shu:#EE7A5F; --shu-soft:#3A2420; --gold:#D6AE55; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.85; font-size:15px}
+.wrap{max-width:820px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:28px 56px}
+h1,h2,h3{font-family:var(--f-head); font-weight:900; margin:0; text-wrap:balance; letter-spacing:.02em}
+h1{font-size:clamp(1.7rem,6vw,2.4rem)}
+.eyebrow{font-size:.74rem; letter-spacing:.18em; color:var(--shu); font-weight:700}
+.lead{color:var(--muted); margin:10px 0 0; max-width:62ch}
+.origin{margin-top:22px; background:var(--navy); color:#F3F1EC; border-radius:18px; padding:20px 20px 18px}
+:root[data-theme="dark"] .origin{color:#13151A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .origin{color:#13151A}}
+.origin h2{font-size:1.2rem}
+.origin p{margin:8px 0 0; max-width:62ch}
+.origin q{font-family:var(--f-head); font-weight:700; quotes:"「" "」"}
+nav.toc{display:flex; flex-wrap:wrap; gap:6px; margin:22px 0 0}
+nav.toc a{font-size:.8rem; text-decoration:none; color:var(--ink); background:var(--paper); border:1px solid var(--line); padding:4px 10px; border-radius:999px}
+nav.toc a:focus-visible{outline:3px solid var(--shu); outline-offset:2px}
+article{background:var(--paper); border:1px solid var(--line); border-radius:20px; margin-top:22px; overflow:hidden; scroll-margin-top:12px}
+.head{display:grid; grid-template-columns:72px 1fr; gap:14px; padding:18px 18px 0; align-items:center}
+.mono{width:72px; height:72px; border-radius:16px; display:grid; place-items:center; font-family:var(--f-head); font-weight:900; font-size:1.9rem; color:#fff; background:var(--c)}
+.head h2{font-size:1.45rem}
+.head .meta{font-size:.8rem; color:var(--muted)}
+.hook{margin:12px 18px 0; font-family:var(--f-head); font-weight:700; font-size:1.05rem; line-height:1.7; border-left:4px solid var(--c); padding-left:12px}
+.body{padding:6px 18px 18px}
+.body h3{font-size:.95rem; margin:18px 0 6px; color:var(--c)}
+.body p{margin:0}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px}
+.kv{background:var(--paper2); border-radius:12px; padding:10px 12px}
+.kv b{display:block; font-size:.72rem; color:var(--muted); letter-spacing:.06em}
+details.secret{margin-top:12px; background:var(--shu-soft); border-radius:14px}
+details.secret summary{cursor:pointer; padding:10px 14px; font-weight:700; color:var(--shu); list-style:none}
+details.secret summary::-webkit-details-marker{display:none}
+details.secret summary::before{content:"▶ "; font-size:.7rem}
+details.secret[open] summary::before{content:"▼ "}
+details.secret summary:focus-visible{outline:3px solid var(--shu); outline-offset:2px; border-radius:14px}
+details.secret div{padding:0 14px 12px}
+ol.arc{list-style:none; padding:0; margin:0; display:grid; gap:6px}
+ol.arc li{display:grid; grid-template-columns:76px 1fr; gap:10px; font-size:.9rem}
+ol.arc li span{font-size:.72rem; font-weight:700; color:var(--muted); padding-top:3px}
+.scene{background:var(--paper2); border-radius:14px; padding:12px 14px; font-size:.92rem}
+.scene .sd{color:var(--muted); font-size:.82rem; margin-bottom:6px}
+.scene p{margin:4px 0}
+.scene b{font-family:var(--f-head)}
+.lines{display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:0; list-style:none}
+.lines li{font-family:var(--f-head); font-weight:700; font-size:.88rem; border:1.5px solid var(--c); color:var(--ink); padding:3px 10px; border-radius:10px}
+section.extra{margin-top:36px}
+section.extra h2{font-size:1.3rem; margin-bottom:10px}
+.tw{overflow-x:auto; background:var(--paper); border:1px solid var(--line); border-radius:16px}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:.84rem}
+th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{font-family:var(--f-head); font-size:.8rem; color:var(--muted); background:var(--paper2)}
+td:first-child{white-space:nowrap; font-weight:700}
+.threads{display:grid; gap:8px}
+.thread{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:10px 14px; display:grid; grid-template-columns:auto 1fr; gap:4px 12px}
+.thread .who{font-family:var(--f-head); font-weight:900; white-space:nowrap}
+.thread p{margin:0; font-size:.9rem}
+.foot{font-size:.8rem; color:var(--muted); margin-top:28px; border-top:1px dashed var(--line); padding-top:12px}
+.world{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:10px; margin-top:12px}
+.wcard{background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:14px}
+.wcard .k{font-size:.72rem; color:var(--muted); letter-spacing:.08em}
+.wcard h3{font-size:1.15rem; margin:2px 0 6px}
+.wcard p{margin:0; font-size:.88rem}
+.chapters{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:8px; margin-top:12px}
+.chap{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:10px 12px}
+.chap b{font-family:var(--f-head); font-size:1.05rem; display:block}
+.chap span{font-size:.72rem; color:var(--muted)}
+.chap p{margin:4px 0 0; font-size:.82rem}
+.nameorigin{font-size:.85rem; background:var(--paper2); border-radius:12px; padding:10px 12px; margin-top:12px}
+.nameorigin b{font-family:var(--f-head); color:var(--c)}
+.ruby{font-size:.72rem; color:var(--muted); letter-spacing:.12em; font-weight:500; margin-left:6px}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">経理ラボ ／ ストーリーモード 設定資料</div>
+  <h1>バランスシート</h1>
+  <p class="lead">新入社員からCFOまでの約30年。仕事と人生の両方で、答えのない選択を重ねていく物語。タイトルは「貸借対照表」と「仕事と人生のバランス」の二重の意味です。ゲームの4つの数値（仕事・家族・元気・貯金）が、そのまま主人公の人生の貸借対照表になります。</p>
+
+  <div class="origin">
+    <h2>物語の芯：主人公の原点</h2>
+    <p>主人公が15歳の冬、父の会社「有限会社ランタン」が倒産した。社員9人。中小企業向けの小さな会計ソフトを作っていた。父の口ぐせは<q>小さな会社の足元を照らすソフトを作るんだ</q>だった。</p>
+    <p>決算書は黒字だった。けれど、受託開発の元請けだった大手SIer「誠和インフォテック」が粉飾決算の発覚で突然倒産し、半年分の開発代金が回収できなくなった。<b>連鎖倒産</b>、そして<b>黒字倒産</b>。他人の帳簿を守るソフトを作っていた父が、自分の会社の資金繰りで潰れた。</p>
+    <p>その夜、父は印刷した資金繰り表の前で、朝まで一言もしゃべらなかった。<q>儲かってたのに、なんで潰れるの？</q> その答えを知りたくて、主人公は簿記を始めた。物語を通して問い続けるのは、ひとつだけ。<b>数字は、人を守れるのか。</b></p>
+  </div>
+
+  <section class="extra" id="world"><h2>世界観：3つの会社</h2>
+    <div class="world">
+      <div class="wcard"><div class="k">主人公が働く会社</div><h3>株式会社カサネ</h3><p>中小企業向けの受発注・請求管理SaaS「カサネ」を作る、社員300人のIT企業。五反田。創業者の天城が、一度会社を潰したあとに「ゼロになっても、また一つずつ重ねればいい」と名付けた。帳簿も、取引の積み重ね。3年前に東証グロース市場に上場し、次の目標はプライム市場への移行。株価と四半期ごとの決算発表に追われる毎日。社長の無茶振りは、社内では「天城案件」と呼ばれている。</p></div>
+      <div class="wcard"><div class="k">父の会社（回想）</div><h3>有限会社ランタン</h3><p>蒲田の雑居ビル3階。社員9人で中小企業向けの会計ソフトを作っていた。夢は「小さな会社の足元を照らすこと」。受託開発の売掛金が回収できず、黒字のまま倒産した。</p></div>
+      <div class="wcard"><div class="k">すべての始まり</div><h3>誠和インフォテック</h3><p>かつての中堅SIer。取引先と架空の発注を回し合う「循環取引」で売上を膨らませ、粉飾の発覚で倒産した。誠実の「誠」を名乗った会社の嘘が、下請けの会社をいくつも道連れにした。墨谷はここの経理課長だった。</p></div>
+    </div>
+    <h2 style="margin-top:24px">章のタイトル：会計用語の二重の意味</h2>
+    <div class="chapters" id="chap"></div>
+    <p class="lead" style="margin-top:12px">最後の伏線：CFOになった主人公は、中小企業向けの資金繰り予測機能を立ち上げる。開発コード名は「ランタン」。父の夢が、別の形で灯る。</p>
+  </section>
+
+  <nav class="toc" aria-label="人物一覧" id="toc"></nav>
+  <div id="cast"></div>
+
+  <section class="extra" id="timeline"><h2>年表：仕事と人生が重なる7章</h2><div class="tw"><table id="tl"></table></div></section>
+  <section class="extra" id="threads"><h2>関係の糸：人物どうしのつながり</h2><div class="threads" id="th"></div></section>
+  <p class="foot">登場する人物・会社名はすべて架空です（地名は実在の地域を舞台として使っています）。</p>
+</div>
+
+<script>
+const CHAPTERS = [
+  ['1章','期首','新入社員・22歳','会計期間の始まり。そして社会人の始まり。'],
+  ['2章','仮勘定','担当者・25歳','行き先がまだ決まらないお金と、まだ名前のない気持ち。渚との出会い。'],
+  ['3章','連結','主任・28歳','別々の会社をひとつの決算に。結婚。'],
+  ['4章','引当金','係長・32歳','将来に備えて、今から積んでおくもの。宙の誕生。'],
+  ['5章','資金繰り','課長・38歳','会社のお金と、住宅ローン。どちらも回さなければ止まる。'],
+  ['6章','減損','経理部長・45歳','価値が戻らないと認めること。父の衰え、恩人の引退。'],
+  ['7章','決算','CFO・50歳','すべてを締めて、数字を確定させる。父への答え。'],
+  ['終章','貸借一致','エンディング','仕事と人生の左右が、釣り合ったかどうか。'],
+];
+const CAST = [
+  { id:'you', name:'あなた（主人公）', ruby:'', ch:'あ', c:'#22324A', meta:'22歳で入社 ／ 名前はプレイヤーが決める',
+    origin:'名前はプレイヤーが付ける。父の名前「照男」の「照」の字を、主人公の名前に入れると、終盤のある台詞が少しだけ変わる。',
+    hook:'黒字なのに潰れた父の会社。その理由を知りたくて経理になった。',
+    face:'真面目で数字に強いが、性格はプレイヤーの選択で育っていく。仕事を取るか、家族を取るか、正しさを取るか。選んだことの積み重ねが、そのまま人柄になる。',
+    want:'父の会社が潰れた理由を、自分の手で解き明かしたい。', need:'答えが分かったあとで、父を責めずにいられること。', weak:'正しさにこだわるあまり、身近な人の気持ちを後回しにしがち。',
+    secret:'父の会社を連鎖倒産に追い込んだ誠和インフォテックで、経理課長をしていたのが、のちの上司・墨谷だった。主人公は6章までそれを知らない。',
+    arc:[['1章 22歳','新入社員。父の倒産のことは誰にも話していない。'],['3章 28歳','主任。渚と結婚。'],['4章 32歳','係長。宙が生まれる。'],['6章 45歳','経理部長。父の介護が始まり、実家から当時の帳簿が出てくる。'],['7章 50歳','CFO。資金繰り予測機能「ランタン」を立ち上げ、父に「あの日の答え」を伝える。']],
+    scene:{sd:'7章・最終場面。介護施設の面会室。父は認知症で、今もランタンを経営していて、納期に追われているつもりでいる。', lines:[['父','納品、間に合ったか。……今月の支払いも、大丈夫かなあ。'],['あなた','……大丈夫。ちゃんと計算したから。'],['父','そうか。お前は昔から、計算が得意だったもんな。'],['（ト書き）','父は、ただ笑っている。主人公は、35年分の答えを言わずに、父の手を握る。']]},
+    lines:['数字は、人を守れるのか','あの日の答えが、やっと分かったよ'] },
+
+  { id:'akeno', name:'朱野 志乃', ruby:'あけの しの', ch:'朱', c:'#A9362B', meta:'34歳（1章）／ 経理の先輩 → 独立した税理士',
+    origin:'<b>朱</b>は、間違いを正す赤い字「朱書き」から。<b>志乃</b>は「志」を持ち続け、落ちても落ちても「忍ぶ」人。',
+    hook:'仕訳のミスを一瞬で見抜く「朱書きの朱野」。でも税理士試験の法人税法には、7回落ちている。',
+    face:'頼れる完璧な先輩。新人の伝票を赤ペンで真っ赤にするが、なぜそこが違うのかを必ず最後まで説明する。仕事の早さは社内一。',
+    want:'税理士になって独立し、母のような個人事業主を税金で泣かせないこと。', need:'完璧ではない自分を許すこと。', weak:'人に頼れない。部下を責める言葉は、本当は自分に向いている。',
+    secret:'母は小さな美容室を営んでいたが、帳簿をつけておらず、税務調査で追徴課税を受けて店をたたんだ。志乃が「証憑は？」と言い続けるのは、母を守れなかった悔しさから。本番で頭が真っ白になるのは、試験に落ちるたびに母の顔が浮かぶから。',
+    arc:[['1章','あなたの教育係。厳しいが、誰より面倒見がいい。'],['2章','8月、試験前の1週間だけ別人のように無口になる。'],['3章','あなたの一言に背中を押され、8回目の受験で合格。退職して「朱野税理士事務所」を開く。'],['6章','カサネの顧問税理士として戻ってくる。立場が逆転する。'],['7章','プライム市場への移行に向けて、グループ全体の税務を支える。「今度は私が、あなたの味方をする番」。']],
+    scene:{sd:'3章・12月。合格発表の日の昼休み、オフィスビルの非常階段。', lines:[['志乃','（電話を切って、しばらく黙ったまま）'],['志乃','……受かった。8回目で、受かった。'],['あなた','おめでとうございます！'],['志乃','ねえ。今だけ、赤ペン置いてもいいかな。'],['（ト書き）','ずっと誰にも見せなかった涙が、手すりに落ちる。']]},
+    affinity:'試験直前の繁忙期に、彼女の仕事を代わるかどうか。代わると好感度が大きく上がるが、あなたの残業が増え、家族の数値が下がる。',
+    lines:['証憑は？','8月の第1週は話しかけないで','赤ペン、今だけ置いていい？'] },
+
+  { id:'sumiya', name:'墨谷 誠一', ruby:'すみや せいいち', ch:'墨', c:'#3B3B44', meta:'56歳（1章）／ 経理課長 → 部長 → 定年',
+    origin:'<b>墨</b>は、手書きの帳簿の墨。そして、一度書いたら消せないもの。<b>誠一</b>の「誠」は、かつて勤めた誠和インフォテックと同じ字。その一字を、本人はずっと重く背負っている。',
+    hook:'怒鳴らない。そろばんの検算はExcelより速い。そして、1円の差異が合うまで絶対に帰らない。',
+    face:'寡黙で、手書きの帳簿を知る最後の世代。部下には敬語を使う。デジタル化には懐疑的で、後輩の新堂とはよくぶつかる。',
+    want:'自分が止められなかったことを、二度と起こさせないこと。', need:'過去を言葉にして、次の世代に渡すこと。', weak:'償いの気持ちが強すぎて、部下にまで同じ重さを背負わせてしまう。',
+    secret:'7年前まで、誠和インフォテックで経理課長をしていた。営業部門が取引先と架空の発注を回し合う循環取引に気づきながら、黙っていた。会社は粉飾の発覚で倒産し、下請けのソフト会社が次々と連鎖倒産した。その中に、主人公の父の「有限会社ランタン」があった。墨谷は採用面接で主人公の履歴書を見たときから、それに気づいている。',
+    arc:[['1章','無口で厳しい上司。あなたにだけ、なぜか特に厳しい。'],['4章','部長に昇進し、あなたを課長に推薦する。'],['6章','社長に粉飾を迫られて迷うあなたに、自分の過去と、ランタンの名前を初めて口にする。'],['6章・定年','手書きの引継ぎノートを渡す。最後のページには、あなたの父への謝罪が書いてある。'],['7章','許すか、許さないか。あなたの選択がエンディングに響く。']],
+    scene:{sd:'6章・深夜の経理部。粉飾を迫られたあなたに、墨谷がそろばんを置いて話し始める。', lines:[['墨谷','有限会社ランタンさん。……あなたのお父さんの会社ですね。'],['あなた','……どうして、それを。'],['墨谷','私が黙っていたせいで、潰れた会社のひとつです。'],['墨谷','墨で書いたものは、消せません。だから私は、ずっと書き直さずに来た。'],['墨谷','あなたは、最初から正しく書ける人でいてください。']]},
+    affinity:'6章の告白に対して「許す」「許さない」「何も言わない」を選ぶ。どれも正解ではなく、エンディングの墨谷の姿が変わる。',
+    lines:['1円合わないのは、1円の問題じゃない','検算はしましたか','墨で書いたものは、消せません'] },
+
+  { id:'hayase', name:'早瀬 駆', ruby:'はやせ かける', ch:'駆', c:'#C2611F', meta:'22歳（1章）／ 営業部の同期 → 起業家',
+    origin:'<b>早瀬</b>は流れの速い川。<b>駆</b>は、立ち止まらずに走り続ける人。足元の数字を見ないまま、夢に向かって走ってしまう。',
+    hook:'経費精算はいつも締め切り後。でも、誰よりお客さんに愛される営業マン。',
+    face:'ムードメーカーで、同期の飲み会の幹事はいつも彼。領収書はくしゃくしゃで、宛名は「上様」。経理とは衝突するが、あなたとは不思議と馬が合う。',
+    want:'自分の会社をつくって、頑張った人がちゃんと報われる場所にしたい。', need:'数字から逃げないこと。', weak:'情に厚すぎて、頼まれると断れない。',
+    secret:'母子家庭で育った。母は保険の外交員で、歩合給とノルマに追い詰められていた。「数字が人を追い詰める」と本気で思っていて、経理の仕事を少し憎んでいる。',
+    arc:[['1〜2章','飲み仲間。経費精算をめぐって何度ももめる。'],['4章','タクシー代の水増しが見つかる。告発するか、本人に話すか、黙るか。'],['5章','カサネを辞めて起業。資金繰りに詰まり、あなたに相談に来る。'],['7章','カサネの買収候補が、彼の会社だった。調べると、友人の会社の借入の保証人になっていた（帳簿に載らない借金＝簿外債務）。'],['エンディング','友情と職責の両方を守れるか。']],
+    scene:{sd:'5章・閉店後の居酒屋。起業して2年、駆は通帳を見せる。', lines:[['駆','売上は伸びてるんだよ。なのに、来月の給料が払えない。'],['あなた','売掛金の回収が、支払いより2か月遅いんだ。'],['駆','……なあ。数字って、夢を止めるためにあるの？'],['あなた','違う。夢を、最後まで走らせるためにある。']]},
+    affinity:'4章の水増しをどう扱うかで、彼の人生が大きく変わる。黙ると好感度は上がるが、7章で同じ問題が大きくなって返ってくる。',
+    lines:['これ、経費で落ちる？','宛名、上様でいいよね？','数字って、夢を止めるためにあるの？'] },
+
+  { id:'shindo', name:'新堂 結', ruby:'しんどう ゆい', ch:'結', c:'#5E5CB8', meta:'22歳（3章で入社）／ 後輩 → 経理部長',
+    origin:'<b>新堂</b>は新しい世代。<b>結</b>は、つなぐこと。手書きの帳簿と自動化を、墨谷の世代とこれからの世代を、結ぶ人。',
+    hook:'「それ、なんで手でやってるんですか？」入社3か月で月次決算を3日短くした。',
+    face:'合理主義のデジタル世代。作業を片っ端から自動化する。電話が苦手で、チャットなら饒舌。墨谷の手書き文化と真っ向からぶつかる。',
+    want:'正しいことが、正しく評価される世界。', need:'データだけでなく、人を信じること。', weak:'正しさを言葉にするとき、相手の立場を考えない。',
+    secret:'大手監査法人の内定を辞退してカサネに来た。「数字をチェックする側じゃなく、作る側に行きたかった」。実は、墨谷のノートの手書きの数字が、どんなシステムより正確だと一番認めているのも彼女。',
+    arc:[['3章','あなたの後輩。最初は反発する。'],['5章','墨谷の引継ぎノートをデジタル化する。世代の橋渡し役になる。'],['7章','データ分析から、子会社「カサネ・ソリューションズ」が取引先と売上を回し合う循環取引を見つけ、内部通報する。匿名のはずが、社内で噂になる。'],['7章','あなたが彼女を守り切れるかどうか。'],['エンディング','あなたの後を継いで経理部長になる。']],
+    scene:{sd:'7章・夜の会議室。通報したのが自分だと噂になり、結は辞表を持っている。', lines:[['結','データは嘘をつかないのに、人は簡単に嘘をつくんですね。'],['あなた','その辞表、預かっておく。出すのは、全部終わってから決めて。'],['結','……先輩なら、握りつぶさないって信じてました。']]},
+    affinity:'自動化の提案を採用するか、墨谷のやり方を守るか。どちらを選んでも誰かが傷つく。',
+    lines:['それ、なんで手でやってるんですか？','電話じゃなくてチャットでお願いします','データは嘘をつきません'] },
+
+  { id:'amagi', name:'天城 豪', ruby:'あまぎ ごう', ch:'天', c:'#8A6A1A', meta:'52歳（1章）／ カサネ創業社長 → 会長',
+    origin:'<b>天城</b>は、空に城を建てる人。地面（数字）より先に、城の完成図が見えてしまう。<b>豪</b>は、豪快すぎて人の都合が目に入らない人。',
+    hook:'月曜朝9時のチャット。「来年、プライム市場に行こう」「経費は半分、売上は倍で」。本人は本気で、悪気はまったくない。',
+    face:'思いつきと無茶振りの天才。会議の途中で目標を倍にし、締め日の前日に新しい事業を始める。口ぐせは「前例がないなら、つくればいい」。ただし、無茶振りの3回に1回は、本当に会社を救う。だから誰も止められない。',
+    want:'誰も見たことのない会社をつくること。', need:'「できない」と言ってくれる人を、遠ざけないこと。', weak:'自分の速さに、周りがついてこられないことに気づかない。数字を「なんとかなるもの」だと思っている。',
+    secret:'27歳で起こした最初のネットベンチャーを、ITバブル崩壊で潰している。そのときも、誰も「無理です」と言わなかった。言ってくれる人がいたら潰れなかったと、本当は分かっている。だから無茶を言いながら、心のどこかで止めてくれる人を探している。「カサネ」は、ゼロからもう一度積み重ねるという誓いの名前。',
+    arc:[['1章','入社3日目のあなたに「来月の役員会で、全社のコスト削減案を発表して」。'],['2章','「月次決算、3日で締められるよね？」（今は10日かかっている）'],['4章','「家族旅行も、まあ視察みたいなもんだから経費で」。'],['5章','「来期の売上目標は200%。予算はそれで組んで」。根拠はない。'],['6章','公表済みの業績予想を大きく下回りそうになった瞬間、「年間契約の売上、今期に全部入れれば予想どおりだろ？」。最大の無茶振り。'],['7章','「来年、プライム市場に行こう」。そして子会社の不正が発覚する。'],['エンディング','あなたが何回「できません」と言ったかで、最後の一言が変わる。']],
+    scene:{sd:'5章・月曜朝9時2分。社内チャットの通知が鳴る。', lines:[['天城','おはよう！ 週末考えたんだけど、来期は売上200%いこう。予算、今日中にお願い！'],['あなた','……根拠は、ありますか。'],['天城','ない！ だから君に頼んでる。'],['（ト書き）','既読の数字が、経理部全員分ついていく。決算発表まで、あと3週間。']]},
+    affinity:'無茶振りに「断る」「代わりの案を出す」「全部引き受ける」を選ぶ。引き受けると元気が減り、断ると社長の信頼が減る。代わりの案は、数字の知識がないと出せない。6章の「止めてくれて、ありがとう」が聞けるかは、それまでに何回、正しく断れたかで決まる。',
+    lines:['それ、明日までにできる？','前例がないなら、つくればいい','数字は、なんとかなるだろ？','止めてくれて、ありがとう'] },
+
+  { id:'kirishima', name:'霧島 玲', ruby:'きりしま れい', ch:'玲', c:'#3E6E9C', meta:'24歳（2章）／ 新人の監査補助 → 監査の責任者',
+    origin:'<b>霧島</b>は、霧に包まれた島。<b>玲</b>は、玉が触れ合って鳴る澄んだ音。霧の中で迷っていた新人が、やがて数字の霧を晴らす側になる。',
+    hook:'2章では、初めての期末監査でミスをして泣いていた新人。7章では、誰より厳しい監査の責任者として戻ってくる。',
+    face:'2章：自信がなく、監査法人を辞めようとしていた。7章：無駄な言葉を一切使わない、冷静沈着な会計士。',
+    want:'自分の判断に、自信を持つこと。', need:'厳しさの理由を、相手に伝えること。', weak:'迷いを見せないために、必要以上に冷たく見える。',
+    secret:'2章の夜、非常階段で泣いていた彼女に、あなたは「数字は誰かを守るためにあるんだと思う」と言った。彼女はその言葉を手帳に書き、今も持ち歩いている。7章で子会社の不正が見つかったとき、監査法人の上司から「穏便に」と圧力がかかるが、彼女は意見を出さない（不表明）ことも辞さない。',
+    arc:[['2章','期末監査で出会う。ソフトウェアの資産計上の検証でミスをした彼女を、あなたが助ける。'],['3〜6章','ときどき近況が届く。'],['7章','カサネの監査責任者（業務執行社員）として着任。「根拠を示してください」。'],['7章','不正をめぐって、あなたと同じ側に立つ。']],
+    scene:{sd:'7章・監査の講評の席。', lines:[['玲','妥協はしません。'],['あなた','……昔とは、別人みたいですね。'],['玲','あの夜、あなたは「数字は誰かを守るためにある」と言いました。'],['玲','だから、守ります。この会社が、二度と誰かを潰さないように。']]},
+    lines:['根拠を示してください','妥協はしません','数字は誰かを守るためにある'] },
+
+  { id:'nagisa', name:'渚', ruby:'なぎさ', ch:'渚', c:'#B7781F', meta:'主人公と同い年 ／ 救急の看護師 → 認定看護師（呼び方は妻・夫・パートナーから選べる）',
+    origin:'<b>渚</b>は、波が寄せては返す場所。嵐のような毎日でも、帰る場所であり続ける人。でも、ただ穏やかなだけではない。波は、ときどき強く打ち返す。',
+    hook:'出会いは、過労で倒れたあなたが運ばれた病院。第一声は「点滴中に仕訳しないでください」。',
+    face:'夜勤のある救急の看護師。明るく、言うことははっきり言う。あなたの仕事を応援しているが、自分の仕事も同じくらい大事にしている。支える役ではなく、対等にぶつかる相手。',
+    want:'自分のキャリア（認定看護師）も諦めないこと。', need:'言わなくても分かってほしい、を手放すこと。', weak:'限界まで我慢してから、一気に爆発する。',
+    secret:'結婚前に一度、別の病院からの誘いを断っている。理由は、あなたの転勤の可能性があったから。それをあなたに話したことはない。',
+    arc:[['2章','出会い（入院）。'],['3章','結婚。式の準備が決算期と重なる。'],['4章','宙が生まれる。育休をどちらがどれだけ取るか。そして、税務調査の初日に宙が熱を出す。'],['5章','渚の資格試験と、あなたの課長昇進が同じ時期に重なる。'],['6章','あなたの父の介護を、どう分担するか。'],['7章','「決算発表が終わったら、少しは休めるの？ ……それ、3か月ごとに聞いてるよね」']],
+    scene:{sd:'4章・朝6時半。宙が38.5℃。今日は税務調査の初日、渚は病院で大事な症例発表がある。', lines:[['渚','私も今日だけは休めない。分かってるよね。'],['あなた','……病児保育、空いてないか調べる。'],['渚','もう調べた。全部いっぱい。'],['（ト書き）','宙が、おもちゃの電卓をピピピと鳴らす。正解はない。']]},
+    affinity:'記念日・家族の行事・相手のキャリアをどう扱ったかが、エンディングの二人の関係を決める。',
+    lines:['点滴中に仕訳しないでください','今日は何の日か、覚えてる？','私の仕事も、仕事だからね'] },
+
+  { id:'sora', name:'宙', ruby:'そら', ch:'宙', c:'#4C8C4A', meta:'4章で誕生 ／ 3歳 → 14歳 → 24歳',
+    origin:'<b>宙</b>は、地面（数字）から離れて、どこまでも広がる場所。地に足をつけて生きてきた親とは、正反対の夢を見る子。',
+    hook:'熱を出すのは、なぜかいつも大事な日。',
+    face:'3歳：おもちゃの電卓のボタン連打が大好き。14歳：「経理なんて地味な仕事、絶対やらない」。24歳：起業して資金繰りに詰まり、「簿記を教えて」と頭を下げに来る。',
+    want:'（14歳）親とは違う、かっこいい仕事がしたい。', need:'親の仕事の意味を、自分の言葉で知ること。', weak:'親に似て、意地っ張り。',
+    secret:'14歳のとき「地味」と言ったのは、学校の職業紹介で親の仕事をうまく説明できず、笑われたから。',
+    arc:[['4章 3歳','税務調査の初日に熱を出す。'],['6章 14歳','反抗期。「経理って何してるの？つまんなそう」。'],['7章 24歳','起業。資金繰り表の作り方を教わりに来る。最初の相談相手は、駆。'],['エンディング','おじいちゃんの会社「ランタン」の古い帳簿を、親子3代で読む。']],
+    scene:{sd:'7章・実家の居間。ランタンの古い帳簿を前に。', lines:[['宙','おじいちゃんの会社、黒字だったのに潰れたの？'],['あなた','うん。お金が入ってくるより先に、出ていったんだ。'],['宙','……それ、今の私の会社と同じだ。'],['あなた','だから、教える。全部。']]},
+    lines:['でんたく、ピピピってして！','経理って何してるの？','簿記、教えてください']},
+
+  { id:'father', name:'父・照男', ruby:'てるお', ch:'照', c:'#6B6B6B', meta:'回想で52歳 ／ 6章から介護（80歳前後）',
+    origin:'<b>照男</b>は、照らす男。会社の名前「ランタン」も、自分の名前から付けた。小さな会社の足元を照らしたかった人。',
+    hook:'会社が潰れた日も、借金を返し終えた日も、一度も愚痴を言わなかった父。',
+    face:'有限会社ランタンの社長で、自分も現役のプログラマー。徹夜明けの缶コーヒーがトレードマーク。倒産後はシステム保守の契約社員として働き、15年かけて借金を返した。',
+    want:'家族に、苦労を見せないこと。', need:'（物語の最後に）あの日のことを、誰かと分かち合うこと。', weak:'全部ひとりで抱え込む。',
+    secret:'押し入れの奥に、当時の帳簿と資金繰り表をずっと捨てずに取っておいた。売掛金の欄には「誠和インフォテック」の名前と、回収できなかった金額が赤字で書いてある。その横に、小さく「すまない」とも。',
+    arc:[['回想','15歳の主人公が見た、資金繰り表の前の背中。'],['6章','倒れて介護が始まる。認知症で、今もランタンを経営しているつもりでいる。'],['6章','実家の片付けで、当時の帳簿が出てくる。'],['7章','CFOになった主人公が、帳簿を読み解く。そして資金繰り予測機能に「ランタン」と名付ける。']],
+    scene:{sd:'回想・主人公15歳の冬。深夜、蒲田の雑居ビル3階。古いモニターの光だけがついている。', lines:[['（ト書き）','机の上に、印刷した資金繰り表。来月の欄が、赤い数字で埋まっている。'],['15歳のあなた','父さん、うちって儲かってたんじゃないの？'],['父','……儲かってたよ。だから、悔しいんだ。']]},
+    lines:['納品、間に合ったか','儲かってたよ。だから、悔しいんだ','小さな会社の足元を照らすんだ'] },
+];
+
+const TL = [
+  ['1章「期首」','新入社員','22歳・一人暮らし','墨谷・志乃に出会う。駆と同期になる。','2年目の6月、住民税で手取りが減る。'],
+  ['2章「仮勘定」','担当者','25歳・恋人','期末監査で玲を助ける。志乃の試験の夏。','過労で入院し、渚に出会う。記念日と月末締め。'],
+  ['3章「連結」','主任','28歳・結婚','結が入社。志乃が合格・独立。','結婚式と決算期。パートナーの「年収の壁」。'],
+  ['4章「引当金」','係長','32歳・第一子','税務調査。駆の水増し発覚。社長の公私混同。','宙が誕生、育休の分担。調査初日の発熱。'],
+  ['5章「資金繰り」','課長','38歳・マイホーム','資金繰り、期末の売上前倒し、予算、経理DX。駆が退職・起業。','お迎えと残業。渚の資格試験。住宅ローン控除。'],
+  ['6章「減損」','経理部長','45歳・親の介護','社長の最大の無茶振り（売上の一括計上）。墨谷の告白と定年。志乃が顧問税理士に。','父が倒れる。実家からランタンの帳簿が出てくる。宙14歳の反抗期。'],
+  ['7章「決算」','CFO','50歳・子どもの独立','社長の「来年、プライム市場に行こう」。玲が着任。駆の会社の買収。子会社の循環取引と結の内部通報。社長の決断。','宙24歳の起業。父への答え。「決算発表が終わったら、少しは休めるの？」'],
+];
+const THREADS = [
+  ['墨谷 → 父','墨谷が経理課長だった誠和インフォテックの粉飾倒産が、ランタンを連鎖倒産させた。墨谷は最初から知っている。'],
+  ['志乃 ↔ 墨谷','志乃を経理に誘ったのは墨谷。二人だけは、互いの過去を少し知っている。'],
+  ['結 ↔ 墨谷','自動化と手書きで衝突するが、墨谷のノートを一番正確に読み解けるのは結。'],
+  ['天城 ↔ あなた','無茶を言う人と、数字で止める人。一度会社を潰した天城が本当に探していたのは、「できません」と言える人だった。'],
+  ['玲 ↔ あなた','2章の一言が、20年後の監査の姿勢を決めている。'],
+  ['駆 ↔ 宙','起業家どうし。7章で、駆が宙の最初の相談相手になる。'],
+  ['渚 ↔ 志乃','どちらも「自分の仕事」を諦めない人。あなたの知らないところで、意外と仲がいい。'],
+  ['ランタン → カサネ','父が作れなかった「小さな会社の足元を照らす」機能を、主人公がカサネで完成させる。'],
+];
+
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+document.getElementById('chap').innerHTML = CHAPTERS.map(([n, t, r, d]) => `<div class="chap"><span>${n} ／ ${r}</span><b>${t}</b><p>${d}</p></div>`).join('');
+document.getElementById('toc').innerHTML = '<a href="#world">世界観</a>' + CAST.map(c => `<a href="#${c.id}">${esc(c.name.replace(/（.*?）/, ''))}</a>`).join('') + '<a href="#timeline">年表</a><a href="#threads">関係の糸</a>';
+document.getElementById('cast').innerHTML = CAST.map(c => `<article id="${c.id}" style="--c:${c.c}">
+  <div class="head"><div class="mono" aria-hidden="true">${c.ch}</div><div><h2>${esc(c.name)}${c.ruby ? `<span class="ruby">${c.ruby}</span>` : ''}</h2><div class="meta">${esc(c.meta)}</div></div></div>
+  <p class="hook">${esc(c.hook)}</p>
+  <div class="body">
+    <div class="nameorigin">名前の由来：${c.origin}</div>
+    <h3>表の顔</h3><p>${esc(c.face)}</p>
+    <h3>心の中</h3><div class="grid2"><div class="kv"><b>欲しいもの</b>${esc(c.want)}</div><div class="kv"><b>本当に必要なもの</b>${esc(c.need)}</div><div class="kv"><b>弱さ</b>${esc(c.weak)}</div></div>
+    <details class="secret"><summary>ネタバレ：秘密</summary><div>${esc(c.secret)}</div></details>
+    <h3>あなたとの関係の変化</h3><ol class="arc">${c.arc.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ol>
+    <h3>名場面</h3><div class="scene"><div class="sd">${esc(c.scene.sd)}</div>${c.scene.lines.map(([w, t]) => `<p><b>${esc(w)}</b>　${esc(t)}</p>`).join('')}</div>
+    ${c.affinity ? `<h3>選択で変わること</h3><p>${esc(c.affinity)}</p>` : ''}
+    <h3>名台詞（グッズ候補）</h3><ul class="lines">${c.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+  </div></article>`).join('');
+document.getElementById('tl').innerHTML = '<tr><th>章</th><th>役職</th><th>ライフステージ</th><th>仕事の出来事</th><th>人生の出来事</th></tr>' + TL.map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('');
+document.getElementById('th').innerHTML = THREADS.map(([w, t]) => `<div class="thread"><span class="who">${esc(w)}</span><p>${esc(t)}</p></div>`).join('');
+</script>

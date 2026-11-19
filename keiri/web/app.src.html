@@ -381,6 +381,9 @@ function mascot(wear = S.wear, mood = 'happy', cls = '') {
     tie:'<path d="M60 88l-6 6 6 20 6-20z" fill="#E5432F"/><path d="M55 86h10l-5 6z" fill="#B42C1C"/>',
     calc:'<g transform="translate(86 74) rotate(12)"><rect width="24" height="32" rx="4" fill="#16261F"/><rect x="4" y="4" width="16" height="7" rx="1.5" fill="#B9F0D5"/><g fill="#fff">'+[0,1,2].map(r=>[0,1,2].map(c=>`<rect x="${4+c*6}" y="${14+r*5.5}" width="4" height="3.5" rx="1"/>`).join('')).join('')+'</g></g>',
     crown:'<path d="M40 30l8 8 12-14 12 14 8-8-4 18H44z" fill="#F2A516" stroke="#B06F00" stroke-width="2" stroke-linejoin="round"/>',
+    armcover:'<rect x="14" y="62" width="18" height="16" rx="5" fill="#2A2F3A"/><rect x="88" y="62" width="18" height="16" rx="5" fill="#2A2F3A"/><path d="M16 66h14M90 66h14" stroke="#4A5160" stroke-width="2"/>',
+    soroban:'<g transform="translate(2 84) rotate(-14)"><rect width="34" height="18" rx="3" fill="#7A4B22"/><rect x="2.5" y="2.5" width="29" height="13" rx="2" fill="#E9D3A8"/><path d="M2.5 7h29" stroke="#7A4B22" stroke-width="1.5"/>'+[0,1,2,3,4].map(c=>`<circle cx="${6+c*5.5}" cy="4.8" r="1.8" fill="#3B2410"/><circle cx="${6+c*5.5}" cy="${10+(c%2)*2.5}" r="1.8" fill="#3B2410"/>`).join('')+'</g>',
+    goldcalc:'<g transform="translate(86 74) rotate(12)"><rect width="24" height="32" rx="4" fill="#C98A0C"/><rect x="1.5" y="1.5" width="21" height="29" rx="3" fill="#F2B632"/><rect x="4" y="4" width="16" height="7" rx="1.5" fill="#FFF6D6"/><g fill="#FFE59A">'+[0,1,2].map(r=>[0,1,2].map(c=>`<rect x="${4+c*6}" y="${14+r*5.5}" width="4" height="3.5" rx="1"/>`).join('')).join('')+'</g><circle cx="-4" cy="2" r="2" fill="#FFF6D6"/><circle cx="28" cy="30" r="1.6" fill="#FFF6D6"/></g>',
     headband:'<path d="M32 38q28-14 56 0" stroke="#E5432F" stroke-width="7" fill="none"/><circle cx="60" cy="31" r="7" fill="#fff" stroke="#E5432F" stroke-width="2"/><circle cx="60" cy="31" r="3" fill="#E5432F"/>',
   };
   const w = (wear || []).map(k => items[k] || '').join('');
@@ -400,7 +403,7 @@ function mascot(wear = S.wear, mood = 'happy', cls = '') {
 const KEY = 'keiri-lab-v2';
 const DEF = { xp:0, coins:120, hearts:5, heartTs:Date.now(), streak:0, bestStreak:0, lastDay:null, freeze:0, goal:30,
   hist:{}, done:{}, perfect:{}, pro:false, proPlan:null, boostUntil:0, owned:[], wear:[], career:{stage:0, cleared:[]},
-  swipeBest:0, plays:{date:null, n:0}, tickets:0, quests:{date:null, lessons:0, correct:0, swipe:0, claimed:[]},
+  swipeBest:0, plays:{date:null, n:0}, tickets:0, hints:2, deposit:null, receipts:0, quests:{date:null, lessons:0, correct:0, swipe:0, claimed:[]},
   sound:true, wrong:[], badges:[], promoHidden:false, onboard:false };
 let S = load();
 function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); return s ? { ...DEF, ...s } : { ...DEF }; } catch (e) { return { ...DEF }; } }
@@ -693,6 +696,16 @@ function bindAsk(q, scr) {
     }
   };
 }
+function useHint(q) {
+  if (S.hints <= 0) { toast('赤ペンがありません。購買部で買えます（3本 120コイン）'); buzz(30); return; }
+  S.hints--; S.hintUsed = (S.hintUsed || 0) + 1; q.hinted = true; checkBadges(); save(); beep('tap');
+  const right = q.t === 'cat' ? A[q.acct].cat : String(q.a);
+  const btns = [...document.querySelectorAll(q.t === 'cat' ? '#qb [data-c]' : '#qb [data-i]')];
+  const wrong = shuffle(btns.filter(b => (b.dataset.c ?? b.dataset.i) !== right)).slice(0, 2);
+  wrong.forEach(b => { b.disabled = true; b.style.opacity = .3; b.style.textDecoration = 'line-through'; b.style.textDecorationColor = 'var(--shu)'; b.style.textDecorationThickness = '3px'; });
+  if (wrong.some(b => +b.dataset.i === L.sel)) L.sel = null;
+  drawSheet();
+}
 function canCheck(q) {
   if (q.t === 'mcq') return L.sel !== null;
   if (q.t === 'je') return q.placed.借方.length && q.placed.貸方.length;
@@ -702,8 +715,11 @@ function canCheck(q) {
 function drawSheet() {
   const q = L.queue[L.i], sh = $('#sheet');
   if (L.state === 'ask') {
-    sh.innerHTML = q.t === 'cat' ? '' : `<button class="btn btn-primary" id="chk" ${canCheck(q) ? '' : 'disabled'}>${q.t==='doc' && !q.picked.length ? '問題なし' : 'チェック'}</button>`;
+    const nOpts = q.t === 'cat' ? CATS.length : q.t === 'mcq' ? q.choices.length : 0;
+    const hint = nOpts > 2 && !q.hinted ? `<button class="btn btn-ghost" id="hint" style="padding:10px; font-size:.9rem; margin-bottom:10px">🖍️ 赤ペンで2つ消す（残り${S.hints}本）</button>` : '';
+    sh.innerHTML = hint + (q.t === 'cat' ? '' : `<button class="btn btn-primary" id="chk" ${canCheck(q) ? '' : 'disabled'}>${q.t==='doc' && !q.picked.length ? '問題なし' : 'チェック'}</button>`);
     const c = $('#chk', sh); if (c) c.onclick = check;
+    const h = $('#hint', sh); if (h) h.onclick = () => useHint(q);
   }
 }
 function isRight(q) {
@@ -818,7 +834,7 @@ function paywall(reason, resumeLesson = false) {
   const draw = () => {
     m.innerHTML = `<div class="inner wrap">
       <div class="lhead"><button class="xbtn" id="pw-x" aria-label="閉じる">${I.x}</button></div>
-      <div class="pw-hero">${sparks}${mascot(['crown','tie'], 'happy', 'bounce')}<div class="small" style="opacity:.85; font-weight:700">${esc(reason || '経理ラボ Pro')}</div>
+      <div class="pw-hero">${sparks}${mascot(['goldcalc','tie','armcover'], 'happy', 'bounce')}<div class="small" style="opacity:.85; font-weight:700">${esc(reason || '経理ラボ Pro')}</div>
         <h1>${S.pro ? 'Pro をご利用中です' : 'Pro で、最速で一人前に'}</h1></div>
       <table class="compare"><tr><th></th><th>無料</th><th class="pro">Pro</th></tr>
         <tr><td>ハート</td><td>5個（20分で回復）</td><td class="pro">無制限</td></tr>
@@ -827,7 +843,7 @@ function paywall(reason, resumeLesson = false) {
         <tr><td>総まとめテスト</td><td>—</td><td class="pro">${I.check.replace('<svg','<svg width="20" height="20"')}</td></tr>
         <tr><td>スワイプゲーム</td><td>1日3回</td><td class="pro">無制限</td></tr>
         <tr><td>獲得コイン</td><td>×1</td><td class="pro">×2</td></tr>
-        <tr><td>限定着せ替え（王冠）</td><td>—</td><td class="pro">${I.check.replace('<svg','<svg width="20" height="20"')}</td></tr></table>
+        <tr><td>限定装備（黄金の電卓）</td><td>—</td><td class="pro">${I.check.replace('<svg','<svg width="20" height="20"')}</td></tr></table>
       ${S.pro ? `<button class="btn btn-ghost" id="pw-cancel">Pro を解約する（デモ）</button>` : `
       <div class="plans">
         <button class="plan ${plan==='year'?'sel':''}" data-plan="year"><span class="ribbon">いちばんお得 · 34%OFF</span><span class="radio"></span>
@@ -842,12 +858,12 @@ function paywall(reason, resumeLesson = false) {
     m.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { plan = b.dataset.plan; beep('tap'); draw(); });
     const go = $('#pw-go', m); if (go) go.onclick = () => {
       S.pro = true; S.proPlan = plan; S.hearts = HEART_MAX; checkBadges(); save(); beep('win'); confetti(200);
-      m.innerHTML = `<div class="inner wrap" style="text-align:center; justify-content:center">${mascot(['crown','tie','glasses'], 'happy', 'bounce')}
+      m.innerHTML = `<div class="inner wrap" style="text-align:center; justify-content:center">${mascot(['goldcalc','tie','glasses','armcover'], 'happy', 'bounce')}
         <h1 style="margin-top:10px">Pro へようこそ！</h1><p class="muted" style="line-height:1.7">ハート無制限、課長・部長編、苦手復習が使えるようになりました。<br>（デモ：請求は発生していません）</p>
         <div style="height:24px"></div><button class="btn btn-primary" id="pw-ok">さっそく学ぶ</button></div>`;
       $('#pw-ok', m).onclick = () => { m.remove(); if (resumeLesson) next(); else render(); };
     };
-    const cc = $('#pw-cancel', m); if (cc) cc.onclick = () => { S.pro = false; S.proPlan = null; S.wear = S.wear.filter(w => w !== 'crown'); save(); toast('Pro を解約しました（デモ）'); m.remove(); render(); };
+    const cc = $('#pw-cancel', m); if (cc) cc.onclick = () => { S.pro = false; S.proPlan = null; S.wear = S.wear.filter(w => w !== 'goldcalc'); save(); toast('Pro を解約しました（デモ）'); m.remove(); render(); };
   };
   draw(); document.body.append(m);
 }
@@ -1049,61 +1065,135 @@ function swipeGame() {
   draw();
 }
 
-/* ───────── ショップ ───────── */
+/* ───────── 購買部（ショップ） ─────────
+   買うたびに「領収書」と「仕訳」が切られる。価格は税込、仕訳は税抜経理。 */
+const taxIn = p => Math.floor(p * 10 / 110);                       // 内消費税（10%）
+const exTax = (acct, p) => [[acct, p - taxIn(p)], ['仮払消費税', taxIn(p)]];
 const ITEMS = [
-  { id:'refill', ic:'❤️', t:'ハート全回復', d:'すぐに5個まで回復', p:350, can:() => !S.pro && S.hearts < HEART_MAX },
-  { id:'freeze', ic:'🧊', t:'ストリークフリーズ', d:'1日休んでも連続記録を守る（最大2個）', p:200, can:() => S.freeze < 2 },
-  { id:'boost', ic:'⚡', t:'XP 2倍ブースト', d:'15分間、獲得XPが2倍に', p:150, can:() => true },
-  { id:'ticket', ic:'🎟️', t:'ゲームチケット×3', d:'スワイプ仕分けを3回追加', p:100, can:() => !S.pro },
+  { id:'refill', ic:'🧃', t:'栄養ドリンク', d:'ハートを5個まで全回復。決算期の味方', p:350, can:() => !S.pro && S.hearts < HEART_MAX,
+    je:p => ({ dr:exTax('福利厚生費', p), cr:[['現金', p]], note:'従業員みんなに配るなら福利厚生費。特定の人だけなら給与扱いになることも。' }) },
+  { id:'freeze', ic:'🏖️', t:'有給休暇届', d:'1日休んでも連続記録を守る（最大2枚）', p:200, can:() => S.freeze < 2,
+    je:() => ({ dr:[], cr:[], note:'有給休暇は会社が何かを買うわけではないので、仕訳は不要！ ただし年5日の取得は会社の義務です。' }) },
+  { id:'hint', ic:'🖍️', t:'赤ペン×3', d:'レッスン中に使うと、まちがいの選択肢を2つ消せる', p:120, can:() => true,
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'事務用品は消耗品費。10万円未満なら資産にせず費用でOK。' }) },
+  { id:'boost', ic:'🍱', t:'残業食', d:'15分間、獲得XPが2倍に', p:150, can:() => true,
+    je:p => ({ dr:exTax('福利厚生費', p), cr:[['現金', p]], note:'残業時の食事は、常識的な金額なら福利厚生費にできます。' }) },
+  { id:'ticket', ic:'🧾', t:'伝票の束', d:'スワイプ仕分けを3回追加', p:100, can:() => !S.pro,
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'伝票や帳票の用紙も消耗品費。' }) },
 ];
 const OUTFITS = [
-  { id:'glasses', ic:'👓', t:'まるメガネ', p:300 }, { id:'tie', ic:'👔', t:'ビジネスネクタイ', p:500 },
-  { id:'headband', ic:'🎌', t:'決算ハチマキ', p:600 }, { id:'calc', ic:'🧮', t:'マイ電卓', p:800 }, { id:'crown', ic:'👑', t:'CFOの王冠', p:0, pro:true },
+  { id:'armcover', ic:'🧤', t:'アームカバー', p:250, d:'経理の伝統装備',
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'業務用の作業着・備品は経費になります。' }) },
+  { id:'glasses', ic:'👓', t:'黒縁メガネ', p:300, d:'数字の見間違い防止',
+    je:() => ({ dr:[], cr:[], note:'視力矯正のメガネは私物。会社の経費にはできません（会社が払うと給与として課税されることも）。自腹で買いました！' }) },
+  { id:'soroban', ic:'🧮', t:'そろばん', p:400, d:'暗算力アップ（気分）',
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'10万円未満の事務用品は消耗品費。' }) },
+  { id:'tie', ic:'👔', t:'ネクタイ', p:500, d:'税務調査の日の勝負服',
+    je:() => ({ dr:[], cr:[], note:'スーツやネクタイは普段も使える私物なので、原則として経費になりません。自腹です！' }) },
+  { id:'headband', ic:'🎌', t:'決算ハチマキ', p:600, d:'締め日前夜の必需品',
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'社内イベント用なら消耗品費や福利厚生費で処理します。' }) },
+  { id:'calc', ic:'🖩', t:'12桁電卓', p:800, d:'経理の相棒。億単位も一発',
+    je:p => ({ dr:exTax('消耗品費', p), cr:[['現金', p]], note:'電卓は10万円未満なので備品ではなく消耗品費。' }) },
+  { id:'goldcalc', ic:'✨', t:'黄金の電卓', p:0, pro:true, d:'Pro メンバー限定' },
 ];
+const FUNDING = [
+  { c:500, y:120, t:'創業資金', ic:'🌱', r:'' }, { c:1200, y:250, t:'増資', ic:'📈', r:'人気' }, { c:3000, y:480, t:'IPO（上場）', ic:'🔔', r:'いちばんお得' },
+];
+const DEPOSIT = { amt:500, rate:.05, hours:24, wh:.15315 };
+function receipt({ title, rows, dr, cr, note }) {
+  const n = Math.max(dr.length, cr.length);
+  const lines = Array.from({length:n}, (_, i) => `<tr><td>${dr[i] ? esc(dr[i][0]) : ''}</td><td class="a">${dr[i] ? yen(dr[i][1]) : ''}</td><td>${cr[i] ? esc(cr[i][0]) : ''}</td><td class="a">${cr[i] ? yen(cr[i][1]) : ''}</td></tr>`).join('');
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="box" style="text-align:left">
+    <div class="paper" style="animation:unfold .45s cubic-bezier(.2,.8,.2,1)"><div class="kind">${esc(title)}</div>
+      <div class="sub">経理ラボ購買部　${todayStr().replaceAll('-', '/')}</div>
+      <table>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('')}</table>
+      <div class="seal" style="position:absolute; right:14px; bottom:12px; width:48px; height:48px; border:3px solid var(--shu); color:var(--shu); border-radius:50%;
+        display:grid; place-items:center; font-family:var(--f-disp); font-weight:800; font-size:.8rem; transform:rotate(-10deg); animation:seal .45s .35s cubic-bezier(.2,1.6,.4,1) both">領収</div></div>
+    <div class="disp small" style="margin-top:6px">この取引の仕訳</div>
+    ${n ? `<table class="entry"><tr><th>借方</th><th style="text-align:right">金額</th><th>貸方</th><th style="text-align:right">金額</th></tr>${lines}</table>`
+        : `<div class="card" style="padding:10px 12px; font-weight:800; color:var(--shu)">仕訳なし（会社の経費ではありません）</div>`}
+    <p class="small" style="line-height:1.7; margin:4px 0 6px">💡 ${esc(note)}</p>
+    <button class="btn btn-primary" id="rc-ok">OK</button></div>`;
+  document.body.append(m); $('#rc-ok', m).onclick = () => { m.remove(); render(); };
+}
+const priceRows = (name, p, coinLabel = 'コイン') => [['品名', esc(name)], ['金額', `<b>${yen(p)} ${coinLabel}</b>（税込）`], ['内消費税', `${yen(taxIn(p))}（10%）`]];
+function depositCard() {
+  const d = S.deposit;
+  if (!d) return `<div class="card" style="display:grid; gap:8px">
+      <div style="display:flex; gap:12px; align-items:center"><span style="font-size:2rem">🏦</span><div style="min-width:0"><b class="disp">定期預金</b>
+      <div class="small muted" style="line-height:1.6">${DEPOSIT.amt}コインを${DEPOSIT.hours}時間預けると、利息${DEPOSIT.amt*DEPOSIT.rate}コイン。<br>ただし利息からは税金 15.315% が源泉徴収されます。</div></div></div>
+      <button class="btn btn-gold" data-act="deposit" ${S.coins < DEPOSIT.amt ? 'disabled' : ''}>${DEPOSIT.amt} コインを預ける</button></div>`;
+  const left = d.ts + DEPOSIT.hours * 36e5 - Date.now();
+  return `<div class="card" style="display:grid; gap:8px"><div style="display:flex; gap:12px; align-items:center"><span style="font-size:2rem">🏦</span>
+      <div style="min-width:0"><b class="disp">定期預金 ${yen(d.amt)} コイン</b><div class="small muted">${left > 0 ? `満期まであと ${Math.floor(left/36e5)}時間${Math.ceil(left%36e5/6e4)}分` : '満期になりました！'}</div></div></div>
+      <button class="btn btn-primary" data-act="withdraw" ${left > 0 ? 'disabled' : ''}>${left > 0 ? '満期を待っています' : '利息を受け取る'}</button></div>`;
+}
 function viewShop() {
   return `<div style="padding-top:8px; display:flex; align-items:center; gap:12px">${mascot(S.wear, 'happy', 'bounce').replace('class="mascot', 'style="width:84px;height:84px;margin:0" class="mascot')}
-    <div><h1 style="font-size:1.4rem">ショップ</h1><p class="muted small" style="margin:4px 0 0">コインはレッスン・クエスト・ゲームで貯まります</p></div></div>
-    ${S.pro ? '' : `<button class="promo" style="width:100%; margin-top:14px; text-align:left" data-act="paywall"><div style="font-size:2rem">👑</div>
-      <div style="min-width:0"><b>経理ラボ Pro</b><div class="small" style="opacity:.9">ハート無制限・全ステージ・コイン2倍</div></div>
+    <div style="min-width:0"><h1 style="font-size:1.4rem">購買部</h1><p class="muted small" style="margin:4px 0 0; line-height:1.6">買うたびに領収書と仕訳が切られます。<br>経費になる？ ならない？ 当ててみよう</p></div></div>
+    ${S.pro ? '' : `<button class="promo" style="width:100%; margin-top:14px; text-align:left" data-act="paywall"><div style="font-size:2rem">✨</div>
+      <div style="min-width:0"><b>経理ラボ Pro</b><div class="small" style="opacity:.9">ハート無制限・全ステージ・黄金の電卓</div></div>
       <span class="x disp" style="background:#fff; color:#5B32E0; padding:8px 12px; border-radius:12px">7日無料</span></button>`}
-    <div class="section-title">アイテム</div>
+    <div class="section-title">事務用品・福利厚生</div>
     <div class="shop">${ITEMS.map(it => `<button class="item" data-act="buy:${it.id}" ${it.can() ? '' : 'disabled style="opacity:.5"'}>
       <span class="ic">${it.ic}</span><span class="t">${it.t}</span><span class="d">${it.d}</span>
-      ${it.id==='freeze' ? `<span class="own">所持 ${S.freeze}/2</span>` : ''}${it.id==='boost' && boost() ? '<span class="own">発動中</span>' : ''}
-      <span class="price">${I.coin}${yen(it.p)}</span></button>`).join('')}</div>
-    <div class="section-title">着せ替え</div>
+      ${it.id==='freeze' ? `<span class="own">所持 ${S.freeze}/2</span>` : ''}${it.id==='hint' ? `<span class="own">所持 ${S.hints}本</span>` : ''}${it.id==='boost' && boost() ? '<span class="own">発動中</span>' : ''}
+      <span class="price">${I.coin}${yen(it.p)}<span class="small muted" style="font-family:var(--f-body); font-weight:500">税込</span></span></button>`).join('')}</div>
+    <div class="section-title">チョーボの装備</div>
     <div class="shop">${OUTFITS.map(o => { const own = S.owned.includes(o.id) || (o.pro && S.pro), wear = S.wear.includes(o.id);
-      return `<button class="item" data-act="outfit:${o.id}"><span class="ic">${o.ic}</span><span class="t">${o.t}</span>
-        <span class="d">${o.pro ? 'Pro メンバー限定' : 'チョーボに着せよう'}</span>
+      return `<button class="item" data-act="outfit:${o.id}"><span class="ic">${o.ic}</span><span class="t">${o.t}</span><span class="d">${o.d}</span>
         ${own ? `<span class="own">${wear ? '着用中（タップで外す）' : '所持（タップで着る）'}</span>` : o.pro ? '<span class="pro-pill" style="box-shadow:none; font-size:.66rem; padding:4px 8px; align-self:flex-start">PRO</span>' : `<span class="price">${I.coin}${yen(o.p)}</span>`}</button>`; }).join('')}</div>
-    <div class="section-title">コインを買う</div>
-    <div class="packs">${[[500,120,''],[1200,250,'人気'],[3000,480,'お得']].map(([c, y, r]) => `<button class="pack" data-act="pack:${c}">
-      ${r ? `<span class="ribbon">${r}</span>` : ''}<span class="ic">${c >= 3000 ? '💰' : c >= 1200 ? '🪙' : '🟡'}</span>
-      <span><span class="t num">${yen(c)} コイン</span><br><span class="small muted">${c >= 1200 ? `${Math.round((1 - y / c / (120/500)) * 100)}% お得` : 'まずはお試し'}</span></span><span class="yen">¥${y}</span></button>`).join('')}</div>
-    <p class="demo-note">デモ版のため、コインの購入は実際の支払いなしで追加されます。</p><div style="height:16px"></div>`;
+    <div class="section-title">財務</div>${depositCard()}
+    <div class="section-title">資金調達</div>
+    <div class="packs">${FUNDING.map(f => `<button class="pack" data-act="pack:${f.c}">
+      ${f.r ? `<span class="ribbon">${f.r}</span>` : ''}<span class="ic">${f.ic}</span>
+      <span><span class="t">${f.t}</span><br><span class="small muted num">${yen(f.c)} コイン${f.c >= 1200 ? `（${Math.round((1 - f.y / f.c / (120/500)) * 100)}%お得）` : ''}</span></span><span class="yen">¥${f.y}</span></button>`).join('')}</div>
+    <p class="demo-note">デモ版のため、資金調達は実際の支払いなしでコインが追加されます。</p><div style="height:16px"></div>`;
 }
 ACTIONS.buy = id => {
   const it = ITEMS.find(x => x.id === id);
   if (!it.can()) return;
-  if (S.coins < it.p) { toast(`コインが ${yen(it.p - S.coins)} 足りません`); buzz(30); return; }
+  if (S.coins < it.p) { toast(`コインが ${yen(it.p - S.coins)} 足りません（資金ショート！）`); buzz(30); return; }
   S.coins -= it.p;
   if (id === 'refill') S.hearts = HEART_MAX;
   if (id === 'freeze') S.freeze++;
+  if (id === 'hint') S.hints += 3;
   if (id === 'boost') S.boostUntil = Math.max(Date.now(), S.boostUntil) + 15 * 6e4;
   if (id === 'ticket') S.tickets += 3;
-  save(); beep('coin'); toast(`${it.t} を購入しました`); render();
+  S.receipts = (S.receipts || 0) + 1; checkBadges(); save(); beep('coin');
+  receipt({ title:'領収書', rows:priceRows(it.t, it.p), ...it.je(it.p) });
 };
 ACTIONS.outfit = id => {
   const o = OUTFITS.find(x => x.id === id), own = S.owned.includes(id) || (o.pro && S.pro);
   if (!own) {
-    if (o.pro) return paywall('王冠は Pro メンバー限定です');
-    if (S.coins < o.p) { toast(`コインが ${yen(o.p - S.coins)} 足りません`); buzz(30); return; }
-    S.coins -= o.p; S.owned.push(id); S.wear.push(id); beep('coin'); confetti(60); toast(`${o.t} を手に入れた！`);
-  } else S.wear = S.wear.includes(id) ? S.wear.filter(w => w !== id) : [...S.wear, id];
+    if (o.pro) return paywall('黄金の電卓は Pro メンバー限定です');
+    if (S.coins < o.p) { toast(`コインが ${yen(o.p - S.coins)} 足りません（資金ショート！）`); buzz(30); return; }
+    S.coins -= o.p; S.owned.push(id); S.wear.push(id); S.receipts = (S.receipts || 0) + 1; beep('coin'); confetti(60);
+    checkBadges(); save(); receipt({ title:'領収書', rows:priceRows(o.t, o.p), ...o.je(o.p) }); return;
+  }
+  S.wear = S.wear.includes(id) ? S.wear.filter(w => w !== id) : [...S.wear, id];
   checkBadges(); save(); render();
 };
-ACTIONS.pack = c => { S.coins += +c; save(); beep('coin'); confetti(90); toast(`${yen(c)} コインを追加しました（デモ）`); render(); };
-
+ACTIONS.pack = c => {
+  const f = FUNDING.find(x => x.c === +c); S.coins += f.c; checkBadges(); save(); beep('coin'); confetti(90);
+  receipt({ title:'払込証明', rows:[['内容', `${f.t}（デモ）`], ['払込額', `<b>${yen(f.c)} コイン</b>`], ['消費税', '不課税（出資は消費税の対象外）']],
+    dr:[['普通預金', f.c]], cr:[['資本金', f.c]], note: f.c >= 3000 ? '上場すると株主が一気に増え、四半期ごとの開示や内部統制の監査（J-SOX）が求められます。経理の腕の見せどころ！' : '株主からの出資は返済不要。借入金（負債）ではなく資本金（純資産）が増えます。' });
+};
+ACTIONS.deposit = () => {
+  if (S.coins < DEPOSIT.amt) return;
+  S.coins -= DEPOSIT.amt; S.deposit = { amt:DEPOSIT.amt, ts:Date.now() }; save(); beep('coin');
+  receipt({ title:'預金証書', rows:[['種類', '定期預金（1日もの）'], ['預入額', `<b>${yen(DEPOSIT.amt)} コイン</b>`], ['利率', '5%（ゲーム内の特別金利）']],
+    dr:[['定期預金', DEPOSIT.amt]], cr:[['普通預金', DEPOSIT.amt]], note:'定期預金も会社のお金（資産）。普通預金から振り替えるだけなので、損も得もまだ出ていません。' });
+};
+ACTIONS.withdraw = () => {
+  const d = S.deposit; if (!d || Date.now() < d.ts + DEPOSIT.hours * 36e5) return;
+  const interest = Math.round(d.amt * DEPOSIT.rate), tax = Math.floor(interest * DEPOSIT.wh), net = d.amt + interest - tax;
+  S.coins += net; S.deposit = null; S.receipts = (S.receipts || 0) + 1; addBadge('interest'); save(); beep('win'); confetti(70);
+  receipt({ title:'利息計算書', rows:[['元本', `${yen(d.amt)} コイン`], ['利息', `${interest} コイン`], ['源泉徴収税（15.315%）', `△${tax} コイン`], ['お受取額', `<b>${yen(net)} コイン</b>`]],
+    dr:[['普通預金', net], ['法人税等', tax]], cr:[['定期預金', d.amt], ['受取利息', interest]],
+    note:'会社の預金利息からは所得税・復興特別所得税 15.315% が源泉徴収されます（個人なら住民税5%も加わり20.315%）。天引きされた税金は法人税等で処理し、法人税の申告で差し引けます。' });
+};
 /* ───────── マイページ ───────── */
 const BADGES = [
   { id:'first', ic:'🌱', t:'はじめの一歩', ok:() => Object.keys(S.done).length >= 1 },
@@ -1115,7 +1205,11 @@ const BADGES = [
   { id:'swipe100', ic:'🃏', t:'仕分け100点', ok:() => false },
   { id:'kacho', ic:'💼', t:'課長就任', ok:() => S.career.cleared.includes(3) },
   { id:'bucho', ic:'🏆', t:'経理部長', ok:() => false },
-  { id:'fashion', ic:'🎀', t:'おしゃれ', ok:() => S.owned.length >= 2 },
+  { id:'fashion', ic:'🧤', t:'経理の正装', ok:() => S.owned.includes('armcover') && S.owned.includes('calc') },
+  { id:'receipts', ic:'🧾', t:'領収書10枚', ok:() => (S.receipts || 0) >= 10 },
+  { id:'interest', ic:'🏦', t:'利息生活', ok:() => false },
+  { id:'akapen', ic:'🖍️', t:'赤ペン先生', ok:() => (S.hintUsed || 0) >= 5 },
+  { id:'kessan', ic:'📊', t:'決算を締めた', ok:() => ['u6a','u6b'].every(n => S.done[n]) },
   { id:'lv10', ic:'⭐', t:'レベル10', ok:() => level(S.xp) >= 10 },
   { id:'pro', ic:'👑', t:'Pro メンバー', ok:() => S.pro },
 ];
