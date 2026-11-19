@@ -1260,6 +1260,7 @@ const EPISODES = [
     const r = await battle({ enemy:'過年度訂正と市場変更の審査', kind:'ボス', desc:'事実をすべて開示し、5年分の決算を訂正する。', hp:400, atk:17, every:3, pool:POOLS.all, party:fixedParty(['kirishima', 'yui']), freeRevive:true,
       taunts:['記者からの問い合わせが30件','株価がストップ安','子会社の社長が辞任を拒否'] });
     if (!r.win) return r;
+    vnOpen('office', '3月　記者会見');
     await run([['narr','会見で、社長は深く頭を下げた。プライム市場への移行は、見送りになった。'], ['amagi','……止めてくれて、ありがとう。','sad'], ['amagi','最初の会社を潰したとき、誰も「無理だ」と言ってくれなかった。……君は、言ってくれた。']]);
     return r;
   }},
@@ -1617,7 +1618,7 @@ function viewHome() {
     </div>
     <div class="hm-bottom side">
       <div class="bsstrip glass">${STAT.map(([k, l, c]) => `<div><span>${l}</span><i><s style="width:0; background:var(${c})" data-w="${G.stat[k]}"></s></i></div>`).join('')}</div>
-      <button class="story-cta shine" id="cta"><span><span class="k">${ep ? `STORY　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」` : 'STORY'}</span><b>${ep ? `${ep.no}「${ep.title}」` : 'エンディング'}</b><span class="small muted">${ep ? esc(ep.desc) : '月次決算ランで仲間を育てよう'}</span></span><span class="go">${ep ? 'PLAY' : 'RUN'}</span></button>
+      <button class="story-cta shine" id="cta"><span><span class="k">${ep ? `STORY　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」` : 'STORY'}</span><b>${ep ? `${ep.no}「${ep.title}」` : 'エンディング'}</b><span class="small muted">${ep ? esc(ep.desc) : '終章「貸借一致」をもう一度見る'}</span></span><span class="go">PLAY</span></button>
     </div></div>` + tabs('home');
   bindTabs();
   requestAnimationFrame(() => document.querySelectorAll('.bsstrip s').forEach(e => e.style.width = e.dataset.w + '%'));
