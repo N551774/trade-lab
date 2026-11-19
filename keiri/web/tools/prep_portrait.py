@@ -18,6 +18,7 @@ from PIL import Image, ImageFilter
 
 MODEL = "isnet-general-use"  # 持ち物（スマホなど）も残す汎用モデル。--model で変更できる
 ERODE = 0                     # 輪郭を何ピクセル内側に削るか（--erode）
+MATTING = False               # 髪の毛先を細かく抜く（--matting）
 
 
 def cutout(im: Image.Image) -> Image.Image:
@@ -28,7 +29,8 @@ def cutout(im: Image.Image) -> Image.Image:
     global _SESSION
     if "_SESSION" not in globals():
         _SESSION = new_session(MODEL)
-    out = remove(im.convert("RGB"), session=_SESSION, post_process_mask=True)
+    kw = dict(alpha_matting=True, alpha_matting_foreground_threshold=240, alpha_matting_background_threshold=20, alpha_matting_erode_size=12) if MATTING else {}
+    out = remove(im.convert("RGB"), session=_SESSION, post_process_mask=not MATTING, **kw)
     if ERODE:  # 髪の毛先などに残る背景のふちを削る
         a = out.getchannel("A").filter(ImageFilter.MinFilter(2 * ERODE + 1)).filter(ImageFilter.GaussianBlur(1))
         out.putalpha(a)
@@ -76,9 +78,11 @@ def main() -> None:
     ap.add_argument("--height", type=int, default=900)
     ap.add_argument("--model", default=MODEL, help="rembg のモデル名（例：u2net_human_seg）")
     ap.add_argument("--erode", type=int, default=0, help="輪郭を内側に削るピクセル数（髪のふちの背景残り対策）")
+    ap.add_argument("--matting", action="store_true", help="髪の毛先を細かく抜く（時間がかかる）")
     o = ap.parse_args()
     globals()["MODEL"] = o.model
     globals()["ERODE"] = o.erode
+    globals()["MATTING"] = o.matting
     im = Image.open(o.src)
     if o.box:
         im = im.crop(tuple(int(v) for v in o.box.split(",")))

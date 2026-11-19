@@ -1,604 +1,1073 @@
 <title>バランスシート</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
 <style>
-/* Layout: 縦長スマホの1画面ゲーム。上に人生のバランスシート、中央に人物、下に台詞。バトルは上に業務（敵）、下にコマンド。 */
+/* Layout: 縦持ちスマホの1画面アプリ。上にHUD、中央に画面、下にタブ。物語・バトル・ランは全画面。
+   色：夜のオフィス（紺）を地に、金（報酬・★）、朱（経理の朱書き＝攻撃・警告）。 */
 :root{
-  --bg:#101318; --bg2:#171B22; --panel:#1D222B; --panel2:#262C37; --line:#323A47; --ink:#EEF0F3; --muted:#9AA3B1;
-  --gold:#D9B45B; --shu:#E0563C; --green:#4FBF8F; --blue:#6A9BE0; --violet:#A98BE6;
-  --work:#6A9BE0; --family:#E59A5A; --health:#4FBF8F; --money:#D9B45B;
+  --bg:#0E1117; --bg2:#151A22; --panel:#1B212B; --panel2:#242B37; --line:#313A48; --ink:#EEF1F5; --muted:#98A2B3;
+  --gold:#E2B85C; --gold2:#F6D88E; --shu:#E2573D; --green:#4FC08F; --blue:#6FA0E6; --violet:#A98BE6;
+  --work:#6FA0E6; --family:#E79C5C; --health:#4FC08F; --money:#E2B85C;
+  --r3:#8FA3BF; --r4:#B98BEA; --r5:#E2B85C;
   --f-head:"Noto Serif JP","Hiragino Mincho ProN",serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); overscroll-behavior:none; -webkit-tap-highlight-color:transparent}
-button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); overscroll-behavior:none; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0}
 button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
-.app{max-width:480px; margin:0 auto; height:100%; position:relative; overflow:hidden; display:flex; flex-direction:column}
-.side{padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:480px; height:100%; margin:0 auto; position:relative; overflow:hidden; display:flex; flex-direction:column; background:var(--bg)}
+.side{padding-left:max(14px,env(safe-area-inset-left,0px)); padding-right:max(14px,env(safe-area-inset-right,0px))}
+.scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch}
+.num{font-variant-numeric:tabular-nums}
+.serif{font-family:var(--f-head)}
+.muted{color:var(--muted)}
+.small{font-size:.78rem}
 
-/* 人生のバランスシート */
-.bs{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; padding-block:10px 8px; font-size:.72rem; border-bottom:1px solid var(--line); background:var(--bg2)}
-.bs .t{grid-column:1/-1; display:flex; justify-content:space-between; color:var(--muted); letter-spacing:.08em}
-.bs .t b{font-family:var(--f-head); color:var(--ink); letter-spacing:.04em}
-.meter{display:grid; grid-template-columns:2.6em 1fr 2.2em; align-items:center; gap:6px}
-.meter i{height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; display:block}
-.meter i s{display:block; height:100%; border-radius:6px; transition:width .6s}
-.meter em{font-style:normal; text-align:right; font-variant-numeric:tabular-nums; color:var(--muted)}
-.meter.flash{animation:flash .8s}
-@keyframes flash{30%{transform:scale(1.04); filter:brightness(1.6)}}
+/* HUD */
+.hud{display:flex; align-items:center; gap:8px; padding-block:calc(8px + env(safe-area-inset-top,0px)) 8px; background:linear-gradient(var(--bg2),rgba(21,26,34,.85)); border-bottom:1px solid var(--line); position:relative; z-index:5}
+.lv{display:flex; align-items:center; gap:8px; min-width:0; flex:1}
+.lv .b{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#2B3446,#1A2030); border:1px solid var(--line); display:grid; place-items:center; font-weight:900; font-size:.8rem; line-height:1}
+.lv .b small{display:block; font-size:.55rem; color:var(--muted); font-weight:500}
+.lv .t{min-width:0}
+.lv .t b{display:block; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.lv .t i{display:block; height:4px; width:88px; border-radius:4px; background:var(--panel2); overflow:hidden; margin-top:3px}
+.lv .t i s{display:block; height:100%; background:var(--blue)}
+.cur{display:flex; align-items:center; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 4px; font-size:.78rem; font-weight:700}
+.cur .ic{width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:.62rem; font-weight:900; color:#1A1408}
+.cur.sta .ic{background:var(--green)} .cur.coin .ic{background:var(--gold)} .cur.so .ic{background:linear-gradient(135deg,#C9A6FF,#7B5CE0); color:#fff}
 
-/* 舞台 */
-.stage{flex:1; position:relative; overflow:hidden; background:var(--scene, linear-gradient(#1A2130,#101318))}
-.stage::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 55%, rgba(0,0,0,.55)); pointer-events:none}
-.place{position:absolute; top:10px; left:max(16px,env(safe-area-inset-left,0px)); z-index:3; font-size:.72rem; letter-spacing:.12em; color:rgba(255,255,255,.75);
-  background:rgba(0,0,0,.35); padding:4px 10px; border-radius:6px}
-.who{position:absolute; inset:auto 0 0 0; height:88%; display:flex; justify-content:center; align-items:flex-end; z-index:1}
-.who .por{height:100%; max-width:90%; transition:opacity .35s, transform .35s}
-.who .por.in{animation:porIn .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes porIn{from{opacity:0; transform:translateY(16px)}}
-.who img{height:100%; width:auto; max-width:none; object-fit:contain; object-position:bottom}
-.who img.cg{-webkit-mask-image:radial-gradient(70% 62% at 50% 42%, #000 55%, transparent 100%); mask-image:radial-gradient(70% 62% at 50% 42%, #000 55%, transparent 100%)}
-.chap-title{position:absolute; inset:0; z-index:5; display:grid; place-items:center; text-align:center; background:#000; animation:fadeOut 2.8s forwards; pointer-events:none}
-.chap-title b{display:block; font-family:var(--f-head); font-size:2.6rem; letter-spacing:.3em; padding-left:.3em}
-.chap-title span{color:var(--muted); font-size:.85rem; letter-spacing:.2em}
-@keyframes fadeOut{0%,70%{opacity:1}100%{opacity:0}}
+/* タブ */
+.tabs{display:grid; grid-template-columns:repeat(5,1fr); background:var(--bg2); border-top:1px solid var(--line); padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+.tab{display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.64rem; color:var(--muted); padding:5px 0; border-radius:10px; position:relative}
+.tab svg{width:24px; height:24px}
+.tab.on{color:var(--gold); background:rgba(226,184,92,.1)}
+.dot{position:absolute; top:3px; right:22%; width:8px; height:8px; border-radius:50%; background:var(--shu); box-shadow:0 0 0 2px var(--bg2)}
 
-/* 台詞 */
-.box{position:relative; min-height:178px; background:var(--panel); border-top:1px solid var(--line); padding-block:14px calc(14px + env(safe-area-inset-bottom,0px))}
-.name{display:inline-block; font-family:var(--f-head); font-weight:900; font-size:1rem; padding:2px 12px 2px 10px; border-left:4px solid var(--c, var(--gold)); margin-bottom:6px}
-.name small{font-family:var(--f-body); font-weight:400; color:var(--muted); font-size:.7rem; margin-left:8px}
-.text{font-size:1.02rem; line-height:1.85; min-height:3.7em; white-space:pre-wrap}
-.text.narr{color:#C9CED8; font-family:var(--f-head)}
-.next{position:absolute; right:max(18px,env(safe-area-inset-right,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); color:var(--gold); font-size:.8rem; animation:bob 1.2s infinite}
+/* 共通 */
+.btn{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; letter-spacing:.04em; transition:transform .08s; flex-direction:column; line-height:1.3}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:linear-gradient(180deg,var(--gold2),var(--gold)); color:#2A1D05; box-shadow:0 4px 0 #9C7A2C}
+.btn.shu{background:linear-gradient(180deg,#F07A5E,var(--shu)); color:#fff; box-shadow:0 4px 0 #973522}
+.btn.dark{background:var(--panel2); border:1px solid var(--line); color:var(--ink)}
+.btn.so{background:linear-gradient(135deg,#B48CFF,#6C4BD8); color:#fff; box-shadow:0 4px 0 #43308E}
+.btn:disabled{filter:grayscale(1); opacity:.45}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px}
+.sec{font-family:var(--f-head); font-weight:900; font-size:1rem; margin:18px 0 8px; display:flex; align-items:center; gap:8px}
+.sec small{font-family:var(--f-body); font-weight:500; color:var(--muted); font-size:.72rem}
+.chip{display:inline-flex; align-items:center; gap:4px; font-size:.7rem; padding:2px 8px; border-radius:999px; background:var(--panel2); color:var(--muted)}
+.new{font-size:.6rem; font-weight:900; color:#fff; background:var(--shu); padding:1px 6px; border-radius:6px; letter-spacing:.06em}
+
+/* ホーム */
+.home{flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column}
+.home .bgx{position:absolute; inset:0; background:
+  linear-gradient(180deg,rgba(14,17,23,0) 40%,rgba(14,17,23,.95) 78%),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 60px),
+  linear-gradient(180deg,#22304A 0%,#141A26 70%)}
+.home .stand{position:absolute; left:0; right:0; bottom:190px; top:12px; display:flex; justify-content:center; align-items:flex-end; pointer-events:none}
+.home .stand img,.home .stand svg{height:100%; width:auto; max-width:none; filter:drop-shadow(0 10px 30px rgba(0,0,0,.6)); animation:breathe 5s ease-in-out infinite; transform-origin:bottom center}
+@keyframes breathe{50%{transform:scale(1.008) translateY(-2px)}}
+.home .tapzone{position:absolute; left:15%; right:15%; top:40px; bottom:220px}
+.bubble{position:absolute; left:50%; top:24px; transform:translateX(-50%); max-width:86%; background:rgba(245,242,234,.96); color:#1B1B1B; border-radius:14px; padding:10px 14px; font-size:.86rem; line-height:1.6; box-shadow:0 8px 24px rgba(0,0,0,.4); animation:pop .25s; z-index:3}
+.bubble b{display:block; font-size:.7rem; color:#8A6A2A}
+@keyframes pop{from{transform:translate(-50%,6px) scale(.92); opacity:0}}
+.home .bottom{position:relative; margin-top:auto; display:grid; gap:8px; padding-bottom:10px}
+.cta{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; background:linear-gradient(135deg,#3A2E14,#22201A); border:1px solid #6E5826; text-align:left; box-shadow:0 0 0 1px rgba(226,184,92,.15), 0 8px 24px rgba(0,0,0,.4)}
+.cta .k{font-size:.66rem; color:var(--gold); letter-spacing:.12em}
+.cta b{display:block; font-family:var(--f-head); font-size:1.05rem}
+.cta .go{margin-left:auto; flex:none; background:var(--gold); color:#2A1D05; font-weight:900; border-radius:10px; padding:8px 12px; font-size:.85rem; animation:glow 1.8s infinite}
+@keyframes glow{50%{box-shadow:0 0 18px rgba(246,216,142,.7)}}
+.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.tile{background:rgba(27,33,43,.92); border:1px solid var(--line); border-radius:14px; padding:10px 6px; text-align:center; position:relative}
+.tile b{display:block; font-size:.82rem}
+.tile span{font-size:.64rem; color:var(--muted)}
+.tile .ic{font-size:1.3rem; line-height:1.3}
+.bsmini{display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:.66rem; color:var(--muted)}
+.bsmini div{display:grid; grid-template-columns:2.2em 1fr; gap:6px; align-items:center}
+.bsmini i{height:4px; border-radius:4px; background:var(--panel2); overflow:hidden}
+.bsmini i s{display:block; height:100%}
+
+/* ミッション */
+.mis{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line)}
+.mis:last-child{border-bottom:0}
+.mis .t{flex:1; min-width:0; font-size:.85rem}
+.mis .t i{display:block; height:5px; border-radius:5px; background:var(--panel2); overflow:hidden; margin-top:5px}
+.mis .t i s{display:block; height:100%; background:var(--gold)}
+.claim{flex:none; font-size:.75rem; font-weight:900; padding:7px 10px; border-radius:10px; background:var(--gold); color:#2A1D05}
+.claim:disabled{background:var(--panel2); color:var(--muted)}
+
+/* 物語（ノベル） */
+.vn{flex:1; display:flex; flex-direction:column; position:relative; overflow:hidden}
+.vn .stage{flex:1; position:relative; overflow:hidden; background:var(--scene,linear-gradient(#1A2130,#0E1117))}
+.vn .stage::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 60%, rgba(0,0,0,.6)); pointer-events:none}
+.vn .place{position:absolute; top:calc(10px + env(safe-area-inset-top,0px)); left:max(14px,env(safe-area-inset-left,0px)); z-index:3; font-size:.7rem; letter-spacing:.1em; color:rgba(255,255,255,.8); background:rgba(0,0,0,.4); padding:4px 10px; border-radius:6px; max-width:55%}
+.vn .place:empty{display:none}
+.vn .ctl{position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); right:max(10px,env(safe-area-inset-right,0px)); z-index:4; display:flex; gap:6px}
+.vn .ctl button{font-size:.68rem; font-weight:900; letter-spacing:.08em; padding:6px 10px; border-radius:8px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.2)}
+.vn .ctl button.on{background:var(--gold); color:#2A1D05; border-color:var(--gold)}
+.vn .who{position:absolute; inset:auto 0 0 0; height:90%; display:flex; justify-content:center; align-items:flex-end; z-index:1}
+.vn .who img,.vn .who svg{height:100%; width:auto; max-width:none; animation:in .4s cubic-bezier(.2,.8,.2,1)}
+.vn .who img.cg{-webkit-mask-image:radial-gradient(70% 62% at 50% 42%,#000 55%,transparent 100%); mask-image:radial-gradient(70% 62% at 50% 42%,#000 55%,transparent 100%)}
+@keyframes in{from{opacity:0; transform:translateY(14px)}}
+.box{position:relative; min-height:168px; background:linear-gradient(rgba(27,33,43,.97),var(--panel)); border-top:1px solid var(--line); padding-block:12px calc(14px + env(safe-area-inset-bottom,0px))}
+.name{display:inline-block; font-family:var(--f-head); font-weight:900; font-size:.98rem; padding:0 10px; border-left:4px solid var(--c,var(--gold)); margin-bottom:4px}
+.name small{font-family:var(--f-body); font-weight:400; color:var(--muted); font-size:.68rem; margin-left:6px}
+.text{font-size:1rem; line-height:1.85; min-height:3.6em; white-space:pre-wrap}
+.text.narr{font-family:var(--f-head); color:#CDD3DE}
+.nx{position:absolute; right:max(16px,env(safe-area-inset-right,0px)); bottom:calc(10px + env(safe-area-inset-bottom,0px)); color:var(--gold); font-size:.8rem; animation:bob 1.2s infinite}
 @keyframes bob{50%{transform:translateY(3px)}}
-.choices{display:grid; gap:8px; margin-top:6px}
-.choice{text-align:left; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; line-height:1.55; font-size:.92rem; transition:background .15s}
-.choice:hover{background:#2E3542}
-.choice small{display:block; color:var(--muted); font-size:.72rem; margin-top:2px}
-.tap{position:absolute; inset:0; z-index:2}
-.effects{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
-.fx{font-size:.75rem; padding:2px 8px; border-radius:6px; background:var(--panel2)}
-.fx.up{color:var(--green)} .fx.down{color:var(--shu)}
-.point{margin-top:8px; font-size:.84rem; line-height:1.7; background:rgba(217,180,91,.1); border-left:3px solid var(--gold); padding:8px 10px; border-radius:6px; color:#E7DFC8}
-input.nm{width:100%; font:inherit; font-size:1.1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); margin:6px 0 10px}
-.btn{display:block; width:100%; text-align:center; padding:14px; border-radius:12px; font-weight:700; background:var(--gold); color:#1A1408}
-.btn.ghost{background:var(--panel2); color:var(--ink); border:1px solid var(--line)}
+.choices{display:grid; gap:8px; margin-top:4px}
+.choice{text-align:left; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:11px 13px; line-height:1.55; font-size:.9rem}
+.choice small{display:block; color:var(--gold); font-size:.68rem; margin-top:2px; letter-spacing:.06em}
+.fx{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.fx span{font-size:.72rem; padding:2px 8px; border-radius:6px; background:var(--panel2)}
+.fx .up{color:var(--green)} .fx .dn{color:var(--shu)}
+.point{margin-top:6px; font-size:.84rem; line-height:1.7; background:rgba(226,184,92,.09); border-left:3px solid var(--gold); padding:8px 10px; border-radius:6px; color:#E9E1CB}
+.chap{position:absolute; inset:0; z-index:6; display:grid; place-items:center; text-align:center; background:#000; animation:fade 2.6s forwards; pointer-events:none}
+.chap span{display:block; color:var(--muted); font-size:.8rem; letter-spacing:.2em}
+.chap b{display:block; font-family:var(--f-head); font-size:2.2rem; letter-spacing:.2em; margin:6px 0}
+@keyframes fade{0%,70%{opacity:1}100%{opacity:0}}
 
 /* バトル */
-.battle{flex:1; display:flex; flex-direction:column; overflow:hidden}
-.enemy{position:relative; padding-block:14px 10px; background:radial-gradient(120% 90% at 50% 0%, #2A2230, var(--bg) 70%); text-align:center}
-.enemy .card{display:inline-block; min-width:62%; max-width:100%; background:#F4F1E8; color:#1B1B1B; border-radius:6px; padding:14px 16px 12px; box-shadow:0 10px 30px rgba(0,0,0,.5);
-  transform:rotate(-1.5deg); transition:transform .2s}
-.enemy .card .k{font-size:.66rem; letter-spacing:.2em; color:#7A6F5A}
-.enemy .card b{display:block; font-family:var(--f-head); font-size:1.25rem; margin:2px 0 4px}
-.enemy .card p{margin:0; font-size:.75rem; color:#5A5448}
-.enemy .card.hit{animation:hit .4s}
-@keyframes hit{20%{transform:translateX(-10px) rotate(-4deg); filter:brightness(1.4)}60%{transform:translateX(8px) rotate(2deg)}}
-.hp{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; font-size:.72rem; color:var(--muted); margin-top:10px}
-.hp i{height:8px; border-radius:8px; background:var(--panel2); overflow:hidden; display:block}
-.hp i s{display:block; height:100%; transition:width .5s; border-radius:8px}
-.dmg{position:absolute; left:50%; top:40%; font-family:var(--f-head); font-weight:900; font-size:2rem; color:var(--gold); text-shadow:0 2px 8px #000; animation:dmg .9s forwards; pointer-events:none}
-@keyframes dmg{0%{transform:translate(-50%,10px) scale(.6); opacity:0}25%{transform:translate(-50%,-8px) scale(1.15); opacity:1}100%{transform:translate(-50%,-40px); opacity:0}}
-.party{display:flex; gap:8px; padding-block:8px}
-.mem{flex:1; display:flex; gap:8px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:6px 8px; min-width:0}
-.mem .av{width:34px; height:34px; border-radius:50%; flex:none; display:grid; place-items:center; font-family:var(--f-head); font-weight:900; background:var(--c); color:#fff}
-.mem div{min-width:0; font-size:.72rem}
-.mem b{display:block; font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.log{flex:1; overflow-y:auto; font-size:.86rem; line-height:1.7; color:#C9CED8; padding-block:6px}
-.log p{margin:0 0 4px}
-.cmds{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-block:10px calc(12px + env(safe-area-inset-bottom,0px)); background:var(--panel); border-top:1px solid var(--line)}
-.cmd{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:left}
-.cmd b{display:block; font-size:.95rem}
-.cmd small{color:var(--muted); font-size:.7rem}
-.cmd:disabled{opacity:.4; cursor:default}
-.cmd.main{grid-column:1/-1; background:linear-gradient(135deg,#3A3220,#2A2418); border-color:#6B5A2E}
-.cmd.main b{color:var(--gold)}
-.flashred{position:fixed; inset:0; background:rgba(224,86,60,.28); pointer-events:none; animation:fr .45s forwards; z-index:50}
-@keyframes fr{to{opacity:0}}
-
-/* 問題 */
-.q{position:fixed; inset:0; z-index:40; background:var(--bg); display:flex; flex-direction:column; max-width:480px; margin:0 auto; animation:porIn .25s}
-.q .head{display:flex; align-items:center; gap:10px; padding-block:calc(10px + env(safe-area-inset-top,0px)) 8px; border-bottom:1px solid var(--line)}
-.q .head b{font-size:.8rem; color:var(--muted); font-weight:500}
-.q .body{flex:1; overflow-y:auto; padding-block:14px}
-.q .kind{font-size:.72rem; letter-spacing:.14em; color:var(--gold)}
-.q .qt{font-family:var(--f-head); font-weight:700; font-size:1.12rem; line-height:1.7; margin:6px 0 14px}
-.opt{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px; line-height:1.55}
+.bt{flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative}
+.bt-top{padding-block:calc(8px + env(safe-area-inset-top,0px)) 8px; background:radial-gradient(120% 100% at 50% 0%,#2C2232,var(--bg) 75%); border-bottom:1px solid var(--line); position:relative}
+.enemy{display:flex; gap:10px; align-items:center}
+.enemy .doc{flex:1; min-width:0; background:#F2EEE3; color:#1B1B1B; border-radius:6px; padding:8px 12px; transform:rotate(-1deg); box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.enemy .doc .k{font-size:.58rem; letter-spacing:.18em; color:#7A6F5A}
+.enemy .doc b{display:block; font-family:var(--f-head); font-size:1.05rem; line-height:1.35}
+.enemy .doc p{margin:0; font-size:.68rem; color:#5A5448}
+.enemy .doc.hit{animation:hit .35s}
+@keyframes hit{25%{transform:translateX(-9px) rotate(-4deg); filter:brightness(1.5)}60%{transform:translateX(7px) rotate(2deg)}}
+.cd{flex:none; text-align:center; font-size:.6rem; color:var(--muted); width:52px}
+.cd b{display:block; font-family:var(--f-head); font-size:1.5rem; color:var(--shu); line-height:1.1}
+.cd.warn b{animation:warn .8s infinite}
+@keyframes warn{50%{transform:scale(1.2)}}
+.hpbar{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; font-size:.66rem; color:var(--muted); margin-top:8px}
+.hpbar i{height:9px; border-radius:9px; background:var(--panel2); overflow:hidden; display:block}
+.hpbar i s{display:block; height:100%; transition:width .45s; border-radius:9px}
+.bt-q{flex:1; overflow-y:auto; padding-block:12px}
+.qk{font-size:.66rem; letter-spacing:.14em; color:var(--gold)}
+.qt{font-family:var(--f-head); font-weight:700; font-size:1.05rem; line-height:1.65; margin:4px 0 12px}
+.opt{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:7px; line-height:1.5; font-size:.92rem}
 .opt.sel{border-color:var(--gold); background:#2E2A1E}
-.opt.ok{border-color:var(--green); background:#1C3328}
-.opt.ng{border-color:var(--shu); background:#3A211C}
-.opt.gone{opacity:.25; text-decoration:line-through}
-.cats{display:grid; grid-template-columns:1fr 1fr; gap:8px}
-.cats .opt{text-align:center; margin:0}
-.acct{font-family:var(--f-head); font-size:1.9rem; font-weight:900; text-align:center; padding:26px 0; background:#F4F1E8; color:#1B1B1B; border-radius:6px; margin-bottom:14px}
-.je{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px}
-.zone{min-height:96px; border:1px dashed var(--line); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px}
+.opt.gone{opacity:.2; text-decoration:line-through; pointer-events:none}
+.cats{display:grid; grid-template-columns:1fr 1fr; gap:7px}
+.cats .opt{margin:0; text-align:center; font-weight:700}
+.acct{font-family:var(--f-head); font-size:1.7rem; font-weight:900; text-align:center; padding:18px 0; background:#F2EEE3; color:#1B1B1B; border-radius:6px; margin-bottom:12px}
+.je{display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:8px}
+.zone{min-height:80px; border:1px dashed var(--line); border-radius:12px; padding:7px; display:flex; flex-direction:column; gap:5px; align-items:flex-start}
 .zone.on{border-style:solid; border-color:var(--gold); background:#221F17}
-.zone h4{margin:0; font-size:.75rem; color:var(--muted); font-weight:500}
+.zone h4{margin:0; font-size:.7rem; color:var(--muted); font-weight:500}
 .zone.on h4{color:var(--gold)}
-.chip{display:inline-block; padding:8px 12px; border-radius:10px; background:var(--panel2); border:1px solid var(--line); font-size:.88rem; margin:3px}
-.chip.used{visibility:hidden}
+.ch{display:inline-block; padding:8px 11px; border-radius:10px; background:var(--panel2); border:1px solid var(--line); font-size:.86rem; margin:3px}
+.ch.used{visibility:hidden}
 .bank{text-align:center}
-.paper{background:#F4F1E8; color:#1B1B1B; border-radius:6px; padding:12px 14px; margin-bottom:12px}
-.paper .pk{font-family:var(--f-head); font-weight:900; text-align:center; letter-spacing:.3em; border-bottom:1.5px solid #1B1B1B; padding-bottom:4px}
-.paper table{width:100%; border-collapse:collapse; font-size:.82rem; margin-top:6px}
-.paper td{padding:4px 2px; vertical-align:top}
-.paper td:first-child{color:#6A6455; width:38%}
-.q .foot{padding-block:10px calc(12px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--line); background:var(--bg2)}
-.exp{font-size:.88rem; line-height:1.75; margin-bottom:10px}
-.exp b.ok{color:var(--green)} .exp b.ng{color:var(--shu)}
-table.ent{width:100%; border-collapse:collapse; font-size:.82rem; margin:6px 0}
-table.ent td,table.ent th{padding:4px 6px; border-bottom:1px solid var(--line); text-align:left}
+.paper{background:#F2EEE3; color:#1B1B1B; border-radius:6px; padding:10px 12px; margin-bottom:10px}
+.paper .pk{font-family:var(--f-head); font-weight:900; text-align:center; letter-spacing:.3em; border-bottom:1.5px solid #1B1B1B; padding-bottom:3px}
+.paper table{width:100%; border-collapse:collapse; font-size:.78rem; margin-top:4px}
+.paper td{padding:3px 2px; vertical-align:top}
+.paper td:first-child{color:#6A6455; width:36%}
+.ans{position:sticky; bottom:0; padding-top:8px; background:linear-gradient(transparent,var(--bg) 30%)}
+.exp{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:.84rem; line-height:1.7; margin-bottom:8px}
+.exp b.ng{color:var(--shu)}
+table.ent{width:100%; border-collapse:collapse; font-size:.8rem; margin:4px 0}
+table.ent td,table.ent th{padding:3px 5px; border-bottom:1px solid var(--line); text-align:left}
 table.ent td.a{text-align:right; font-variant-numeric:tabular-nums}
+.bt-bot{border-top:1px solid var(--line); background:var(--bg2); padding-block:8px calc(10px + env(safe-area-inset-bottom,0px))}
+.timer{height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin-bottom:8px}
+.timer s{display:block; height:100%; background:var(--gold); transform-origin:left}
+.party{display:flex; gap:8px; align-items:center}
+.mem{position:relative; width:58px; height:58px; flex:none; border-radius:50%; padding:4px; background:conic-gradient(var(--gold) calc(var(--g)*1%), var(--panel2) 0)}
+.mem .f{width:100%; height:100%; border-radius:50%; background:var(--panel) center 12%/cover; display:grid; place-items:center; font-family:var(--f-head); font-weight:900}
+.mem.full{animation:ready 1s infinite}
+.mem.full::after{content:"TAP"; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); font-size:.55rem; font-weight:900; background:var(--gold); color:#2A1D05; padding:1px 6px; border-radius:6px}
+@keyframes ready{50%{box-shadow:0 0 16px rgba(246,216,142,.8)}}
+.team{flex:1; min-width:0}
+.team b{font-size:.72rem}
+.combo{font-family:var(--f-head); font-weight:900; color:var(--gold); font-size:.8rem}
+.item{flex:none; width:50px; height:50px; border-radius:12px; background:var(--panel2); border:1px solid var(--line); font-size:.58rem; display:grid; place-items:center; line-height:1.15; text-align:center}
+.item:disabled{opacity:.4}
+.dmg{position:absolute; left:50%; top:46%; font-family:var(--f-head); font-weight:900; font-size:2.2rem; color:var(--gold2); text-shadow:0 2px 10px #000; animation:dmg .9s forwards; pointer-events:none; z-index:9; white-space:nowrap}
+.dmg.crit{color:#FF7A5C; font-size:2.6rem}
+@keyframes dmg{0%{transform:translate(-50%,0) scale(.5); opacity:0}25%{transform:translate(-50%,-14px) scale(1.15); opacity:1}100%{transform:translate(-50%,-50px); opacity:0}}
+.flash{position:absolute; inset:0; pointer-events:none; z-index:8; animation:fl .45s forwards}
+@keyframes fl{from{opacity:1}to{opacity:0}}
+.shake{animation:shk .35s}
+@keyframes shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.cutin{position:absolute; inset:0; z-index:20; display:flex; align-items:center; overflow:hidden; background:rgba(0,0,0,.55); animation:fade 1.5s forwards}
+.cutin .band{position:relative; width:100%; height:44%; background:linear-gradient(100deg,var(--c) 0 55%,transparent 55.2%), linear-gradient(100deg,rgba(0,0,0,.3),rgba(0,0,0,.6)); animation:band .5s cubic-bezier(.2,.8,.2,1)}
+.cutin .band img{position:absolute; right:-6%; bottom:0; height:130%; width:auto; animation:slide .6s cubic-bezier(.2,.8,.2,1)}
+.cutin .band b{position:absolute; left:6%; top:50%; transform:translateY(-50%); font-family:var(--f-head); font-weight:900; font-size:1.8rem; color:#fff; text-shadow:0 3px 12px rgba(0,0,0,.6); max-width:60%; line-height:1.3}
+.cutin .band b small{display:block; font-family:var(--f-body); font-size:.75rem; letter-spacing:.14em; opacity:.9}
+@keyframes band{from{transform:scaleY(0)}}
+@keyframes slide{from{transform:translateX(60%); opacity:0}}
+.tip{position:absolute; left:50%; transform:translateX(-50%); z-index:15; background:var(--gold); color:#2A1D05; font-weight:900; font-size:.85rem; padding:8px 14px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.5); white-space:nowrap; animation:pop .3s; pointer-events:none}
+.tip::after{content:""; position:absolute; left:50%; margin-left:-7px; border:7px solid transparent; top:100%; border-top-color:var(--gold)}
 
-/* タイトル */
-.title{flex:1; display:flex; flex-direction:column; justify-content:center; gap:18px; background:radial-gradient(90% 60% at 50% 30%, #23293A, var(--bg))}
-.title h1{font-family:var(--f-head); font-size:2.6rem; font-weight:900; letter-spacing:.12em; margin:0}
-.title p{color:var(--muted); margin:0; line-height:1.8}
-.title .sub{font-size:.75rem; letter-spacing:.3em; color:var(--gold)}
-.ledger{font-family:var(--f-head); font-size:.9rem; color:#C9CED8; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:10px 0; display:grid; grid-template-columns:repeat(4,1fr); text-align:center}
-.ledger span+span{border-left:1px solid var(--line)}
-.end-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:6px}
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}}
+/* 結果 */
+.res{flex:1; overflow-y:auto; text-align:center; padding-block:calc(26px + env(safe-area-inset-top,0px)) 20px; background:radial-gradient(100% 60% at 50% 0%,#3A3018,var(--bg) 70%)}
+.res h1{font-family:var(--f-head); font-weight:900; font-size:2rem; margin:6px 0; letter-spacing:.1em}
+.stars{font-size:2.2rem; letter-spacing:.2em; color:var(--panel2)}
+.stars span{display:inline-block}
+.stars span.on{color:var(--gold); animation:star .5s backwards}
+@keyframes star{from{transform:scale(2.4) rotate(-20deg); opacity:0}}
+.rew{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:14px 0}
+.rew div{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 12px; font-size:.8rem}
+.rew b{display:block; font-size:1.05rem; color:var(--gold)}
+.miss{text-align:left; margin-top:12px}
+.miss details{background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:6px}
+.miss summary{padding:10px 12px; font-size:.85rem; cursor:pointer}
+.miss details div{padding:0 12px 10px; font-size:.82rem; line-height:1.7}
+
+/* スカウト */
+.banner{border-radius:18px; overflow:hidden; position:relative; height:200px; background:linear-gradient(120deg,#3A1C14,#1A1222 60%); border:1px solid #6E3A2A; text-align:left}
+.banner img{position:absolute; right:-10px; bottom:0; height:118%; width:auto}
+.banner .t{position:absolute; left:14px; top:14px; right:46%}
+.banner .t span{font-size:.66rem; letter-spacing:.14em; color:var(--gold)}
+.banner .t b{display:block; font-family:var(--f-head); font-size:1.3rem; line-height:1.35; margin-top:2px}
+.banner .t p{font-size:.72rem; color:var(--muted); margin:6px 0 0}
+.rates{font-size:.76rem}
+.rates table{width:100%; border-collapse:collapse}
+.rates td{padding:5px 4px; border-bottom:1px solid var(--line)}
+.env-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; padding-block:16px}
+.env{aspect-ratio:3/4; border-radius:6px; background:#EDE6D4; position:relative; box-shadow:0 6px 14px rgba(0,0,0,.4); display:grid; place-items:center; animation:drop .4s backwards; overflow:hidden}
+.env::before{content:""; position:absolute; left:0; right:0; top:0; height:42%; background:linear-gradient(160deg,#E2D8C0 50%,transparent 50.5%),linear-gradient(200deg,#E2D8C0 50%,transparent 50.5%)}
+.env i{width:32%; aspect-ratio:1; border-radius:50%; background:var(--seal); position:relative; z-index:1}
+.env.r5{box-shadow:0 0 22px rgba(246,216,142,.9)}
+.env.open{background:none; box-shadow:none; animation:none; display:block}
+.env.open::before{display:none}
+@keyframes drop{from{transform:translateY(-30px) rotate(-8deg); opacity:0}}
+.ccard{border-radius:10px; overflow:hidden; position:relative; aspect-ratio:3/4; background:var(--panel2) center 15%/cover; border:2px solid var(--rc); animation:flip .45s backwards; display:block; width:100%}
+.ccard .bar{position:absolute; left:0; right:0; bottom:0; padding:12px 5px 4px; background:linear-gradient(transparent,rgba(0,0,0,.85)); font-size:.56rem; line-height:1.25; text-align:left}
+.ccard .bar b{display:block; font-size:.62rem}
+.ccard .st{position:absolute; top:3px; left:4px; font-size:.6rem; color:var(--rc); text-shadow:0 1px 3px #000; letter-spacing:-.05em}
+.ccard.r5{box-shadow:0 0 16px rgba(246,216,142,.6)}
+.ccard .nw{position:absolute; top:3px; right:3px}
+@keyframes flip{from{transform:rotateY(90deg)}}
+
+/* 仲間 */
+.cgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.cgrid .ccard{animation:none}
+.pslot{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-width:280px}
+.modal{position:absolute; inset:0; z-index:30; background:rgba(5,7,10,.72); display:flex; align-items:flex-end; animation:fade2 .2s}
+@keyframes fade2{from{opacity:0}}
+.sheet{width:100%; max-height:90%; overflow-y:auto; background:var(--bg2); border-radius:22px 22px 0 0; border-top:1px solid var(--line); padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px)); animation:up .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet h2{font-family:var(--f-head); margin:0 0 6px; font-size:1.2rem}
+
+/* チャット */
+.thread{display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); width:100%; text-align:left}
+.thread .av{width:46px; height:46px; border-radius:50%; background:var(--panel2) center 12%/cover; flex:none}
+.thread .t{flex:1; min-width:0}
+.thread .t b{font-size:.9rem}
+.thread .t p{margin:2px 0 0; font-size:.76rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.msgs{display:flex; flex-direction:column; gap:10px; padding-block:12px}
+.msg{display:flex; gap:8px; align-items:flex-end; animation:in .3s}
+.msg .av{width:34px; height:34px; border-radius:50%; background:var(--panel2) center 12%/cover; flex:none}
+.msg .b{max-width:78%; background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 16px 4px; padding:9px 12px; font-size:.88rem; line-height:1.6}
+.msg .tm{font-size:.6rem; color:var(--muted)}
+.msg.me{justify-content:flex-end}
+.msg.me .b{background:#2D5A8A; border-color:#2D5A8A; border-radius:16px 16px 4px 16px}
+
+/* 月次決算ラン */
+.run-h{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.run-h div{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; text-align:center}
+.run-h b{display:block; font-family:var(--f-head); font-size:1.2rem}
+.run-h span{font-size:.62rem; color:var(--muted)}
+.weeks{display:flex; gap:6px; margin:12px 0}
+.weeks i{flex:1; height:6px; border-radius:6px; background:var(--panel2)}
+.weeks i.on{background:var(--gold)} .weeks i.now{background:var(--shu)}
+.acts{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.act{background:linear-gradient(180deg,#F2EEE3,#E3DCC8); color:#1B1B1B; border-radius:10px; padding:10px 8px; text-align:left; min-height:150px; display:flex; flex-direction:column; gap:4px; box-shadow:0 6px 16px rgba(0,0,0,.4); animation:deal .4s backwards}
+.act .ic{font-size:1.4rem}
+.act b{font-family:var(--f-head); font-size:.92rem}
+.act p{margin:0; font-size:.68rem; color:#4A4438; line-height:1.5; flex:1}
+.act em{font-style:normal; font-size:.64rem; font-weight:700; color:#8A4A2A}
+@keyframes deal{from{transform:translateY(30px) rotate(6deg); opacity:0}}
+.toast{position:absolute; left:50%; top:calc(60px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:40; background:rgba(238,241,245,.96); color:#111; font-weight:700; font-size:.84rem; padding:9px 14px; border-radius:12px; animation:toast 2.2s forwards; max-width:90%; text-align:center; pointer-events:none}
+@keyframes toast{0%{opacity:0; transform:translate(-50%,-8px)}10%,85%{opacity:1; transform:translate(-50%,0)}100%{opacity:0}}
+input.nm{width:100%; font:inherit; font-size:1.1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); margin:6px 0 10px; user-select:text; -webkit-user-select:text}
+.title{flex:1; display:grid; place-items:center; text-align:center; background:radial-gradient(90% 60% at 50% 35%,#2A3247,var(--bg))}
+.title h1{font-family:var(--f-head); font-weight:900; font-size:clamp(1.7rem,9vw,2.4rem); letter-spacing:.08em; margin:4px 0; white-space:nowrap; animation:slam .7s cubic-bezier(.2,1.4,.4,1)}
+@keyframes slam{from{transform:scale(2.4); opacity:0; letter-spacing:.6em}}
+.title .ln{font-family:var(--f-head); color:var(--muted); letter-spacing:.3em; font-size:.8rem}
+.title .bsl{display:flex; justify-content:center; margin:14px 0; font-family:var(--f-head); font-size:.85rem}
+.title .bsl span{padding:0 12px; border-left:1px solid var(--line)} .title .bsl span:first-child{border:0}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important}}
 </style>
 
 <div class="app" id="app"></div>
 
 <script>
 const DATA = /*__DATA__*/null;
+const IMG = /*__IMG__*/{};
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rnd = a => a[Math.floor(Math.random() * a.length)];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const yen = n => Number(n).toLocaleString('ja-JP');
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
 
-/* ───────── 登場人物（絵は画像ができたら IMG に入れると差し替わる） ───────── */
-const IMG = /*__IMG__*/{}; // keiri/web/img/人物_表情.webp をビルド時に埋め込む（例：akeno_normal.webp → 'akeno:normal'）
+/* ═════════ 人物 ═════════ */
 const P = {
-  you:{ name:'', c:'#8FA6C8' },
   akeno:{ name:'朱野 志乃', role:'経理の先輩', c:'#C24A3A', ch:'朱' },
   sumiya:{ name:'墨谷 誠一', role:'経理課長', c:'#6B6B78', ch:'墨' },
   hayase:{ name:'早瀬 駆', role:'営業部の同期', c:'#D9772E', ch:'駆' },
   amagi:{ name:'天城 豪', role:'社長', c:'#C9A23A', ch:'天' },
   father:{ name:'父', role:'', c:'#7C8794', ch:'父' },
-  narr:{ name:'', c:'#000' },
+  narr:{ name:'', c:'#000' }, you:{ name:'', c:'#8FA6C8' },
 };
-const CG = new Set(['father']); // 背景ごと使う絵（周りをぼかして場面になじませる）
-const face = id => IMG[`${id}:normal`];
+const CG = new Set(['father']);
+const face = id => IMG[`${id}:normal`] || '';
 function portrait(id, expr = 'normal') {
   const p = P[id]; if (!p || id === 'narr' || id === 'you') return '';
   const src = IMG[`${id}:${expr}`] || IMG[`${id}:normal`];
-  if (src) return `<img class="por in ${CG.has(id) ? 'cg' : ''}" src="${src}" alt="${esc(p.name)}">`;
-  // 仮の影絵（人物の色）
-  const tilt = { happy:-2, angry:3, sad:-4, surprised:0 }[expr] || 0;
-  return `<svg class="por in" viewBox="0 0 300 380" role="img" aria-label="${esc(p.name)}" style="transform:rotate(${tilt}deg)">
-    <defs><linearGradient id="g-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.c}" stop-opacity=".95"/><stop offset="1" stop-color="${p.c}" stop-opacity=".15"/></linearGradient></defs>
-    <path d="M150 40 C196 40 214 78 212 118 C210 160 188 196 150 196 C112 196 90 160 88 118 C86 78 104 40 150 40Z" fill="url(#g-${id})"/>
-    <path d="M30 380 C34 280 80 232 150 228 C220 232 266 280 270 380Z" fill="url(#g-${id})"/>
-    <text x="150" y="330" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="96" fill="#fff" opacity=".18">${p.ch}</text></svg>`;
+  if (src) return `<img class="${CG.has(id) ? 'cg' : ''}" src="${src}" alt="${esc(p.name)}">`;
+  return `<svg viewBox="0 0 300 380" role="img" aria-label="${esc(p.name)}"><defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.c}" stop-opacity=".95"/><stop offset="1" stop-color="${p.c}" stop-opacity=".15"/></linearGradient></defs>
+    <path d="M150 40C196 40 214 78 212 118C210 160 188 196 150 196C112 196 90 160 88 118C86 78 104 40 150 40Z" fill="url(#g${id})"/><path d="M30 380C34 280 80 232 150 228C220 232 266 280 270 380Z" fill="url(#g${id})"/>
+    <text x="150" y="330" text-anchor="middle" font-family="Noto Serif JP,serif" font-weight="900" font-size="96" fill="#fff" opacity=".18">${p.ch}</text></svg>`;
+}
+const avatarStyle = id => face(id) ? `style="background-image:url(${face(id)})"` : '';
+
+/* 仲間カード（スカウトで手に入る） */
+const CARDS = [
+  { id:'akeno3', char:'akeno', r:3, title:'月末の', quote:'残り312枚。朝までに終わらせるよ。' },
+  { id:'sumiya3', char:'sumiya', r:3, title:'寡黙な課長', quote:'検算はしましたか。' },
+  { id:'hayase3', char:'hayase', r:3, title:'新人営業', quote:'宛名、上様でいいよね？' },
+  { id:'akeno4', char:'akeno', r:4, title:'朱書きの', quote:'証憑は？' },
+  { id:'sumiya4', char:'sumiya', r:4, title:'そろばん検算', quote:'1円合わないのは、1円の問題じゃない。' },
+  { id:'hayase4', char:'hayase', r:4, title:'くしゃくしゃの領収書', quote:'これ、経費で落ちる？' },
+  { id:'amagi4', char:'amagi', r:4, title:'月曜9時2分', quote:'おはよう！ 週末考えたんだけど……' },
+  { id:'akeno5', char:'akeno', r:5, title:'8月の第1週', quote:'今週だけは、話しかけないで。', pickup:true },
+  { id:'sumiya5', char:'sumiya', r:5, title:'墨は消えない', quote:'墨で書いたものは、消せません。' },
+  { id:'amagi5', char:'amagi', r:5, title:'前例がないなら', quote:'つくればいい！' },
+];
+const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
+const SKILL = {
+  akeno:{ name:'朱書きチェック', desc:'ダメージ＋次の問題でまちがいを消す' },
+  sumiya:{ name:'そろばん検算', desc:'大ダメージ' },
+  hayase:{ name:'勢いで押し切る', desc:'ダメージ＋反撃を2ターン止める' },
+  amagi:{ name:'天城案件', desc:'効果はやってみないと分からない' },
+};
+const cardPow = id => { const c = CARD[id], o = G.cards[id] || { lv:1, dup:0 }; return { atk: [0,0,0,5,8,12][c.r] + Math.floor(o.lv * .4) + o.dup * 2, ult: [0,0,0,1,1.25,1.6][c.r] + o.dup * .1 }; };
+const maxLv = r => ({ 3:30, 4:40, 5:50 })[r];
+
+/* ═════════ 状態 ═════════ */
+const KEY = 'balance-sheet-v3';
+const NEW = () => ({ name:'', cold:false, tutScout:false, lv:1, exp:0, coins:800, so:300, mats:6, sta:30, staTs:Date.now(),
+  cards:{}, party:[], home:'akeno', bond:{}, stat:{ work:30, family:50, health:70, money:20 }, story:[], daily:{ date:'', m:{ story:0, run:0, scout:0 }, claimed:[] },
+  login:{ last:'', streak:0, total:0 }, freeTs:0, pity:0, chat:{}, mistakes:[], know:0 });
+let G = (() => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (!s) return NEW(); const n = NEW(); return { ...n, ...s, stat:{ ...n.stat, ...s.stat }, daily:{ ...n.daily, ...s.daily }, login:{ ...n.login, ...s.login } }; } catch (e) { return NEW(); } })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
+const staMax = () => 30 + G.lv;
+const STA_MIN = 4; // 4分で1回復
+function regen() { if (G.sta >= staMax()) { G.staTs = Date.now(); return; } const n = Math.floor((Date.now() - G.staTs) / (STA_MIN * 6e4)); if (n > 0) { G.sta = Math.min(staMax(), G.sta + n); G.staTs += n * STA_MIN * 6e4; } }
+const expNext = () => 40 + G.lv * 20;
+function gainExp(n) { G.exp += n; let up = 0; while (G.exp >= expNext()) { G.exp -= expNext(); G.lv++; up++; G.sta = staMax(); } return up; }
+const bondLv = c => Math.floor((G.bond[c] || 0) / 30) + 1;
+function daily() { const t = today(); if (G.daily.date !== t) G.daily = { date:t, m:{ story:0, run:0, scout:0 }, claimed:[] }; }
+const RANKS = ['新入社員','担当者','主任','係長','課長','経理部長','CFO'];
+const STAT = [['work','仕事','--work'],['family','家族','--family'],['health','元気','--health'],['money','貯金','--money']];
+
+/* ═════════ 効果音・振動 ═════════ */
+let AC, SND = true;
+function sfx(k) {
+  if (!SND) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const S = { tap:[[700,.03,'triangle']], ok:[[660,.06,'triangle'],[990,.1,'triangle']], ng:[[180,.18,'sawtooth']], hit:[[140,.12,'square'],[90,.12,'square']],
+      crit:[[880,.05,'square'],[1320,.12,'square']], win:[[523,.1,'triangle'],[659,.1,'triangle'],[784,.1,'triangle'],[1047,.25,'triangle']], ult:[[300,.08,'sawtooth'],[600,.08,'sawtooth'],[1200,.2,'triangle']],
+      env:[[1200,.04,'triangle']], r5:[[784,.1,'triangle'],[988,.1,'triangle'],[1175,.1,'triangle'],[1568,.4,'triangle']] }[k];
+    let t = AC.currentTime;
+    for (const [f, d, w] of S) { const o = AC.createOscillator(), g = AC.createGain(); o.type = w; o.frequency.value = f; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.15, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); t += d * .85; }
+  } catch (e) {}
+}
+const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; if (document.querySelector('.bt')) d.style.top = '36%'; $('#app').append(d); setTimeout(() => d.remove(), 2300); }
+
+/* ═════════ 問題 ═════════ */
+const A = DATA.accounts, CATS = ['資産','負債','純資産','収益','費用'];
+const drill = Object.fromEntries(DATA.drill.map(d => [d.id, d]));
+const docs = Object.fromEntries(DATA.docs.map(d => [d.id, d]));
+const Q = {
+  je: id => ({ t:'je', key:'je:' + id, ...drill[id] }),
+  cat: a => ({ t:'cat', key:'cat:' + a, acct:a }),
+  doc: id => ({ t:'doc', key:'doc:' + id, ...docs[id] }),
+  chk: (l, i) => ({ t:'mcq', key:`chk:${l}:${i}`, ...DATA.checks[l][i] }),
+  term: i => ({ t:'mcq', key:'term:' + i, ...DATA.terms[i] }),
+};
+const POOLS = {
+  basic: () => [Q.cat('売掛金'), Q.cat('買掛金'), Q.cat('未払金'), Q.cat('前受金'), Q.cat('普通預金'), Q.cat('消耗品費'), Q.je('b01'), Q.je('b02'), Q.je('b03'), Q.je('b04'), Q.chk('l02', 0), Q.chk('l03', 0), Q.chk('l03', 1)],
+  expense: () => [Q.je('b05'), Q.je('b06'), Q.je('b07'), Q.je('b14'), Q.je('b15'), Q.doc('d2'), Q.doc('d4'), Q.cat('旅費交通費'), Q.cat('交際費'), Q.cat('通信費'), Q.cat('租税公課')],
+  close: () => [Q.je('b08'), Q.je('b09'), Q.je('b11'), Q.je('b12'), Q.je('b13'), Q.je('t01'), Q.je('t02'), Q.chk('l08', 0), Q.chk('l08', 1), Q.term(11), Q.term(17), Q.cat('仮払金'), Q.cat('預り金')],
+  tax: () => [Q.je('c01'), Q.je('c02'), Q.je('c04'), Q.je('p01'), Q.doc('d1'), Q.doc('d3'), Q.doc('d7'), Q.term(2), Q.term(8), Q.chk('l06', 0)],
+  all: () => [...POOLS.basic(), ...POOLS.expense(), ...POOLS.close(), ...POOLS.tax()],
+};
+const TL = { cat:10, mcq:16, doc:32, je:32 }; // 制限時間（秒）
+function qBody(q, st) {
+  if (q.t === 'mcq') return `<div class="qk">判断</div><div class="qt">${esc(q.q)}</div>` + q.choices.map((c, i) => `<button class="opt ${st.gone.has(i) ? 'gone' : ''}" data-i="${i}">${esc(c)}</button>`).join('');
+  if (q.t === 'cat') return `<div class="qk">この勘定科目はどの区分？</div><div class="acct">${esc(q.acct)}</div><div class="cats">` + CATS.map(c => `<button class="opt ${st.gone.has(c) ? 'gone' : ''}" data-c="${c}">${c}</button>`).join('') + '</div>';
+  if (q.t === 'doc') return `<div class="qk">証憑チェック　問題をすべて選ぶ（なければ選ばない）</div><div class="paper"><div class="pk">${esc(q.kind)}</div><div style="text-align:center; font-size:.66rem; color:#6A6455">${esc(q.title)}</div><table>${q.fields.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`
+    + q.issues.map((s, i) => `<button class="opt ${st.picked.includes(i) ? 'sel' : ''}" data-t="${i}">${esc(s)}</button>`).join('');
+  return `<div class="qk">仕訳を切る　借方・貸方を選んでから科目をタップ</div><div class="qt">${esc(q.q)}</div><div class="je">${['借方','貸方'].map(s => `<div class="zone ${st.side === s ? 'on' : ''}" data-z="${s}"><h4>${s}（${s === '借方' ? '左' : '右'}）</h4>${st.placed[s].map(a => `<button class="ch" data-p="${s}|${esc(a)}">${esc(a)}</button>`).join('')}</div>`).join('')}</div>`
+    + `<div class="bank">${st.bank.map(a => `<button class="ch ${st.placed.借方.includes(a) || st.placed.貸方.includes(a) ? 'used' : ''}" data-b="${esc(a)}">${esc(a)}</button>`).join('')}</div>`;
+}
+function judge(q, st) {
+  if (q.t === 'mcq') return st.sel === q.a;
+  if (q.t === 'cat') return st.sel === A[q.acct].cat;
+  if (q.t === 'doc') { const f = a => a.filter(i => !/特に不備はない/.test(q.issues[i])).sort().join(); return f(q.answer) === f(st.picked); }
+  const s = x => [...new Set(x.map(y => y[0]))].sort().join(); return s(q.dr) === [...st.placed.借方].sort().join() && s(q.cr) === [...st.placed.貸方].sort().join();
+}
+function explain(q) {
+  if (q.t === 'mcq') return `正解：<b>${esc(q.choices[q.a])}</b><br>${esc(q.exp)}`;
+  if (q.t === 'cat') return `<b>${esc(q.acct)}</b> は <b>${A[q.acct].cat}</b>。${esc(A[q.acct].desc)}`;
+  if (q.t === 'doc') return `正解：<b>${q.answer.map(i => esc(q.issues[i])).join('／')}</b><br>${esc(q.exp)}`;
+  const n = Math.max(q.dr.length, q.cr.length);
+  return `<table class="ent"><tr><th>借方</th><th></th><th>貸方</th><th></th></tr>${Array.from({ length:n }, (_, i) => `<tr><td>${q.dr[i] ? esc(q.dr[i][0]) : ''}</td><td class="a">${q.dr[i] ? yen(q.dr[i][1]) : ''}</td><td>${q.cr[i] ? esc(q.cr[i][0]) : ''}</td><td class="a">${q.cr[i] ? yen(q.cr[i][1]) : ''}</td></tr>`).join('')}</table>${esc(q.exp)}`;
+}
+const qTitle = q => q.t === 'cat' ? `「${q.acct}」の区分` : q.t === 'doc' ? `${q.kind}：${q.title}` : q.q;
+/* 1問を出して答えを待つ → {ok, fast, timeout} */
+function askIn(el, q, o = {}) {
+  return new Promise(resolve => {
+    const right = q.t === 'je' ? [...new Set([...q.dr, ...q.cr].map(x => x[0]))] : [];
+    const st = { sel:null, picked:[], side:'借方', placed:{ 借方:[], 貸方:[] }, gone:new Set(),
+      bank: q.t === 'je' ? shuffle([...right, ...shuffle(Object.keys(A).filter(a => !right.includes(a) && right.some(r => A[r].cat === A[a].cat))).slice(0, 3), ...shuffle(Object.keys(A).filter(a => !right.includes(a))).slice(0, 1)]) : [] };
+    if (o.hint) {
+      if (q.t === 'mcq') shuffle(q.choices.map((_, i) => i).filter(i => i !== q.a)).slice(0, Math.max(0, q.choices.length - 2)).forEach(i => st.gone.add(i));
+      if (q.t === 'cat') shuffle(CATS.filter(c => c !== A[q.acct].cat)).slice(0, 3).forEach(c => st.gone.add(c));
+      if (q.t === 'je') st.placed.借方.push(q.dr[0][0]);
+    }
+    const limit = (o.limit ?? TL[q.t]) * 1000, t0 = Date.now();
+    let done = false, timerId = null;
+    const tbar = o.timerEl;
+    if (tbar) { tbar.style.transition = 'none'; tbar.style.transform = 'scaleX(1)'; void tbar.offsetWidth; tbar.style.transition = `transform ${limit}ms linear`; tbar.style.transform = 'scaleX(0)'; }
+    const needConfirm = q.t === 'je' || q.t === 'doc';
+    const draw = () => {
+      el.innerHTML = qBody(q, st) + (needConfirm ? `<div class="ans"><button class="btn gold" id="qgo" ${q.t === 'je' && !(st.placed.借方.length && st.placed.貸方.length) ? 'disabled' : ''}>${q.t === 'doc' && !st.picked.length ? '問題なし' : '決定'}</button></div>` : '');
+      const g = $('#qgo', el); if (g) g.onclick = e => { e.stopPropagation(); finish(); };
+    };
+    const finish = (timeout = false) => {
+      if (done) return; done = true; clearTimeout(timerId); el.onclick = null;
+      if (tbar) { const cs = getComputedStyle(tbar).transform; tbar.style.transition = 'none'; tbar.style.transform = cs; }
+      const ok = !timeout && judge(q, st), fast = ok && Date.now() - t0 < limit * .45;
+      resolve({ ok, fast, timeout });
+    };
+    el.onclick = e => {
+      if (done) return;
+      const b = e.target.closest('button'), z = e.target.closest('[data-z]');
+      if (b && b.id === 'qgo') return;
+      if (b) {
+        sfx('tap');
+        if (b.dataset.i !== undefined) { st.sel = +b.dataset.i; b.classList.add('sel'); return finish(); }
+        if (b.dataset.c) { st.sel = b.dataset.c; b.classList.add('sel'); return finish(); }
+        if (b.dataset.t !== undefined) { const i = +b.dataset.t; st.picked = st.picked.includes(i) ? st.picked.filter(x => x !== i) : [...st.picked, i]; }
+        else if (b.dataset.b) { const a = b.dataset.b; if (!st.placed.借方.includes(a) && !st.placed.貸方.includes(a)) st.placed[st.side].push(a); }
+        else if (b.dataset.p) { const [s, a] = b.dataset.p.split('|'); st.placed[s] = st.placed[s].filter(x => x !== a); }
+        draw(); return;
+      }
+      if (z) { st.side = z.dataset.z; draw(); }
+    };
+    draw(); el.scrollTop = 0;
+    timerId = setTimeout(() => finish(true), limit);
+  });
+}
+function showExplain(el, q, r) {
+  return new Promise(res => {
+    el.insertAdjacentHTML('beforeend', `<div class="ans"><div class="exp"><b class="ng">${r.timeout ? '時間切れ' : '処理ミス'}</b>　${explain(q)}</div><button class="btn dark" id="qnx">次へ</button></div>`);
+    el.scrollTop = el.scrollHeight;
+    $('#qnx', el).onclick = e => { e.stopPropagation(); res(); };
+  });
 }
 
-/* ───────── 状態 ───────── */
-const KEY = 'balance-sheet-v1';
-const NEW = () => ({ name:'', stat:{ work:30, family:50, health:70, money:20 }, aff:{}, ch:0, step:0, flags:{}, know:0, cleared:[] });
-let G = (() => { try { return { ...NEW(), ...JSON.parse(localStorage.getItem(KEY)) }; } catch (e) { return NEW(); } })();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
+/* ═════════ バトル ═════════ */
+function battle(cfg) {
+  return new Promise(resolve => {
+    let hp = cfg.hp, team = cfg.teamHp || 100, cd = cfg.every, combo = 0, maxCombo = 0, qn = 0, hint = false, revived = false, stun = 0, ended = false, waitUlt = null;
+    const teamMax = team, missed = [], pool = [], gauge = cfg.party.map(() => 0);
+    $('#app').innerHTML = `<div class="bt"><div class="bt-top side" id="btTop"></div><div class="bt-q side" id="bq"></div><div class="bt-bot side" id="bb"></div></div>`;
+    const top = () => {
+      $('#btTop').innerHTML = `<div class="enemy"><div class="doc" id="edoc"><div class="k">${esc(cfg.kind)}</div><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
+        <div class="cd ${cd <= 1 && !stun ? 'warn' : ''}">${stun ? 'ひるみ中' : '反撃まで'}<b>${stun ? stun : cd}</b>ターン</div></div>
+        <div class="hpbar"><span>残り</span><i><s style="width:${hp / cfg.hp * 100}%; background:var(--shu)"></s></i><span class="num">${hp}/${cfg.hp}</span></div>`;
+    };
+    const bot = () => {
+      $('#bb').innerHTML = `<div class="timer"><s id="tbar"></s></div><div class="party">${cfg.party.map((m, i) => `<button class="mem ${gauge[i] >= 100 ? 'full' : ''}" data-m="${i}" style="--g:${Math.min(100, gauge[i])}" aria-label="${esc(P[m.char].name)}の必殺技"><span class="f" ${avatarStyle(m.char)}>${face(m.char) ? '' : P[m.char].ch}</span></button>`).join('')}
+        <div class="team"><b>チームの元気</b> <span class="combo">${combo >= 2 ? combo + ' COMBO' : ''}</span><div class="hpbar" style="margin-top:3px"><span></span><i><s style="width:${team / teamMax * 100}%; background:var(--green)"></s></i><span class="num">${team}</span></div></div>
+        <button class="item" id="coffee" ${G.coins < 50 ? 'disabled' : ''}>缶コーヒー<br>50円</button></div>`;
+      $('#bb').querySelectorAll('[data-m]').forEach(b => b.onclick = () => ult(+b.dataset.m));
+      $('#coffee').onclick = () => { if (G.coins < 50) return; G.coins -= 50; team = Math.min(teamMax, team + 25); sfx('ok'); toast('缶コーヒーで元気+25'); keepTimer(bot); };
+    };
+    const keepTimer = fn => { const t = $('#tbar'), tr = t && t.style.transition, tf = t && getComputedStyle(t).transform; fn(); const n = $('#tbar'); if (n && tr) { n.style.transition = 'none'; n.style.transform = tf; void n.offsetWidth; n.style.transition = tr.replace(/transform \d+ms/, `transform ${Math.max(0, curEnd - Date.now())}ms`); n.style.transform = 'scaleX(0)'; } };
+    let curEnd = 0;
+    const pop = (t, crit) => { const d = document.createElement('div'); d.className = 'dmg' + (crit ? ' crit' : ''); d.textContent = t; $('#btTop').append(d); setTimeout(() => d.remove(), 900); };
+    const hitEnemy = d => { hp = Math.max(0, hp - d); top(); const e = $('#edoc'); if (e) { e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); } };
+    async function ult(i) {
+      if (gauge[i] < 100 || ended) return;
+      const m = cfg.party[i]; gauge[i] = 0; sfx('ult'); buzz([20, 30, 60]);
+      const ci = document.createElement('div'); ci.className = 'cutin'; ci.style.setProperty('--c', P[m.char].c);
+      ci.innerHTML = `<div class="band">${face(m.char) ? `<img src="${face(m.char)}" alt="">` : ''}<b><small>${esc(P[m.char].name)}</small>${esc(SKILL[m.char].name)}</b></div>`;
+      $('.bt').append(ci); await sleep(1150); ci.remove();
+      let d = 0;
+      if (m.char === 'akeno') { d = Math.round(30 * m.ult); hint = true; toast('次の問題、まちがいを消しておいた'); }
+      if (m.char === 'sumiya') d = Math.round(80 * m.ult);
+      if (m.char === 'hayase') { d = Math.round(25 * m.ult); stun = 2; }
+      if (m.char === 'amagi') { const r = Math.random(); d = r < .5 ? Math.round(150 * m.ult) : r < .8 ? Math.round(40 * m.ult) : 0; toast(d >= 150 ? '天城案件、大当たり！' : d ? 'まあまあの天城案件' : '……天城案件、空振り。'); }
+      if (d) { hitEnemy(d); pop(d, true); sfx('crit'); }
+      keepTimer(bot);
+      if (waitUlt) { const w = waitUlt; waitUlt = null; w(); }
+      if (hp <= 0) end(true);
+    }
+    const tip = txt => { const t = document.createElement('div'); t.className = 'tip'; t.textContent = txt; t.style.bottom = '104px'; $('.bt').append(t); return t; };
+    function end(win) { if (ended) return; ended = true; setTimeout(() => resolve({ win, stars: win ? 1 + (team >= teamMax * .5 ? 1 : 0) + (missed.length === 0 ? 1 : 0) : 0, missed, qn, maxCombo }), 650); }
+    async function loop() {
+      while (!ended) {
+        if (!pool.length) pool.push(...shuffle(cfg.pool()));
+        const q = pool.shift(); qn++;
+        const t1 = cfg.tutorial && qn === 1 ? tip('時間内に答えると攻撃！速いほど大ダメージ') : null;
+        const limitS = cfg.tutorial ? 40 : TL[q.t]; curEnd = Date.now() + limitS * 1000;
+        const r = await askIn($('#bq'), q, { hint, timerEl:$('#tbar'), limit:limitS });
+        if (ended) return;
+        if (t1) t1.remove(); hint = false;
+        if (r.ok) {
+          combo++; maxCombo = Math.max(maxCombo, combo); G.know++;
+          const base = 16 + cfg.party.reduce((s, m) => s + m.atk, 0);
+          const d = Math.round(base * (1 + .12 * Math.min(combo - 1, 5)) * (r.fast ? 1.5 : 1));
+          hitEnemy(d); pop(d, r.fast); sfx(r.fast ? 'crit' : 'hit'); buzz(15);
+          if (r.fast) toast('速い！ クリティカル');
+          cfg.party.forEach((_, i) => gauge[i] = Math.min(100, gauge[i] + (cfg.tutorial ? 50 : 34)));
+          await sleep(550);
+        } else {
+          combo = 0; sfx('ng'); buzz([30, 40, 30]);
+          if (!missed.find(m => m.key === q.key)) missed.push(q);
+          if (!G.mistakes.includes(q.key)) G.mistakes.push(q.key);
+          await showExplain($('#bq'), q, r);
+        }
+        if (ended) return;
+        bot();
+        if (hp <= 0) return end(true);
+        if (cfg.tutorial && gauge.some(g => g >= 100)) {
+          $('#bq').innerHTML = ''; const t2 = tip('ゲージが満タン！ 下の顔をタップして必殺技');
+          await new Promise(res => waitUlt = res); t2.remove(); if (ended) return;
+          continue;
+        }
+        if (stun) { stun--; top(); continue; }
+        cd--; top();
+        if (cd <= 0) {
+          cd = cfg.every; const d = cfg.tutorial ? 6 : cfg.atk + Math.floor(Math.random() * 5);
+          team = Math.max(0, team - d); sfx('hit'); buzz([40, 30, 60]);
+          const f = document.createElement('div'); f.className = 'flash'; f.style.background = 'rgba(226,87,61,.35)'; $('.bt').append(f); setTimeout(() => f.remove(), 450);
+          $('.bt').classList.add('shake'); setTimeout(() => $('.bt') && $('.bt').classList.remove('shake'), 350);
+          toast(`${rnd(cfg.taunts || ['反撃された'])}　元気 −${d}`);
+          top(); bot();
+          if (team <= 0) { const ok = await revive(); if (!ok) return end(false); team = Math.round(teamMax * .6); bot(); }
+          await sleep(450);
+        }
+      }
+    }
+    function revive() {
+      return new Promise(res => {
+        const free = !revived && cfg.freeRevive;
+        modal(`<h2>元気が尽きた……</h2><p class="muted small">${esc(cfg.enemy)} を片づけきれなかった。</p>
+          <div style="display:grid; gap:8px; margin-top:10px"><button class="btn gold" id="rv1">${free ? '先輩に助けてもらう（無料）' : '栄養ドリンクで復活（SO 50）'}</button><button class="btn dark" id="rv2">あきらめる</button></div>`, m => {
+          $('#rv1', m).onclick = () => { if (!free && G.so < 50) { toast('SOが足りません'); return; } if (!free) G.so -= 50; revived = true; m.remove(); save(); res(true); };
+          $('#rv2', m).onclick = () => { m.remove(); res(false); };
+        }, false);
+      });
+    }
+    top(); bot(); loop();
+  });
+}
+function partyFrom(ids) { return ids.filter(id => CARD[id]).map(id => ({ char:CARD[id].char, ...cardPow(id) })); }
+function fixedParty(chars) { return chars.map(c => { const own = Object.keys(G.cards).filter(id => CARD[id].char === c).sort((a, b) => CARD[b].r - CARD[a].r)[0]; return own ? { char:c, ...cardPow(own) } : { char:c, atk:6, ult:1.1 }; }); }
+
+/* 結果画面 */
+function result(o) {
+  return new Promise(res => {
+    const up = gainExp(o.exp || 0); G.coins += o.coins || 0; G.mats += o.mats || 0; G.so += o.so || 0; save();
+    sfx(o.win === false ? 'ng' : 'win');
+    $('#app').innerHTML = `<div class="res side"><div class="small muted">${esc(o.sub || '')}</div><h1>${o.win === false ? '撤退' : esc(o.title || 'CLEAR')}</h1>
+      ${o.stars !== undefined && o.win !== false ? `<div class="stars">${[1,2,3].map(i => `<span class="${i <= o.stars ? 'on' : ''}" style="animation-delay:${.2 + i * .2}s">★</span>`).join('')}</div>` : ''}
+      ${o.rank ? `<div class="serif" style="font-size:3rem; font-weight:900; color:var(--gold)">${o.rank}</div>` : ''}
+      <div class="rew">${o.exp ? `<div>経験値<b>+${o.exp}</b></div>` : ''}${o.coins ? `<div>円<b>+${yen(o.coins)}</b></div>` : ''}${o.mats ? `<div>研修資料<b>+${o.mats}</b></div>` : ''}${o.so ? `<div>SO<b>+${o.so}</b></div>` : ''}${o.bond ? `<div>絆<b>${esc(o.bond)}</b></div>` : ''}</div>
+      ${up ? `<div class="card" style="border-color:var(--gold)"><b class="serif" style="color:var(--gold); font-size:1.2rem">レベルアップ！ Lv.${G.lv}</b><div class="small muted">気力が全回復した</div></div>` : ''}
+      ${o.missed && o.missed.length ? `<div class="miss"><div class="sec">見直そう <small>まちがえた問題 ${o.missed.length}問</small></div>${o.missed.map(q => `<details><summary>${esc(String(qTitle(q)).slice(0, 60))}</summary><div>${explain(q)}</div></details>`).join('')}</div>` : ''}
+      <div style="height:16px"></div><button class="btn gold" id="resok">${esc(o.next || '次へ')}</button></div>`;
+    $('#resok').onclick = () => res();
+  });
+}
+
+/* ═════════ ノベル ═════════ */
+const VN = { auto:false, skip:false };
+let tapRes = null;
+const BG = { night:'linear-gradient(#0B0D12,#141822)', office:'linear-gradient(#24324A,#141A26)', hall:'linear-gradient(#3A3426,#16140F)', lunch:'linear-gradient(#3B2D22,#17120E)', dusk:'linear-gradient(#4A2E35,#16121A)', crisis:'linear-gradient(#3A1A1A,#120C0C)' };
+let curWho = null;
+function vnOpen(bg, place) {
+  $('#app').innerHTML = `<div class="vn"><div class="stage" id="stg" style="--scene:${BG[bg] || bg}"><div class="place" id="place">${esc(place || '')}</div>
+    <div class="ctl"><button id="cAuto" class="${VN.auto ? 'on' : ''}">AUTO</button><button id="cSkip">SKIP</button></div><div class="who" id="who"></div></div>
+    <div class="box side" id="box"><div id="np"></div><div class="text" id="tx"></div><div id="ex"></div><div class="nx" id="nx" hidden>▼</div></div></div>`;
+  $('#cAuto').onclick = e => { e.stopPropagation(); VN.auto = !VN.auto; e.currentTarget.classList.toggle('on', VN.auto); if (VN.auto && tapRes) tapRes(); };
+  $('#cSkip').onclick = e => { e.stopPropagation(); VN.skip = true; if (tapRes) tapRes(); };
+  $('#box').onclick = () => tapRes && tapRes();
+  $('#stg').onclick = () => tapRes && tapRes();
+  curWho = null;
+}
+function setScene(bg, place) { $('#place').textContent = place || ''; if (bg) $('#stg').style.setProperty('--scene', BG[bg] || bg); setWho(null); }
+function setWho(id, expr) { const w = $('#who'); if (!w) return; if (id === null) { w.innerHTML = ''; curWho = null; return; } if (id === 'narr' || id === 'you') return; const k = id + expr; if (curWho !== k) { w.innerHTML = portrait(id, expr); curWho = k; } }
 const nm = s => s.replaceAll('{name}', G.name || 'あなた');
-const STAT = [['work','仕事','--work'],['family','家族','--family'],['health','元気','--health'],['money','貯金','--money']];
-const clamp = v => Math.max(0, Math.min(100, v));
+async function say(id, text, expr = 'normal') {
+  setWho(id, expr);
+  const p = P[id], tx = $('#tx'); $('#ex').innerHTML = '';
+  $('#np').innerHTML = id === 'narr' ? '' : `<span class="name" style="--c:${p.c}">${esc(id === 'you' ? (G.name || 'あなた') : p.name)}${p.role ? `<small>${esc(p.role)}</small>` : ''}</span>`;
+  tx.className = 'text' + (id === 'narr' ? ' narr' : '');
+  const full = nm(text);
+  if (VN.skip) { tx.textContent = full; await sleep(30); return; }
+  tx.textContent = ''; $('#nx').hidden = true;
+  let i = 0, done = false;
+  await new Promise(res => {
+    const autoNext = d => { if (VN.auto) setTimeout(() => { if (tapRes === step) step(); }, d); };
+    const tick = setInterval(() => { i += 2; tx.textContent = full.slice(0, i); if (i >= full.length) { clearInterval(tick); done = true; $('#nx').hidden = false; autoNext(900 + full.length * 25); } }, 22);
+    const step = () => { if (!done) { clearInterval(tick); tx.textContent = full; done = true; $('#nx').hidden = false; autoNext(900); return; } tapRes = null; res(); };
+    tapRes = step;
+  });
+}
+function choose(opts) {
+  VN.skip = false; $('#nx').hidden = true;
+  return new Promise(res => {
+    const ex = $('#ex');
+    ex.innerHTML = `<div class="choices">${opts.map((o, i) => `<button class="choice" data-i="${i}">${esc(nm(o.t))}${o.hint ? `<small>${esc(o.hint)}</small>` : ''}</button>`).join('')}</div>`;
+    ex.onclick = e => { e.stopPropagation(); const b = e.target.closest('[data-i]'); if (!b) return; sfx('tap'); ex.onclick = null; ex.innerHTML = ''; res(+b.dataset.i); };
+  });
+}
+async function note(html) { VN.skip = false; $('#ex').innerHTML = html; $('#nx').hidden = false; await new Promise(res => { tapRes = () => { tapRes = null; res(); }; }); }
+async function run(lines) { for (const l of lines) await say(l[0], l[1], l[2]); }
+async function chapterCard(no, title, sub) { VN.skip = false; const d = document.createElement('div'); d.className = 'chap'; d.innerHTML = `<div><span>${no}</span><b>${title}</b><span>${sub}</span></div>`; $('#stg').append(d); await sleep(2300); d.remove(); }
 function bump(fx) {
   for (const [k, v] of Object.entries(fx || {})) {
     if (k in G.stat) G.stat[k] = clamp(G.stat[k] + v);
-    else if (k.startsWith('aff_')) { const c = k.slice(4); G.aff[c] = clamp((G.aff[c] ?? 30) + v); }
+    else if (k.startsWith('b_')) G.bond[k.slice(2)] = Math.max(0, (G.bond[k.slice(2)] || 0) + v);
   }
-  save(); drawBS(Object.keys(fx || {}));
+  save();
 }
-const fxHtml = fx => `<div class="effects">${Object.entries(fx || {}).map(([k, v]) => {
-  const lab = STAT.find(s => s[0] === k)?.[1] || (k.startsWith('aff_') ? `${P[k.slice(4)].name.split(' ')[0]}の信頼` : k);
-  return `<span class="fx ${v >= 0 ? 'up' : 'down'}">${lab} ${v >= 0 ? '+' : ''}${v}</span>`; }).join('')}</div>`;
-
-/* ───────── 画面の骨組み ───────── */
-function shell(inner) {
-  $('#app').innerHTML = `<div class="bs side" id="bs"></div>${inner}`;
-  drawBS();
+const fxHtml = fx => `<div class="fx">${Object.entries(fx || {}).filter(([, v]) => v).map(([k, v]) => { const lab = STAT.find(s => s[0] === k)?.[1] || (k.startsWith('b_') ? `${P[k.slice(2)].name.split(' ')[0]}との絆` : k); return `<span class="${v >= 0 ? 'up' : 'dn'}">${lab} ${v >= 0 ? '+' : ''}${v}</span>`; }).join('')}</div>`;
+async function decide(opts, point) {
+  const i = await choose(opts), o = opts[i]; bump(o.fx); sfx('ok');
+  if (o.then) await run(o.then);
+  await note(((o.point || point) ? `<div class="point">${esc(o.point || point)}</div>` : '') + fxHtml(o.fx));
+  return i;
 }
-function drawBS(flash = []) {
-  const el = $('#bs'); if (!el) return;
-  const ch = CHAPTERS[G.ch];
-  el.innerHTML = `<div class="t"><span>人生のバランスシート</span><b>${ch ? `${ch.no}「${ch.title}」` : ''}</b></div>` + STAT.map(([k, l, c]) =>
-    `<div class="meter ${flash.includes(k) ? 'flash' : ''}"><span>${l}</span><i><s style="width:${G.stat[k]}%; background:var(${c})"></s></i><em>${G.stat[k]}</em></div>`).join('');
-}
-
-/* ───────── ノベル（台詞）エンジン ───────── */
-let tapResolve = null;
-function stageHtml(scene, place) {
-  return `<div class="stage" style="--scene:${scene || ''}"><div class="place" id="place">${esc(place || '')}</div><div class="who" id="who"></div></div>
-    <div class="box side" id="box"><div id="nameplate"></div><div class="text" id="text"></div><div id="extra"></div><div class="next" id="nx" hidden>▼</div></div>`;
-}
-let curWho = null;
-function setWho(id, expr) {
-  const w = $('#who'); if (!w) return;
-  if (id === null) { w.innerHTML = ''; curWho = null; return; }
-  if (id === 'narr' || id === 'you') return;
-  if (curWho !== id + expr) { w.innerHTML = portrait(id, expr); curWho = id + expr; }
-}
-async function say(id, text, expr = 'normal') {
-  setWho(id, expr);
-  const p = P[id], np = $('#nameplate'), tx = $('#text'), nx = $('#nx'); $('#extra').innerHTML = '';
-  np.innerHTML = id === 'narr' ? '' : `<span class="name" style="--c:${p.c}">${esc(id === 'you' ? (G.name || 'あなた') : p.name)}${p.role ? `<small>${esc(p.role)}</small>` : ''}</span>`;
-  tx.className = 'text' + (id === 'narr' ? ' narr' : '');
-  const full = nm(text); tx.textContent = ''; nx.hidden = true;
-  let i = 0, done = false;
-  await new Promise(res => {
-    const tick = setInterval(() => { i += 2; tx.textContent = full.slice(0, i); if (i >= full.length) { clearInterval(tick); done = true; nx.hidden = false; } }, 28);
-    tapResolve = () => { if (!done) { clearInterval(tick); tx.textContent = full; done = true; nx.hidden = false; return; } tapResolve = null; res(); };
-  });
-}
-async function choose(opts) {
-  $('#nx').hidden = true;
-  const ex = $('#extra');
-  return new Promise(res => {
-    ex.innerHTML = `<div class="choices">${opts.map((o, i) => `<button class="choice" data-i="${i}">${esc(nm(o.t))}${o.hint ? `<small>${esc(o.hint)}</small>` : ''}</button>`).join('')}</div>`;
-    ex.onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ex.onclick = null; ex.innerHTML = ''; res(+b.dataset.i); };
-  });
-}
-async function note(html) { // 解説や数値の変化を見せて、タップで進む
-  $('#extra').innerHTML = html; $('#nx').hidden = false;
-  await new Promise(res => { tapResolve = () => { tapResolve = null; res(); }; });
-}
-document.addEventListener('click', e => { if (e.target.closest('#box') && !e.target.closest('button,input') && tapResolve) tapResolve(); });
-document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && tapResolve && !e.target.closest('input,button')) { e.preventDefault(); tapResolve(); } });
-
-/* 台本の実行。行の形：['人物', '台詞', '表情'] / {place, scene} / {fn} */
-async function run(lines) {
-  for (const l of lines) {
-    if (Array.isArray(l)) await say(l[0], l[1], l[2]);
-    else if (l.place !== undefined) { const p = $('#place'); if (p) p.textContent = l.place; if (l.scene) $('.stage').style.setProperty('--scene', l.scene); if (l.clear) setWho(null); }
-    else if (l.fn) await l.fn();
-  }
-}
-
-/* ───────── 事件（選択肢） ───────── */
 const SPEAKER = { 心構え:'sumiya', 期ズレ:'hayase', 二重払い:'akeno', 期限:'akeno', 残高照合:'sumiya' };
 const EV = Object.fromEntries(DATA.career.flatMap(s => s.events).map(e => [e.tag, e]));
 async function incident(tag) {
   const e = EV[tag], who = SPEAKER[tag] || 'akeno';
-  await say(who, e.text.replace(/^[^「]*「/, '「').replace(/^(?!「)/, ''));
+  await say(who, e.text.replace(/^[^「]*「/, '「'));
   const order = shuffle(e.choices.map((_, i) => i));
   const pick = order[await choose(order.map(i => ({ t:e.choices[i][0] })))];
-  const [t, pts, fb] = e.choices[pick], best = Math.max(...e.choices.map(c => c[1]));
-  const fx = { work: Math.round(pts / 2), [`aff_${who}`]: pts === best ? 8 : -4 };
-  bump(fx);
-  await say(who, pts === best ? rnd(['……なるほど。それでいい。','助かった。その判断で合ってる。','さすがだね。']) : pts < 0 ? rnd(['……本気で言ってる？','それは、まずいな。','ちょっと待って。']) : 'うーん、悪くはないけど……', pts === best ? 'happy' : pts < 0 ? 'angry' : 'normal');
-  await note(`<div class="point"><b>${pts === best ? '◎ ベストな判断' : pts < 0 ? '× 危ない判断' : '△ もう一歩'}</b>　${esc(fb)}<br><span style="color:var(--muted)">実務ポイント：${esc(e.point)}</span></div>${fxHtml(fx)}`);
-}
-const rnd = a => a[Math.floor(Math.random() * a.length)];
-
-/* ───────── 業務バトル（コマンド制） ───────── */
-const A = DATA.accounts, CATS = ['資産','負債','純資産','収益','費用'];
-const drill = Object.fromEntries(DATA.drill.map(d => [d.id, d]));
-const docs = Object.fromEntries(DATA.docs.map(d => [d.id, d]));
-const Qs = {
-  je: id => ({ t:'je', ...drill[id] }),
-  cat: a => ({ t:'cat', acct:a }),
-  mcq: o => ({ t:'mcq', ...o }),
-  doc: id => ({ t:'doc', ...docs[id] }),
-  chk: (l, i) => ({ t:'mcq', ...DATA.checks[l][i] }),
-};
-const SKILLS = {
-  akeno:{ name:'朱書きチェック', cost:1, desc:'次の問題で、まちがいの選択肢を消す' },
-  sumiya:{ name:'そろばん検算', cost:2, desc:'次の正解のダメージが2倍' },
-  hayase:{ name:'勢いで押し切る', cost:1, desc:'相手の次の攻撃を1回止める' },
-};
-async function battle(cfg) {
-  // cfg: { enemy, kind, desc, hp, atk, pool:()=>[q], party:['akeno'], taunts:[] }
-  let hp = cfg.hp, mp = 2, buff = {}, qi = 0, pool = shuffle(cfg.pool()), combo = 0;
-  const party = cfg.party || [];
-  shell(`<div class="battle"><div class="enemy side" id="en"></div><div class="party side" id="pt"></div><div class="log side" id="log"></div><div class="cmds side" id="cm"></div></div>`);
-  const log = t => { const p = document.createElement('p'); p.innerHTML = t; $('#log').prepend(p); };
-  const drawEnemy = () => { $('#en').innerHTML = `<div class="card" id="ecard"><div class="k">${esc(cfg.kind)}</div><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
-    <div class="hp"><span>残り</span><i><s style="width:${hp / cfg.hp * 100}%; background:var(--shu)"></s></i><span>${hp}/${cfg.hp}</span></div>`; };
-  const drawParty = () => { $('#pt').innerHTML = `<div class="mem" style="--c:${P.you.c}"><span class="av">${esc((G.name || 'あ')[0])}</span><div><b>${esc(G.name || 'あなた')}</b>元気 ${G.stat.health} ／ 気力 ${'●'.repeat(mp)}${'○'.repeat(Math.max(0, 4 - mp))}</div></div>`
-    + party.map(id => `<div class="mem" style="--c:${P[id].c}"><span class="av" ${face(id) ? `style="background:url(${face(id)}) center 12%/cover"` : ''}>${face(id) ? '' : P[id].ch}</span><div><b>${esc(P[id].name)}</b>${esc(SKILLS[id].name)}</div></div>`).join(''); };
-  drawEnemy(); drawParty(); drawBS();
-  log(`<b>${esc(cfg.enemy)}</b> が あらわれた。`);
-  return new Promise(resolve => {
-    const cmds = () => {
-      $('#cm').innerHTML = `<button class="cmd main" data-c="atk"><b>処理する</b><small>問題に答えて片づける</small></button>`
-        + party.map(id => `<button class="cmd" data-c="sk:${id}" ${mp < SKILLS[id].cost ? 'disabled' : ''}><b>${esc(SKILLS[id].name)}</b><small>${esc(P[id].name.split(' ')[0])}／気力${SKILLS[id].cost}　${esc(SKILLS[id].desc)}</small></button>`).join('')
-        + `<button class="cmd" data-c="coffee" ${G.stat.money < 2 ? 'disabled' : ''}><b>缶コーヒー</b><small>元気+12　貯金−2</small></button>`;
-      $('#cm').onclick = async e => {
-        const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
-        const c = b.dataset.c; $('#cm').onclick = null;
-        if (c === 'coffee') { bump({ health:12, money:-2 }); drawParty(); log('缶コーヒーを飲んだ。元気が少し戻った。'); return enemyTurn(); }
-        if (c.startsWith('sk:')) {
-          const id = c.slice(3); mp -= SKILLS[id].cost; buff[id] = true; drawParty();
-          log(`<b>${esc(P[id].name)}</b>の「${esc(SKILLS[id].name)}」！`);
-          if (id === 'hayase') log('相手の次の攻撃を止めた。');
-          return cmds();
-        }
-        // 処理する → 問題
-        if (qi >= pool.length) { pool = shuffle(cfg.pool()); qi = 0; }
-        const q = pool[qi++];
-        const ok = await ask(q, { hint: buff.akeno, title: cfg.enemy });
-        buff.akeno = false;
-        if (ok) {
-          combo++; G.know++;
-          let d = 22 + Math.min(10, Math.floor(G.know / 5)) + (combo >= 3 ? 8 : 0);
-          if (buff.sumiya) { d *= 2; buff.sumiya = false; }
-          hp = Math.max(0, hp - d); mp = Math.min(4, mp + 1);
-          drawEnemy(); $('#ecard').classList.add('hit');
-          const dm = document.createElement('div'); dm.className = 'dmg'; dm.textContent = d; $('#en').append(dm); setTimeout(() => dm.remove(), 900);
-          log(`処理完了！ ${combo >= 3 ? `<b>${combo}連続</b>で ` : ''}${d} 件を片づけた。`);
-          drawParty();
-          if (hp <= 0) { await sleep(700); return finish(true); }
-        } else { combo = 0; log('処理ミス……。やり直しが発生した。'); }
-        enemyTurn();
-      };
-    };
-    const enemyTurn = async () => {
-      await sleep(350);
-      if (buff.hayase) { buff.hayase = false; log(`${esc(P.hayase.name)}が勢いで押し切った。相手は動けない。`); return cmds(); }
-      const d = cfg.atk + Math.floor(Math.random() * 4);
-      bump({ health: -d }); drawParty();
-      const fl = document.createElement('div'); fl.className = 'flashred'; document.body.append(fl); setTimeout(() => fl.remove(), 500);
-      log(`<span style="color:var(--shu)">${esc(rnd(cfg.taunts))}</span>　元気 −${d}`);
-      if (G.stat.health <= 0) { await sleep(600); return finish(false); }
-      cmds();
-    };
-    const finish = win => { save(); resolve(win); };
-    cmds();
-  });
+  const [, pts, fb] = e.choices[pick], best = Math.max(...e.choices.map(c => c[1]));
+  const fx = { work:Math.round(pts / 2), ['b_' + who]: pts === best ? 6 : 0 };
+  bump(fx); sfx(pts === best ? 'ok' : 'ng');
+  await say(who, pts === best ? rnd(['……それでいい。','その判断で合ってる。','助かった。']) : pts < 0 ? rnd(['……本気で言ってる？','それは、まずい。']) : 'うーん、悪くはないけど……', pts === best ? 'happy' : pts < 0 ? 'angry' : 'sad');
+  await note(`<div class="point"><b>${pts === best ? '◎ ベストな判断' : pts < 0 ? '× 危ない判断' : '△ もう一歩'}</b>　${esc(fb)}</div>${fxHtml(fx)}`);
 }
 
-/* 問題の出題（全画面） */
-function ask(q, o = {}) {
-  return new Promise(resolve => {
-    const el = document.createElement('div'); el.className = 'q';
-    let sel = null, picked = [], placed = { 借方:[], 貸方:[] }, side = '借方';
-    const right = q.t === 'je' ? [...new Set([...q.dr, ...q.cr].map(x => x[0]))] : [];
-    const bank = q.t === 'je' ? shuffle([...right, ...shuffle(Object.keys(A).filter(a => !right.includes(a) && right.some(r => A[r].cat === A[a].cat))).slice(0, 3), ...shuffle(Object.keys(A).filter(a => !right.includes(a))).slice(0, 1)]) : [];
-    const gone = new Set();
-    if (o.hint) {
-      if (q.t === 'mcq') shuffle(q.choices.map((_, i) => i).filter(i => i !== q.a)).slice(0, Math.max(0, q.choices.length - 2)).forEach(i => gone.add(i));
-      if (q.t === 'cat') shuffle(CATS.filter(c => c !== A[q.acct].cat)).slice(0, 3).forEach(c => gone.add(c));
-    }
-    const kind = { je:'仕訳を切る', cat:'勘定科目の区分', mcq:'判断', doc:'証憑チェック' }[q.t];
-    const body = () => {
-      if (q.t === 'mcq') return `<div class="qt">${esc(q.q)}</div>` + q.choices.map((c, i) => `<button class="opt ${sel === i ? 'sel' : ''} ${gone.has(i) ? 'gone' : ''}" data-i="${i}" ${gone.has(i) ? 'disabled' : ''}>${esc(c)}</button>`).join('');
-      if (q.t === 'cat') return `<div class="acct">${esc(q.acct)}</div><div class="cats">` + CATS.map(c => `<button class="opt ${sel === c ? 'sel' : ''} ${gone.has(c) ? 'gone' : ''}" data-c="${c}" ${gone.has(c) ? 'disabled' : ''}>${c}</button>`).join('') + '</div>';
-      if (q.t === 'doc') return `<div class="paper"><div class="pk">${esc(q.kind)}</div><div style="text-align:center; font-size:.72rem; color:#6A6455">${esc(q.title)}</div><table>${q.fields.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`
-        + `<div class="kind" style="margin-bottom:6px">問題があるものをすべて選ぶ（なければ選ばない）</div>` + q.issues.map((s, i) => `<button class="opt ${picked.includes(i) ? 'sel' : ''}" data-t="${i}">${esc(s)}</button>`).join('');
-      return `<div class="qt">${esc(q.q)}</div><div class="je">${['借方','貸方'].map(s => `<div class="zone ${side === s ? 'on' : ''}" data-z="${s}"><h4>${s}（${s === '借方' ? '左' : '右'}）${side === s ? '　← ここに入る' : ''}</h4>${placed[s].map(a => `<button class="chip" data-p="${s}|${esc(a)}">${esc(a)}</button>`).join('')}</div>`).join('')}</div>`
-        + `<div class="bank">${bank.map(a => `<button class="chip ${placed.借方.includes(a) || placed.貸方.includes(a) ? 'used' : ''}" data-b="${esc(a)}">${esc(a)}</button>`).join('')}</div>`;
-    };
-    const can = () => q.t === 'mcq' || q.t === 'cat' ? sel !== null : q.t === 'je' ? placed.借方.length && placed.貸方.length : true;
-    const draw = () => {
-      el.innerHTML = `<div class="head side"><b>${esc(o.title || '')}</b></div><div class="body side"><div class="kind">${kind}</div>${body()}</div>
-        <div class="foot side"><button class="btn" id="go" ${can() ? '' : 'disabled style="opacity:.4"'}>${q.t === 'doc' && !picked.length ? '問題なし' : '決定'}</button></div>`;
-      $('#go', el).onclick = () => can() && judge();
-    };
-    el.addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b || b.id === 'go' || el.dataset.done) return;
-      if (b.dataset.i) sel = +b.dataset.i; else if (b.dataset.c) sel = b.dataset.c;
-      else if (b.dataset.t) { const i = +b.dataset.t; picked = picked.includes(i) ? picked.filter(x => x !== i) : [...picked, i]; }
-      else if (b.dataset.b) { if (!placed.借方.includes(b.dataset.b) && !placed.貸方.includes(b.dataset.b)) placed[side].push(b.dataset.b); }
-      else if (b.dataset.p) { const [s, a] = b.dataset.p.split('|'); placed[s] = placed[s].filter(x => x !== a); }
-      else return;
-      draw();
-    });
-    el.addEventListener('click', e => { const z = e.target.closest('[data-z]'); if (z && !e.target.closest('button') && !el.dataset.done) { side = z.dataset.z; draw(); } });
-    const judge = () => {
-      let ok;
-      if (q.t === 'mcq') ok = sel === q.a; else if (q.t === 'cat') ok = sel === A[q.acct].cat;
-      else if (q.t === 'doc') { const f = a => a.filter(i => !/特に不備はない/.test(q.issues[i])).sort().join(); ok = f(q.answer) === f(picked); }
-      else { const s = x => [...new Set(x.map(y => y[0]))].sort().join(); ok = s(q.dr) === [...placed.借方].sort().join() && s(q.cr) === [...placed.貸方].sort().join(); }
-      el.dataset.done = 1;
-      let exp = '';
-      if (q.t === 'mcq') exp = `正解：<b>${esc(q.choices[q.a])}</b><br>${esc(q.exp)}`;
-      else if (q.t === 'cat') exp = `<b>${esc(q.acct)}</b>は<b>${A[q.acct].cat}</b>。${esc(A[q.acct].desc)}`;
-      else if (q.t === 'doc') exp = `正解：<b>${q.answer.map(i => esc(q.issues[i])).join('／')}</b><br>${esc(q.exp)}`;
-      else { const n = Math.max(q.dr.length, q.cr.length); exp = `<table class="ent"><tr><th>借方</th><th></th><th>貸方</th><th></th></tr>${Array.from({length:n}, (_, i) => `<tr><td>${q.dr[i] ? esc(q.dr[i][0]) : ''}</td><td class="a">${q.dr[i] ? yen(q.dr[i][1]) : ''}</td><td>${q.cr[i] ? esc(q.cr[i][0]) : ''}</td><td class="a">${q.cr[i] ? yen(q.cr[i][1]) : ''}</td></tr>`).join('')}</table>${esc(q.exp)}`; }
-      $('.foot', el).innerHTML = `<div class="exp"><b class="${ok ? 'ok' : 'ng'}">${ok ? '○ 処理完了' : '× 処理ミス'}</b><br>${exp}</div><button class="btn" id="cont">戦闘に戻る</button>`;
-      $('#cont', el).onclick = () => { el.remove(); resolve(ok); };
-    };
-    draw(); document.body.append(el);
-  });
-}
-
-/* ───────── 1章「期首」 ───────── */
-const CHAPTERS = [
-  { no:'1章', title:'期首', rank:'新入社員', age:22 },
-  { no:'2章', title:'仮勘定', rank:'担当者', age:25 },
-];
-const SCN = {
-  night:'linear-gradient(#0B0D12,#141822)', office:'linear-gradient(#24324A,#141A26)', hall:'linear-gradient(#3A3426,#16140F)',
-  lunch:'linear-gradient(#3B2D22,#17120E)', room:'linear-gradient(#20252E,#0F1116)', dusk:'linear-gradient(#4A2E35,#16121A)',
-};
-async function chapterTitle(ch) {
-  const d = document.createElement('div'); d.className = 'chap-title'; d.innerHTML = `<div><span>${ch.no}</span><b>${ch.title}</b><span>${ch.rank}・${ch.age}歳</span></div>`;
-  $('.stage').append(d); await sleep(2400);
-}
-const STEPS = [
-  // 0: プロローグ
-  async () => {
-    shell(stageHtml(SCN.night, '15年前・冬　蒲田の雑居ビル3階'));
-    await run([
-      ['narr','深夜。古いモニターの光だけが、事務所を照らしていた。'],
-      ['narr','父の机の上に、印刷した資金繰り表。来月の欄が、赤い数字で埋まっている。'],
-      ['father','……。'],
-      ['narr','中学3年の冬。父の会社「有限会社ランタン」が、明日、倒産する。'],
-      ['narr','「父さん、うちって儲かってたんじゃないの？」'],
-      ['father','……儲かってたよ。だから、悔しいんだ。'],
-      ['narr','黒字なのに、会社は潰れた。その理由が、15歳には分からなかった。'],
-      ['narr','分からないまま、簿記の教科書を買った。'],
+/* ═════════ ストーリー（1章「期首」） ═════════ */
+const EPISODES = [
+  { id:'e1', no:'第1話', title:'天城案件', desc:'入社初日、社長からの無茶振り。', rew:{ exp:30, coins:300, so:50 }, async run() {
+    vnOpen('night', '15年前・冬　蒲田の雑居ビル3階');
+    await run([['father','……儲かってたよ。だから、悔しいんだ。'], ['narr','黒字なのに、父の会社は潰れた。その理由が知りたくて、簿記を始めた。']]);
+    setScene('hall', '1年前・4月1日　五反田　株式会社カサネ');
+    await chapterCard('1章', '期首', '新入社員・22歳');
+    await run([['amagi','カサネへようこそ！ 前例がないなら、つくればいい！','happy'], ['amagi','君が{name}くん？ 経理か、ちょうどいい！ 来月の役員会で、全社のコスト削減案を発表してくれない？','happy'], ['narr','入社して、まだ3時間。']]);
+    await decide([
+      { t:'「入社初日なので、お受けできません」', hint:'断る', fx:{ b_amagi:-3, health:+2 }, then:[['amagi','そうかあ……。','sad']], point:'断るのも正しい判断。ただ、社長の期待はしぼむ。' },
+      { t:'「1か月、経費の明細を全部見させてください。削れる項目を3つ報告します」', hint:'代わりの案', fx:{ work:+6, b_amagi:+6, health:-4 }, then:[['amagi','いいね！ 地に足がついてる！','happy']], point:'無茶振りには、根拠のある「できる範囲」で返す。経理の腕の見せどころ。' },
+      { t:'「やります！」', hint:'全部引き受ける', fx:{ b_amagi:+9, health:-14, family:-4 }, then:[['narr','その夜から、終電の日々が始まった。']], point:'全部引き受けると評価は上がるが、元気が削れる。社内ではこれを「天城案件」と呼ぶ。' },
     ]);
-  },
-  // 1: 名前
-  async () => {
-    shell(stageHtml(SCN.night, ''));
-    setWho(null);
-    $('#nameplate').innerHTML = ''; $('#text').textContent = 'あなたの名前を教えてください。';
-    $('#extra').innerHTML = `<input class="nm" id="nmi" maxlength="8" placeholder="例：沢村 ひかる" value="${esc(G.name)}" aria-label="あなたの名前"><button class="btn" id="nmok">決定</button>`;
-    await new Promise(res => { $('#nmok').onclick = () => { const v = $('#nmi').value.trim(); G.name = v || '新人'; save(); res(); }; });
-  },
-  // 2: 入社式
-  async () => {
-    shell(stageHtml(SCN.hall, '7年後・4月1日　五反田　株式会社カサネ本社'));
-    await chapterTitle(CHAPTERS[0]);
-    await run([
-      ['narr','株式会社カサネ。中小企業向けの受発注・請求管理SaaSをつくる、社員300人の会社。3年前に東証グロース市場に上場した。'],
-      ['amagi','新入社員のみんな、ようこそカサネへ！','happy'],
-      ['amagi','うちの社名はね、「重ねる」から来てる。ゼロになっても、また一つずつ重ねればいい。','normal'],
-      ['amagi','前例がないなら、つくればいい！ 以上！','happy'],
-      ['narr','入社式が終わった直後。社長が、まっすぐこちらに歩いてきた。'],
-      ['amagi','君が{name}くんか。経理配属だったね。','normal'],
-      ['amagi','ちょうどよかった！ 来月の役員会で、全社のコスト削減案を発表してくれないかな。','happy'],
-      ['narr','入社して、まだ3時間しか経っていない。'],
-    ]);
-    const i = await choose([
-      { t:'「入社初日なので、まだ会社の数字を何も知りません。お受けできません」', hint:'正面から断る' },
-      { t:'「まず1か月、経費の明細を全部見させてください。そのうえで、削れそうな項目を3つ報告します」', hint:'代わりの案を出す' },
-      { t:'「やります！」', hint:'全部引き受ける' },
-    ]);
-    const R = [
-      { fx:{ aff_amagi:-6, health:+2 }, l:[['amagi','そうか……。新人らしくないなあ。','sad']], p:'断るのも正しい判断。ただ、社長の期待はしぼむ。' },
-      { fx:{ work:+6, aff_amagi:+6, health:-4 }, l:[['amagi','おお、いいね！ 地に足がついてる。それで頼むよ！','happy']], p:'無茶振りには、根拠のある「できる範囲」で返すのが経理の腕の見せどころ。' },
-      { fx:{ aff_amagi:+10, health:-14, family:-4 }, l:[['amagi','頼もしい！ 楽しみにしてるよ！','happy'],['narr','その夜から、終電の日々が始まった。']], p:'全部引き受けると評価は上がるが、元気が削れる。社内ではこれを「天城案件」と呼ぶ。' },
-    ][i];
-    bump(R.fx); await run(R.l);
-    await note(`<div class="point">${esc(R.p)}</div>${fxHtml(R.fx)}`);
-  },
-  // 3: 経理部
-  async () => {
-    shell(stageHtml(SCN.office, '本社6階　経理部'));
-    await run([
-      ['narr','経理部は、フロアの一番奥にあった。'],
-      ['sumiya','墨谷です。課長をしています。','normal'],
-      ['sumiya','……{name}さん。','normal'],
-      ['narr','課長は、履歴書と私の顔を、しばらく見比べていた。'],
-      ['sumiya','いえ。よろしくお願いします。最初に一つだけ。','normal'],
-      ['sumiya','1円合わないのは、1円の問題じゃありません。覚えておいてください。','normal'],
-      ['akeno','課長、初日から重いですよ。……朱野です。あなたの教育係。','happy'],
-      ['akeno','うちの合言葉は「証憑は？」。根拠のない数字は、1円も入れない。いい？','normal'],
-      ['akeno','あと、8月の第1週は話しかけないで。理由は、そのうち分かるから。','normal'],
-    ]);
-    await incident('心構え');
-  },
-  // 4: 駆と事件
-  async () => {
-    shell(stageHtml(SCN.lunch, '昼休み　ビル1階のカフェ'));
-    await run([
-      ['hayase','よっ、{name}！ 同期の早瀬。営業部！ 経理だって？ じゃあこれからお世話になるわ〜','happy'],
-      ['narr','差し出された名刺の下から、くしゃくしゃの領収書が3枚こぼれ落ちた。'],
-      ['hayase','あ、それ先月の。宛名、上様でいいよね？','normal'],
-      {place:'翌月・2日　経理部'},
-      ['hayase','なあ{name}、ちょっと相談。','normal'],
-    ]);
+    setScene('office', '本社6階　経理部');
+    await run([['sumiya','墨谷です。課長をしています。……{name}さん。'], ['narr','課長は、私の履歴書をしばらく見つめていた。'], ['sumiya','いえ。1円合わないのは、1円の問題じゃありません。覚えておいてください。'], ['akeno','初日から重いですよ、課長。朱野です。あなたの教育係。','happy'], ['akeno','合言葉は「証憑は？」。根拠のない数字は、1円も入れない。いい？'], ['narr','……課長は、なぜあんなに私の履歴書を見ていたんだろう。']]);
+  }},
+  { id:'e2', no:'第2話', title:'上様の領収書', desc:'同期の早瀬と、くしゃくしゃの経費精算47件。', rew:{ exp:40, coins:400, so:50 }, async run() {
+    vnOpen('lunch', '昼休み　ビル1階のカフェ');
+    await run([['hayase','よっ、同期の早瀬！ 営業部！ 経理だって？ これからお世話になるわ〜','happy'], ['narr','差し出された名刺の下から、くしゃくしゃの領収書が3枚こぼれた。'], ['hayase','あ、それ先月の。宛名、上様でいいよね？']]);
     await incident('期ズレ');
-  },
-  // 5: 業務バトル（雑魚）
-  async () => {
-    shell(stageHtml(SCN.office, '翌月・5日　経理部'));
-    await run([
-      ['akeno','早瀬くんの経費精算が、まとめて47件。全部くしゃくしゃ。','angry'],
-      ['akeno','一緒に片づけるよ。わたしの「朱書きチェック」も使って。','normal'],
-    ]);
-    const win = await battle({ enemy:'くしゃくしゃの経費精算 47件', kind:'業務', desc:'宛名は上様、日付はにじんで読めない。', hp:90, atk:5,
-      party:['akeno'], taunts:['領収書の日付が読めない……','「上様」の領収書がまた出てきた','但し書きが「お品代」だ'],
-      pool:() => [Qs.je('b05'), Qs.je('b06'), Qs.je('b14'), Qs.doc('d2'), Qs.doc('d4'), Qs.cat('旅費交通費'), Qs.cat('交際費'), Qs.cat('消耗品費'), Qs.je('b15')] });
-    await afterBattle(win, 'akeno');
-  },
-  // 6: 二重払い・期限
-  async () => {
-    shell(stageHtml(SCN.office, '月末　経理部'));
+    setScene('office', '翌月5日　経理部');
+    await run([['akeno','早瀬くんの経費精算、まとめて47件。全部くしゃくしゃ。','angry'], ['akeno','一緒に片づけるよ。ゲージが溜まったら、わたしを呼んで。']]);
+    return battle({ enemy:'くしゃくしゃの経費精算 47件', kind:'業務', desc:'宛名は上様、日付はにじんで読めない。', hp:110, atk:7, every:3, pool:POOLS.expense, party:fixedParty(['akeno']), freeRevive:true,
+      taunts:['日付が読めない領収書','「上様」がまた出てきた','但し書きが「お品代」'] });
+  }},
+  { id:'e3', no:'第3話', title:'同じ番号の請求書', desc:'郵送とPDFで届いた2通の請求書。そして毎月10日。', rew:{ exp:40, coins:400, so:50 }, async run() {
+    vnOpen('office', '月末　経理部');
     await incident('二重払い');
     await incident('期限');
-  },
-  // 7: ライフイベント：住民税
-  async () => {
-    shell(stageHtml(SCN.dusk, '2年目・6月　給料日の夜'));
-    await run([
-      ['hayase','おい{name}！ 見てくれよ、給与明細！','surprised'],
-      ['hayase','手取りが、先月より2万円も少ない！ 会社のミスじゃね？ 給与担当に文句言いに行こうぜ！','angry'],
-      ['narr','自分の明細を見る。……同じく、減っている。「住民税」の欄に、先月まではなかった数字があった。'],
-    ]);
-    const i = await choose([
-      { t:'「住民税は前の年の所得にかかって、2年目の6月から引かれるんだ」と説明する', hint:'仕事の知識で返す' },
-      { t:'「本当だ、ひどい！」一緒に給与担当へ乗り込む', hint:'ノリで動く' },
-      { t:'黙って家計簿アプリを開き、来月からの節約計画を立てる', hint:'自分の生活を守る' },
-    ]);
-    const R = [
-      { fx:{ work:+4, aff_hayase:+6 }, l:[['hayase','……マジか。1年目って、実は得してたんだな。','surprised'],['hayase','さすが経理。今度焼肉おごるわ。経費で。','happy'],['narr','（それは落ちない）']] },
-      { fx:{ work:-6, aff_hayase:+10, aff_akeno:-6 }, l:[['akeno','……ふたりとも。住民税って知ってる？','angry'],['narr','経理部の自分が言われたことは、しばらく部内の笑い話になった。']] },
-      { fx:{ money:+8, health:-3 }, l:[['hayase','え、無視？ ……まあいいや、ひとりで行ってくる。','sad'],['narr','その月から、昼は弁当になった。']] },
-    ][i];
-    bump(R.fx); await run(R.l);
-    await note(`<div class="point">住民税は、前の年の1〜12月の所得をもとに計算され、翌年の6月から給与天引き（特別徴収）が始まる。1年目は前年の所得がほぼないので、かからないことが多い。</div>${fxHtml(R.fx)}`);
-  },
-  // 8: ボス：初めての月次決算
-  async () => {
-    shell(stageHtml(SCN.night, '月次決算・締め日前夜　経理部'));
-    await run([
-      ['sumiya','明日が締めです。今月から、{name}さんにも決算を手伝ってもらいます。','normal'],
-      ['sumiya','預金の残高が、帳簿と5,500円合いません。','normal'],
-      ['akeno','残り312枚。……朝までに終わらせるよ。','normal'],
-    ]);
+    await run([['akeno','……あと、言っておく。8月の第1週は、話しかけないで。'], ['narr','理由を聞く前に、先輩はもう伝票に赤ペンを走らせていた。']]);
+  }},
+  { id:'e4', no:'第4話', title:'手取りが減った日', desc:'2年目の6月。給与明細に、見慣れない数字。', rew:{ exp:40, coins:400, so:50 }, async run() {
+    vnOpen('dusk', '2年目・6月　給料日の夜');
+    await run([['hayase','{name}！ 手取りが2万円も減ってる！ 会社のミスじゃね？ 文句言いに行こうぜ！','angry'], ['narr','自分の明細にも、先月まではなかった「住民税」の数字があった。']]);
+    await decide([
+      { t:'「住民税は前の年の所得にかかって、2年目の6月から引かれるんだ」', hint:'知識で返す', fx:{ work:+4, b_hayase:+5 }, then:[['hayase','……マジか。さすが経理。今度焼肉おごるわ。経費で。','happy'], ['narr','（それは落ちない）']] },
+      { t:'「ひどい！」一緒に給与担当へ乗り込む', hint:'ノリで動く', fx:{ work:-5, b_hayase:+9, b_akeno:-4 }, then:[['akeno','……ふたりとも。住民税って知ってる？','angry']] },
+      { t:'黙って家計簿アプリを開き、節約計画を立てる', hint:'生活を守る', fx:{ money:+8, health:-3 }, then:[['narr','その月から、昼は弁当になった。']] },
+    ], '住民税は前の年の1〜12月の所得をもとに計算され、翌年6月から給与天引き（特別徴収）になる。1年目は前年の所得がほぼないので、かからないことが多い。');
+    setScene('office', '翌朝　経理部');
+    await incident('心構え');
+  }},
+  { id:'e5', no:'第5話', title:'初めての月次決算', desc:'残り312枚、差異5,500円。締めは明朝9時。', rew:{ exp:80, coins:800, so:100, mats:5 }, async run() {
+    vnOpen('night', '締め日前夜　経理部');
+    await run([['sumiya','預金が、帳簿と5,500円合いません。'], ['akeno','残り312枚。……朝までに終わらせるよ。']]);
     await incident('残高照合');
-    const win = await battle({ enemy:'初めての月次決算', kind:'ボス', desc:'未処理の伝票 312枚。締めは明朝9時。', hp:160, atk:8,
-      party:['akeno', 'sumiya'], taunts:['未処理の請求書が、さらに20枚届いた','社長からチャット「数字、明日の朝イチで見たい！」','差異 5,500円が、まだ合わない','終電が、行ってしまった'],
-      pool:() => [Qs.je('b01'), Qs.je('b02'), Qs.je('b03'), Qs.je('b04'), Qs.je('b07'), Qs.je('b08'), Qs.je('b09'), Qs.je('b12'), Qs.chk('l03', 0), Qs.chk('l03', 1), Qs.chk('l08', 0), Qs.cat('売掛金'), Qs.cat('未払金'), Qs.cat('前受金')] });
-    await afterBattle(win, 'sumiya');
-  },
-  // 9: 辞令
-  async () => {
-    shell(stageHtml(SCN.office, '1年後・4月1日　経理部'));
-    await run([
-      ['sumiya','{name}さん。','normal'],
-      ['sumiya','本日付で、経理部 担当者として、支払と入金の担当を任せます。','normal'],
-      ['sumiya','……よく、やりました。','happy'],
-      ['akeno','ちょっと、課長が褒めた！ 今の録音しておけばよかった。','happy'],
-    ]);
-    G.cleared.push(0); G.ch = 1; save(); drawBS();
-    await note(`<div class="end-card"><div style="font-family:var(--f-head); font-size:1.3rem; font-weight:900">1章「期首」クリア</div>
-      <p style="color:var(--muted); margin:6px 0 0; font-size:.88rem">次は 2章「仮勘定」。支払・入金の担当として、振込詐欺のメール、個人への報酬、そして過労で倒れた先での出会いが待っている。</p></div>`);
-    await note(`<p style="color:var(--muted); font-size:.85rem">このデモは1章までです。2章以降は制作中です。</p><button class="btn ghost" id="again" style="margin-top:8px">最初からやり直す</button>`);
-  },
+    const r = await battle({ enemy:'初めての月次決算', kind:'ボス', desc:'未処理の伝票 312枚。締めは明朝9時。', hp:220, atk:11, every:3, pool:POOLS.close, party:fixedParty(['akeno', 'sumiya']), freeRevive:true,
+      taunts:['請求書がさらに20枚届いた','社長からチャット「数字、朝イチで見たい！」','差異5,500円がまだ合わない','終電が行ってしまった'] });
+    if (!r.win) return r;
+    vnOpen('office', '1年後・4月1日　経理部');
+    await run([['sumiya','{name}さん。本日付で、支払と入金の担当を任せます。'], ['sumiya','……よく、やりました。','happy'], ['akeno','課長が褒めた！ 録音しておけばよかった。','happy'], ['narr','その夜。社内チャットに、社長からメッセージが届いた。'], ['amagi','月次おつかれ！ ところで来月から、3日で締められるよね？','happy']]);
+    return r;
+  }},
 ];
-async function afterBattle(win, helper) {
-  shell(stageHtml(SCN.office, ''));
-  if (win) {
-    bump({ work:+6, [`aff_${helper}`]:+6 });
-    await run([[helper, helper === 'akeno' ? 'おつかれ。……あなた、伸びるよ。' : '検算も合っています。おつかれさまでした。', 'happy']]);
-  } else {
-    bump({ health:+40, family:-6, work:-4 });
-    await run([['narr','気がつくと、デスクに突っ伏して朝を迎えていた。'], [helper, '……残りは、わたしたちで片づけておいた。今日は帰って寝なさい。', 'sad']]);
-    await note(`<div class="point">元気が尽きると、仲間が助けてくれるが、仕事と家族の数値が下がる。缶コーヒーやスキルで元気を保とう。</div>`);
-  }
+const epDone = id => G.story.includes(id);
+const nextEp = () => EPISODES.find(e => !epDone(e.id));
+async function playEpisode(ep) {
+  VN.skip = false;
+  const r = await ep.run();
+  if (r && r.win === false) { await result({ win:false, sub:`${ep.no}「${ep.title}」`, missed:r.missed, next:'もう一度挑戦する' }); return playEpisode(ep); }
+  const first = !epDone(ep.id);
+  if (first) { G.story.push(ep.id); G.daily.m.story++; }
+  await result({ title:'エピソードクリア', sub:`${ep.no}「${ep.title}」`, stars:r && r.stars, missed:r && r.missed, ...(first ? ep.rew : { exp:10, coins:100 }), next:'次へ' });
+  if (ep.id === 'e1' && !G.tutScout) await tutorialScout();
+  go('home');
 }
 
-/* ───────── 進行 ───────── */
-async function play() {
-  while (G.step < STEPS.length) {
-    await STEPS[G.step]();
-    G.step++; save();
+/* ═════════ 冒頭（コールドオープン） ═════════ */
+async function coldOpen() {
+  vnOpen('crisis', '締め日の朝　午前6時');
+  await run([['akeno','締めまで、あと3時間！ 残り3件、一緒に片づけるよ！','angry']]);
+  await battle({ enemy:'締めまで あと3時間', kind:'月次決算', desc:'残り3件。終われば、朝が来る。', hp:70, atk:4, every:9, tutorial:true,
+    pool:() => [Q.cat('売掛金'), Q.chk('l03', 0), Q.cat('買掛金'), Q.cat('前受金'), Q.cat('普通預金')], party:fixedParty(['akeno']), teamHp:100 });
+  vnOpen('crisis', '午前8時57分');
+  await run([['akeno','……終わった。','happy'], ['narr','朝日が、経理部の窓に差しこんだ。']]);
+  $('#app').innerHTML = `<div class="title side"><div><div class="ln">経理ラボ　ストーリーモード</div><h1>バランスシート</h1>
+    <div class="bsl"><span>仕事</span><span>家族</span><span>元気</span><span>貯金</span></div><p class="muted small" style="margin:0 0 18px">新入社員からCFOへ。人生の左右は、釣り合うか。</p>
+    <label class="small muted" for="nmi">あなたの名前（あとで変えられます）</label><input class="nm" id="nmi" maxlength="8" value="${esc(G.name || '沢村 ひかる')}"><button class="btn gold" id="nmok">はじめる</button>
+    <p class="muted small" style="margin-top:10px">登場する人物・会社はすべて架空です</p></div></div>`;
+  sfx('win');
+  await new Promise(res => $('#nmok').onclick = () => { G.name = $('#nmi').value.trim() || '新人'; res(); });
+  G.cold = true; save();
+  await playEpisode(EPISODES[0]);
+}
+
+/* ═════════ スカウト（辞令封筒） ═════════ */
+const RATES = { 5:3, 4:17, 3:80 };
+const PITY = 60;
+function pull(n, guarantee4) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    G.pity++;
+    const r = Math.random() * 100; let rar = r < RATES[5] ? 5 : r < RATES[5] + RATES[4] ? 4 : 3;
+    if (G.pity >= PITY) rar = 5;
+    if (guarantee4 && i === n - 1 && !out.some(c => CARD[c].r >= 4) && rar < 4) rar = 4;
+    let pool = CARDS.filter(c => c.r === rar);
+    if (rar === 5 && Math.random() < .5) pool = pool.filter(c => c.pickup);
+    if (rar === 5) G.pity = 0;
+    out.push(rnd(pool).id);
   }
-  title();
+  return out;
 }
-function title() {
-  $('#app').innerHTML = `<div class="title side">
-    <div class="sub">経理ラボ　ストーリーモード</div>
-    <h1>バランスシート</h1>
-    <div class="ledger"><span>仕事</span><span>家族</span><span>元気</span><span>貯金</span></div><p style="font-family:var(--f-head); color:var(--ink)">人生の左右は、釣り合うか。</p>
-    <p>新入社員からCFOへ。仕事と人生の両方で、答えのない選択を重ねていく約30年の物語。</p>
-    <p style="font-size:.8rem">登場する人物・会社はすべて架空です。</p>
-    <button class="btn" id="start">${G.step > 0 ? '続きから' : 'はじめる'}</button>
-    ${G.step > 0 ? '<button class="btn ghost" id="reset">最初から</button>' : ''}</div>`;
-  $('#start').onclick = () => play();
-  const r = $('#reset'); if (r) r.onclick = () => { G = NEW(); save(); title(); };
+function addCards(ids) {
+  const isNew = {};
+  ids.forEach(id => { if (G.cards[id]) G.cards[id].dup = Math.min(5, G.cards[id].dup + 1); else { G.cards[id] = { lv:1, dup:0 }; isNew[id] = true; } });
+  for (const id of Object.keys(G.cards).sort((a, b) => CARD[b].r - CARD[a].r)) { if (G.party.length >= 2) break; if (!G.party.some(p => CARD[p].char === CARD[id].char)) G.party.push(id); }
+  save(); return isNew;
 }
-document.addEventListener('click', e => { if (e.target.id === 'again') { G = NEW(); save(); title(); } });
-title();
+const cardHtml = (id, extra = '') => { const c = CARD[id]; return `<div class="ccard r${c.r}" style="--rc:var(--r${c.r}); ${face(c.char) ? `background-image:url(${face(c.char)})` : ''}" ${extra}><span class="st">${'★'.repeat(c.r)}</span><div class="bar"><b>${esc(c.title)}</b>${esc(P[c.char].name)}</div></div>`; };
+async function openEnvelopes(ids) {
+  const isNew = addCards(ids);
+  $('#app').innerHTML = `<div class="res side" style="background:radial-gradient(100% 60% at 50% 0%,#2A2134,var(--bg) 70%)"><div class="small muted">辞令</div><h1>スカウト結果</h1>
+    <p class="muted small">封筒をタップして開封　<button class="chip" id="all">すべて開く</button></p><div class="env-grid" id="eg">${ids.map((id, i) => `<button class="env r${CARD[id].r}" data-i="${i}" style="--seal:${CARD[id].r === 5 ? 'radial-gradient(#FFE6A0,#C9922A)' : CARD[id].r === 4 ? 'radial-gradient(#D8B8FF,#7B4FC9)' : 'radial-gradient(#E46A50,#9C2E1F)'}; animation-delay:${i * .06}s" aria-label="封筒${i + 1}"><i></i></button>`).join('')}</div>
+    <div id="done" hidden><button class="btn gold" id="eok">OK</button></div></div>`;
+  let opened = 0;
+  const open = b => { if (b.classList.contains('open')) return; const id = ids[+b.dataset.i]; b.classList.add('open'); b.innerHTML = cardHtml(id); if (isNew[id]) b.firstElementChild.insertAdjacentHTML('beforeend', '<span class="nw new">NEW</span>'); sfx(CARD[id].r === 5 ? 'r5' : 'env'); if (CARD[id].r === 5) buzz([30, 30, 80]); if (++opened === ids.length) $('#done').hidden = false; };
+  $('#eg').onclick = e => { const b = e.target.closest('.env'); if (b) open(b); };
+  $('#all').onclick = () => $('#eg').querySelectorAll('.env').forEach((b, i) => setTimeout(() => open(b), i * 90));
+  await new Promise(res => $('#eok').onclick = res);
+}
+async function tutorialScout() {
+  $('#app').innerHTML = `<div class="res side"><div class="small muted">入社祝い</div><h1>辞令封筒 10通</h1><p>人事部から、あなたと一緒に働く仲間の辞令が届いた。<br><b style="color:var(--gold)">★4以上 1通確定</b>・無料</p>
+    <div class="banner" style="margin:14px 0">${face('akeno') ? `<img src="${face('akeno')}" alt="">` : ''}<div class="t"><span>ピックアップ</span><b>★5「8月の第1週」朱野志乃</b><p>試験前の1週間、彼女は誰とも話さない。</p></div></div>
+    <button class="btn gold" id="ts">封筒を受け取る</button></div>`;
+  await new Promise(res => $('#ts').onclick = res);
+  const ids = pull(10, true); G.tutScout = true; G.daily.m.scout++;
+  await openEnvelopes(ids);
+}
+
+/* ═════════ 月次決算ラン ═════════ */
+const ACTS = [
+  { id:'je', ic:'🧾', t:'仕訳処理', d:'2問。正解ごとに処理が進む', eff:'処理＋' },
+  { id:'doc', ic:'🔍', t:'証憑チェック', d:'1問。正解で処理と正確さが上がる', eff:'処理・正確さ＋' },
+  { id:'study', ic:'📘', t:'研修', d:'正確さ＋15、元気−8', eff:'正確さ＋' },
+  { id:'rest', ic:'☕', t:'定時で帰る', d:'元気＋25', eff:'元気＋' },
+  { id:'ot', ic:'🌙', t:'残業', d:'処理＋20、元気−20、家族−2', eff:'処理＋＋' },
+  { id:'ask', ic:'💬', t:'先輩に相談', d:'正確さ＋10、処理＋6、絆＋', eff:'正確さ・絆＋' },
+];
+const RUN_EVENTS = [
+  { who:'amagi', text:'月曜9時2分。「おはよう！ 今月、締めを2日早められない？」', opts:[
+    { t:'「請求書の提出期限を全社で前倒ししてくれれば」と返す', fx:{ prog:8, acc:5 }, say:'いいね、やろう！' },
+    { t:'「無理です」', fx:{ amagi:-2 }, say:'そっかあ……' },
+    { t:'「やります」', fx:{ prog:12, hp:-18 }, say:'さすが！' } ] },
+  { who:'akeno', text:'「仕入先の請求書が、まだ届いてない。作業はもう終わってるのに」', opts:[
+    { t:'見積額で未払計上しておく', fx:{ acc:10, prog:6 }, say:'それでいい。発生主義ね。' },
+    { t:'届くまで待つ', fx:{ prog:-8 }, say:'……締めに間に合わないよ。' } ] },
+  { who:'hayase', text:'「なあ、今夜同期で飲み会あるんだけど、来る？」', opts:[
+    { t:'行く', fx:{ hp:15, prog:-6 }, say:'よっしゃ！ 経費では落ちないけどな！' },
+    { t:'今夜は残る', fx:{ prog:6, hp:-6 }, say:'まじめか！ がんばれよ。' } ] },
+  { who:'akeno', text:'「取引先から『振込先が変わりました、至急お願いします』ってメール。……どうする？」', opts:[
+    { t:'登録済みの電話番号に電話して確認する', fx:{ acc:15 }, say:'正解。それ、たぶん詐欺。' },
+    { t:'急ぎなので、そのまま振り込む', fx:{ acc:-15, hp:-10 }, say:'待って！ それは絶対ダメ。' } ] },
+  { who:'sumiya', text:'「預金の残高が、帳簿と1,320円合いません」', opts:[
+    { t:'通帳と帳簿を1件ずつ突き合わせる', fx:{ acc:12, hp:-6 }, say:'……見つかりましたか。振込手数料の記帳もれ。' },
+    { t:'雑損失で合わせる', fx:{ acc:-12 }, say:'1円合わないのは、1円の問題じゃありません。' } ] },
+];
+function runSetup() {
+  regen();
+  const own = Object.keys(G.cards).sort((a, b) => CARD[b].r - CARD[a].r);
+  if (!own.length) { toast('まずはストーリーを進めて、仲間を集めよう'); return go('home'); }
+  let sel = G.party.filter(id => G.cards[id]).slice(0, 2);
+  const draw = () => {
+    $('#app').innerHTML = hud() + `<div class="scroll side"><div class="sec">月次決算ラン <small>1回5分・4週＋締め日</small></div>
+      <div class="card small" style="line-height:1.7">1か月の経理を回す。毎週3枚の行動カードから1枚を選び、月末の<b>締め日</b>に挑む。結果に応じて経験値・円・研修資料・絆がもらえる。</div>
+      <div class="sec">サポートする仲間 <small>2人まで（タップで選ぶ）</small></div>
+      <div class="cgrid">${own.map(id => `<button data-c="${id}" style="border-radius:12px; ${sel.includes(id) ? 'outline:3px solid var(--gold)' : ''}">${cardHtml(id)}</button>`).join('')}</div>
+      <div style="height:14px"></div><button class="btn gold" id="rgo" ${sel.length ? '' : 'disabled'}>はじめる（気力 10）</button><div style="height:16px"></div></div>` + tabs('run');
+    bindTabs();
+    $('.cgrid').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; const id = b.dataset.c; if (sel.includes(id)) sel = sel.filter(x => x !== id); else { sel = sel.filter(s => CARD[s].char !== CARD[id].char); if (sel.length >= 2) sel.shift(); sel.push(id); } draw(); };
+    $('#rgo').onclick = () => { regen(); if (G.sta < 10) return staModal(); if (G.sta >= staMax()) G.staTs = Date.now(); G.sta -= 10; save(); playRun(sel); };
+  };
+  draw();
+}
+async function playRun(sup) {
+  const R = { week:1, prog:0, acc:20, hp:100, chars:sup.map(id => CARD[id].char) };
+  const bonus = sup.reduce((s, id) => s + cardPow(id).atk, 0);
+  const view = inner => { $('#app').innerHTML = `<div class="scroll side" style="padding-top:calc(12px + env(safe-area-inset-top,0px)); padding-bottom:20px"><div style="display:flex; align-items:center; justify-content:space-between"><b class="serif">月次決算ラン</b><span class="chip">${R.week <= 4 ? '第' + R.week + '週' : '締め日'}</span></div>
+    <div class="weeks">${[1,2,3,4,5].map(i => `<i class="${i < R.week ? 'on' : i === R.week ? 'now' : ''}"></i>`).join('')}</div>
+    <div class="run-h"><div><b>${R.prog}</b><span>処理（締めの準備）</span></div><div><b>${R.acc}</b><span>正確さ</span></div><div><b>${R.hp}</b><span>元気</span></div></div>
+    <div style="display:flex; gap:6px; margin:10px 0">${R.chars.map(c => `<span class="chip"><span style="width:18px; height:18px; border-radius:50%; background:var(--panel) center 12%/cover; ${face(c) ? `background-image:url(${face(c)})` : ''}"></span>${esc(P[c].name)}</span>`).join('')}</div>
+    <div id="rv">${inner}</div></div>`; };
+  const pick = sel => new Promise(res => $(sel).onclick = e => { const b = e.target.closest('[data-i]'); if (b) { sfx('tap'); res(+b.dataset.i); } });
+  const quiz = async (poolFn, n) => {
+    let ok = 0;
+    for (let i = 0; i < n; i++) {
+      $('#rv').innerHTML = `<div class="timer"><s id="rt"></s></div><div id="rq"></div>`;
+      const q = rnd(poolFn()), r = await askIn($('#rq'), q, { timerEl:$('#rt') });
+      if (r.ok) { ok++; sfx('ok'); toast(r.fast ? '速い！ 正確さ＋3' : '処理完了'); if (r.fast) R.acc = clamp(R.acc + 3); await sleep(450); }
+      else { sfx('ng'); if (!G.mistakes.includes(q.key)) G.mistakes.push(q.key); await showExplain($('#rq'), q, r); }
+    }
+    return ok;
+  };
+  for (; R.week <= 4; R.week++) {
+    const hand = shuffle(ACTS.filter(a => a.id !== 'ask' || R.chars.some(c => c === 'akeno' || c === 'sumiya'))).slice(0, 3);
+    view(`<div class="sec">今週の行動を1つ選ぶ</div><div class="acts">${hand.map((a, i) => `<button class="act" data-i="${i}" style="animation-delay:${i * .08}s"><span class="ic">${a.ic}</span><b>${a.t}</b><p>${a.d}</p><em>${a.eff}</em></button>`).join('')}</div>`);
+    const a = hand[await pick('.acts')];
+    if (a.id === 'je') { const ok = await quiz(rnd([POOLS.basic, POOLS.expense, POOLS.close]), 2); R.prog += ok * (14 + Math.round(bonus / 3)); }
+    if (a.id === 'doc') { const ok = await quiz(() => DATA.docs.map(d => Q.doc(d.id)), 1); R.prog += ok * 10; R.acc += ok * 12; }
+    if (a.id === 'study') { R.acc += 15; R.hp -= 8; }
+    if (a.id === 'rest') R.hp += 25;
+    if (a.id === 'ot') { R.prog += 20; R.hp -= 20; bump({ family:-2 }); }
+    if (a.id === 'ask') { R.acc += 10; R.prog += 6; bump({ ['b_' + R.chars.find(c => c === 'akeno' || c === 'sumiya')]: 4 }); }
+    R.hp = clamp(R.hp); R.acc = clamp(R.acc);
+    if (Math.random() < .7) {
+      const ev = rnd(RUN_EVENTS);
+      view(`<div class="card" style="display:flex; gap:12px; align-items:flex-start"><span style="width:52px; height:52px; border-radius:50%; flex:none; background:var(--panel2) center 12%/cover; ${face(ev.who) ? `background-image:url(${face(ev.who)})` : ''}"></span><div><b>${esc(P[ev.who].name)}</b><p style="margin:4px 0 0; line-height:1.7">${esc(ev.text)}</p></div></div>
+        <div class="choices" style="margin-top:10px" id="evc">${ev.opts.map((o, i) => `<button class="choice" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>`);
+      const o = ev.opts[await pick('#evc')];
+      R.prog += o.fx.prog || 0; R.acc = clamp(R.acc + (o.fx.acc || 0)); R.hp = clamp(R.hp + (o.fx.hp || 0)); if (o.fx.amagi) bump({ b_amagi:o.fx.amagi });
+      view(`<div class="card"><b>${esc(P[ev.who].name)}</b><p style="margin:4px 0 0">「${esc(o.say)}」</p></div><div style="height:10px"></div><button class="btn dark" id="rn">${R.week < 4 ? '次の週へ' : '締め日へ'}</button>`);
+      await new Promise(res => $('#rn').onclick = res);
+    }
+  }
+  view(`<div class="card" style="text-align:center"><div class="small muted">月末</div><b class="serif" style="font-size:1.4rem">締め日</b><p class="small">準備した処理が多いほど、締めは楽になる。</p></div><div style="height:10px"></div><button class="btn shu" id="rb">締めに挑む</button>`);
+  await new Promise(res => $('#rb').onclick = res);
+  const hp = Math.max(60, 240 - R.prog * 2), atk = Math.max(5, 16 - Math.round(R.acc / 8));
+  const r = await battle({ enemy:'締め日', kind:'月次決算ラン', desc:`残りの処理 ${hp}件。正確さ ${R.acc}。`, hp, atk, every:3, pool:POOLS.all, party:partyFrom(sup), teamHp:Math.max(30, R.hp), taunts:['未処理の請求書が届いた','社長「まだ？」','差異が合わない'] });
+  const score = (r.win ? 50 : 0) + Math.min(30, R.prog / 4) + R.acc / 5 + r.stars * 5;
+  const rank = !r.win ? 'D' : score >= 95 ? 'S' : score >= 80 ? 'A' : score >= 65 ? 'B' : 'C';
+  const mult = { S:2, A:1.6, B:1.3, C:1, D:.4 }[rank];
+  R.chars.forEach(c => bump({ ['b_' + c]: Math.round(6 * mult) }));
+  if (r.win) G.daily.m.run++;
+  await result({ title:'締め完了', sub:'月次決算ラン', rank, win:r.win, missed:r.missed, exp:Math.round(35 * mult), coins:Math.round(300 * mult), mats:Math.round(3 * mult), so:rank === 'S' ? 20 : 0, bond:`${R.chars.map(c => P[c].name.split(' ')[0]).join('・')} +${Math.round(6 * mult)}`, next:'ホームへ' });
+  go('home');
+}
+function staModal() {
+  modal(`<h2>気力が足りません</h2><p class="muted small">気力は${STA_MIN}分で1回復します（今 ${G.sta}/${staMax()}）。</p><div style="display:grid; gap:8px; margin-top:10px">
+    <button class="btn so" id="sq1">SO 50 で全回復</button><button class="btn dark" id="sq2">閉じる</button></div>`, m => {
+    $('#sq1', m).onclick = () => { if (G.so < 50) return toast('SOが足りません'); G.so -= 50; G.sta = staMax(); save(); m.remove(); toast('気力が全回復した'); render(); };
+    $('#sq2', m).onclick = () => m.remove();
+  });
+}
+
+/* ═════════ 社内チャット ═════════ */
+const CHAT = [
+  { id:'a1', from:'amagi', when:() => epDone('e1'), time:'9:02', text:'おはよう！ 入社2日目どう？ 役員会のコスト削減案、たのしみにしてるね！', replies:[{ t:'がんばります！', b:3, back:'その意気！ 期待してるよ！' }, { t:'まだ何も分かりません……', b:1, back:'素直でよろしい！ 分からないことは墨谷さんに聞いて！' }] },
+  { id:'k1', from:'akeno', when:() => epDone('e2'), time:'18:40', text:'明日9時、経費精算の締め。早瀬くんの分、また来てない。あなたから催促して。', replies:[{ t:'任せてください', b:4, back:'よろしく。同期なんだから。' }, { t:'先輩から言ってもらえませんか……', b:1, back:'……あなたが言いなさい。練習。' }] },
+  { id:'h1', from:'hayase', when:() => epDone('e2'), time:'21:15', text:'なあ、同期の焼肉って交際費で落ちる？', replies:[{ t:'落ちない', b:3, back:'だよなー！ じゃあ割り勘で！ 来る？' }, { t:'社外の人がいないなら交際費にはならないよ', b:5, back:'詳しすぎて草。経理って全部知ってんの？' }] },
+  { id:'s1', from:'sumiya', when:() => epDone('e4'), time:'22:31', text:'本日の照合、ありがとうございました。……私のそろばんは、前の職場から使っているものです。', replies:[{ t:'前の職場、ですか？', b:5, back:'……余計なことを書きました。おやすみなさい。' }, { t:'お疲れさまでした', b:2, back:'おやすみなさい。' }] },
+  { id:'k2', from:'akeno', when:() => bondLv('akeno') >= 2, time:'23:58', text:'8月の第1週、休みます。理由は聞かないで。', replies:[{ t:'がんばってください', b:6, back:'……ありがと。何をとは聞かないんだね。' }, { t:'了解です', b:3, back:'うん。' }] },
+  { id:'a2', from:'amagi', when:() => epDone('e5'), time:'9:02', text:'月次おつかれ！ ところで来月から、3日で締められるよね？笑', replies:[{ t:'今は10日です。まず7日を目指します', b:5, back:'現実的！ 嫌いじゃない！ それでいこう！' }, { t:'無理です', b:1, back:'……前例がないなら、つくればいい！' }] },
+];
+const unreadChat = () => CHAT.filter(c => c.when() && G.chat[c.id] === undefined).length;
+function chatView(who) {
+  const threads = [...new Set(CHAT.filter(c => c.when()).map(c => c.from))];
+  if (!who) {
+    $('#app').innerHTML = hud() + `<div class="scroll side"><div class="sec">社内チャット <small>Kasane Chat</small></div>
+      ${threads.length ? threads.map(f => { const ms = CHAT.filter(c => c.from === f && c.when()), last = ms[ms.length - 1], un = ms.filter(m => G.chat[m.id] === undefined).length;
+        return `<button class="thread" data-f="${f}"><span class="av" ${avatarStyle(f)}></span><span class="t"><b>${esc(P[f].name)}</b> ${un ? `<span class="new">${un}</span>` : ''}<p>${esc(last.text)}</p></span><span class="small muted">${last.time}</span></button>`; }).join('') : '<p class="muted small">まだメッセージはありません。ストーリーを進めると届きます。</p>'}
+      <div style="height:16px"></div></div>` + tabs('home');
+    bindTabs(); $('.scroll').onclick = e => { const b = e.target.closest('[data-f]'); if (b) chatView(b.dataset.f); }; return;
+  }
+  const ms = CHAT.filter(c => c.from === who && c.when());
+  const draw = () => {
+    $('#app').innerHTML = `<div class="hud side"><button class="chip" id="back">← 戻る</button><b style="margin-left:6px">${esc(P[who].name)}</b><span class="chip" style="margin-left:auto">絆 Lv.${bondLv(who)}</span></div>
+      <div class="scroll side"><div class="msgs">${ms.map(m => { const r = G.chat[m.id]; return `<div class="msg"><span class="av" ${avatarStyle(who)}></span><div><div class="b">${esc(m.text)}</div><span class="tm">${m.time}</span></div></div>`
+        + (r !== undefined ? `<div class="msg me"><div class="b">${esc(m.replies[r].t)}</div></div><div class="msg"><span class="av" ${avatarStyle(who)}></span><div class="b">${esc(m.replies[r].back)}</div></div>`
+        : `<div class="choices">${m.replies.map((x, i) => `<button class="choice" data-m="${m.id}" data-i="${i}">${esc(x.t)}</button>`).join('')}</div>`); }).join('')}</div></div>`;
+    $('#back').onclick = () => chatView();
+    $('.msgs').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; const m = CHAT.find(c => c.id === b.dataset.m), i = +b.dataset.i; G.chat[m.id] = i; bump({ ['b_' + who]: m.replies[i].b }); sfx('ok'); toast(`${P[who].name.split(' ')[0]}との絆 +${m.replies[i].b}`); draw(); };
+    const sc = $('.scroll'); sc.scrollTop = sc.scrollHeight;
+  };
+  draw();
+}
+
+/* ═════════ 画面の部品 ═════════ */
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  story:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 21a2 2 0 0 1 2-2h12v2"/></svg>',
+  run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  scout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
+  party:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-4 3.6-5.5 6.5-5.5s5.5 1.5 6.5 5.5" stroke-linecap="round"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14c2.5 0 4 1.4 4.6 4.5" stroke-linecap="round"/></svg>',
+};
+function hud() {
+  regen();
+  return `<div class="hud side"><div class="lv"><span class="b">${G.lv}<small>Lv</small></span><span class="t"><b>${esc(G.name || '新人')}</b><span class="small muted">${RANKS[epDone('e5') ? 1 : 0]}</span><i><s style="width:${G.exp / expNext() * 100}%"></s></i></span></div>
+    <span class="cur sta"><span class="ic">気</span><span class="num">${G.sta}/${staMax()}</span></span><span class="cur coin"><span class="ic">円</span><span class="num">${yen(G.coins)}</span></span><button class="cur so" id="soBtn" aria-label="SOを手に入れる"><span class="ic">S</span><span class="num">${yen(G.so)}</span></button></div>`;
+}
+function tabs(on) {
+  const free = Date.now() >= G.freeTs;
+  const T = [['home','ホーム'],['story','ストーリー'],['run','決算ラン'],['scout','スカウト'],['party','仲間']];
+  return `<nav class="tabs">${T.map(([k, l]) => `<button class="tab ${on === k ? 'on' : ''}" data-tab="${k}">${ICON[k]}${l}${(k === 'scout' && free && G.tutScout) || (k === 'story' && nextEp() && on !== 'story') ? '<span class="dot"></span>' : ''}</button>`).join('')}</nav>`;
+}
+function bindTabs() { document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { sfx('tap'); go(b.dataset.tab); }); const so = $('#soBtn'); if (so) so.onclick = () => go('scout'); }
+function modal(html, bind, closable = true) { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="sheet">${html}</div>`; if (closable) m.onclick = e => { if (e.target === m) m.remove(); }; $('#app').append(m); bind && bind(m); return m; }
+
+/* ═════════ ホーム ═════════ */
+const HOME_LINES = {
+  akeno:['証憑は？','8月の第1週は、話しかけないで。','赤ペン、また1本使い切った。','根拠のない数字は、1円も入れない。','……あなた、伸びるよ。'],
+  sumiya:['検算はしましたか。','1円合わないのは、1円の問題じゃありません。','そろばんは、手が覚えています。','……今日は、早く帰りなさい。'],
+  hayase:['これ、経費で落ちる？','宛名、上様でいいよね？','今月の売上、見た？ 俺のおかげ！','焼肉行こうぜ！ 割り勘で！'],
+  amagi:['前例がないなら、つくればいい！','それ、明日までにできる？','来年、プライム市場に行こう！','数字は、なんとかなるだろ？'],
+};
+const LB = [[50,'SO'],[300,'円'],[50,'SO'],[3,'研修資料'],[50,'SO'],[500,'円'],[150,'SO']];
+function loginBonus() {
+  const t = today(); if (G.login.last === t) return false;
+  const y = new Date(Date.now() - 864e5), ys = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
+  G.login.streak = G.login.last === ys ? G.login.streak + 1 : 1; G.login.last = t; G.login.total++;
+  const day = ((G.login.total - 1) % 7) + 1, [rew, kind] = LB[day - 1];
+  if (kind === 'SO') G.so += rew; else if (kind === '円') G.coins += rew; else G.mats += rew;
+  save();
+  modal(`<h2>ログインボーナス</h2><p class="muted small">${G.login.total}日目　連続 ${G.login.streak}日</p>
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin:12px 0">${LB.map(([r, k], i) => `<div style="text-align:center; font-size:.6rem; padding:6px 0; border-radius:8px; background:${i + 1 === day ? 'var(--gold)' : i + 1 < day ? 'var(--panel2)' : 'var(--panel)'}; color:${i + 1 === day ? '#2A1D05' : 'var(--muted)'}">${i + 1}日<br><b>${r}</b><br>${k === '研修資料' ? '資料' : k}</div>`).join('')}</div>
+    <p style="text-align:center"><b style="color:var(--gold); font-size:1.2rem">${kind} +${rew}</b></p><button class="btn gold" id="lbok">受け取る</button>`, m => $('#lbok', m).onclick = () => { m.remove(); render(); });
+  return true;
+}
+const MISSIONS = [{ k:'story', t:'ストーリーを1話クリア', n:1, so:50 }, { k:'run', t:'月次決算ランをクリア', n:1, so:50 }, { k:'scout', t:'スカウトを1回する', n:1, so:30 }];
+function viewHome() {
+  const ep = nextEp(), hc = G.party[0] && CARD[G.party[0]] ? CARD[G.party[0]].char : G.home;
+  const free = Date.now() >= G.freeTs, un = unreadChat(), canClaim = MISSIONS.filter(m => G.daily.m[m.k] >= m.n && !G.daily.claimed.includes(m.k)).length;
+  $('#app').innerHTML = hud() + `<div class="home"><div class="bgx"></div><div class="stand">${portrait(hc)}</div><button class="tapzone" id="tz" aria-label="${esc(P[hc].name)}に話しかける"></button>
+    <div class="bottom side">
+      <div class="bsmini card" style="padding:8px 12px">${STAT.map(([k, l, c]) => `<div><span>${l}</span><i><s style="width:${G.stat[k]}%; background:var(${c})"></s></i></div>`).join('')}</div>
+      ${ep ? `<button class="cta" id="cta"><span><span class="k">ストーリー　1章「期首」</span><b>${ep.no}「${ep.title}」</b><span class="small muted">${esc(ep.desc)}</span></span><span class="go">つづき</span></button>`
+           : `<button class="cta" id="cta"><span><span class="k">ストーリー</span><b>2章「仮勘定」は制作中</b><span class="small muted">月次決算ランで仲間を育てよう</span></span><span class="go">決算ラン</span></button>`}
+      <div class="tiles"><button class="tile" data-go="run"><span class="ic">🧾</span><b>決算ラン</b><span>気力10</span></button>
+        <button class="tile" data-go="scout"><span class="ic">✉️</span><b>スカウト</b><span>${free ? '<span style="color:var(--gold)">無料1回</span>' : '無料まで ' + Math.ceil((G.freeTs - Date.now()) / 36e5) + '時間'}</span></button>
+        <button class="tile" id="chatBtn"><span class="ic">💬</span><b>社内チャット</b><span>${un ? `<span style="color:var(--shu)">未読 ${un}</span>` : 'Kasane Chat'}</span>${un ? '<span class="dot" style="right:12px"></span>' : ''}</button></div>
+      <button class="card" id="misBtn" style="display:flex; justify-content:space-between; align-items:center; padding:9px 12px"><b class="small">デイリーミッション</b><span class="small ${canClaim ? '' : 'muted'}" style="${canClaim ? 'color:var(--gold)' : ''}">${canClaim ? '受け取れる報酬あり' : `${G.daily.claimed.length}/3 受取済`}</span></button>
+    </div></div>` + tabs('home');
+  bindTabs();
+  $('#cta').onclick = () => { sfx('tap'); ep ? playEpisode(ep) : go('run'); };
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+  $('#chatBtn').onclick = () => chatView();
+  $('#misBtn').onclick = () => missionModal();
+  $('#tz').onclick = () => { sfx('tap'); const old = $('.bubble'); if (old) old.remove(); const d = document.createElement('div'); d.className = 'bubble'; d.innerHTML = `<b>${esc(P[hc].name)}</b>${esc(rnd(HOME_LINES[hc] || ['……']))}`; $('.home').append(d); setTimeout(() => d.remove(), 3200); };
+  if (G.tutScout) loginBonus();
+}
+function missionModal() {
+  modal(`<h2>デイリーミッション</h2><p class="muted small">毎日0時に更新</p>${MISSIONS.map(m => { const v = Math.min(m.n, G.daily.m[m.k]), got = G.daily.claimed.includes(m.k);
+    return `<div class="mis"><span class="t">${m.t}<i><s style="width:${v / m.n * 100}%"></s></i></span><button class="claim" data-k="${m.k}" ${v < m.n || got ? 'disabled' : ''}>${got ? '受取済' : 'SO ' + m.so}</button></div>`; }).join('')}`, md => {
+    md.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const m = MISSIONS.find(x => x.k === b.dataset.k); G.daily.claimed.push(m.k); G.so += m.so; save(); sfx('win'); toast(`SO +${m.so}`); md.remove(); render(); });
+  });
+}
+
+/* ストーリー一覧 */
+function viewStory() {
+  $('#app').innerHTML = hud() + `<div class="scroll side"><div class="sec">1章「期首」 <small>新入社員・22歳</small></div>
+    ${EPISODES.map((e, i) => { const done = epDone(e.id), open = i === 0 || epDone(EPISODES[i - 1].id);
+      return `<button class="card" data-e="${i}" style="display:flex; gap:12px; align-items:center; width:100%; text-align:left; margin-bottom:8px; ${open ? '' : 'opacity:.45'}"><span class="serif" style="font-size:.8rem; color:var(--gold); width:3.4em; flex:none">${e.no}</span><span style="flex:1; min-width:0"><b>${e.title}</b><br><span class="small muted">${esc(e.desc)}</span></span><span class="small" style="flex:none; color:${done ? 'var(--green)' : 'var(--muted)'}">${done ? 'クリア' : open ? '<span class="new">NEW</span>' : 'ロック'}</span></button>`; }).join('')}
+    <div class="sec">2章「仮勘定」 <small>担当者・25歳</small></div><div class="card small muted">制作中。振込詐欺のメール、志乃の8月、そして過労で倒れた先での出会い。</div>
+    <p class="small muted" style="margin-top:12px">ストーリーは気力を使わずに読めます。</p><div style="height:12px"></div></div>` + tabs('story');
+  bindTabs();
+  $('.scroll').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; const i = +b.dataset.e; if (i > 0 && !epDone(EPISODES[i - 1].id)) return toast('前の話をクリアすると読めます'); playEpisode(EPISODES[i]); };
+}
+
+/* スカウト */
+function viewScout() {
+  const free = Date.now() >= G.freeTs;
+  $('#app').innerHTML = hud() + `<div class="scroll side"><div class="sec">スカウト <small>辞令封筒</small></div>
+    <div class="banner">${face('akeno') ? `<img src="${face('akeno')}" alt="">` : ''}<div class="t"><span>ピックアップ</span><b>★5「8月の第1週」<br>朱野志乃</b><p>試験前の1週間、彼女は誰とも話さない。</p></div></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px">
+      <button class="btn ${free ? 'gold' : 'dark'}" id="p1">${free ? '無料で1通' : 'SO 100 で1通'}</button><button class="btn so" id="p10">SO 1000 で10通<span style="font-size:.64rem; font-weight:500">★4以上1通確定</span></button></div>
+    <p class="small muted">次の無料：${free ? '今すぐ' : Math.ceil((G.freeTs - Date.now()) / 36e5) + '時間後'}（12時間ごと）／天井まであと ${PITY - G.pity} 通（★5確定）</p>
+    <details class="card rates" style="margin-top:8px"><summary class="small"><b>提供割合</b></summary><table><tr><td>★5</td><td>${RATES[5]}%（うちピックアップ ${RATES[5] / 2}%）</td></tr><tr><td>★4</td><td>${RATES[4]}%</td></tr><tr><td>★3</td><td>${RATES[3]}%</td></tr>
+      ${CARDS.map(c => `<tr><td>${'★'.repeat(c.r)}</td><td>「${esc(c.title)}」${esc(P[c.char].name)}</td></tr>`).join('')}</table><p class="small muted">${PITY}通で★5が1通確定します。同じ仲間が出ると「限界突破」で強くなります（最大5回）。</p></details>
+    <div class="sec">SOを手に入れる <small>デモ・実際の請求は発生しません</small></div>
+    <div style="display:grid; gap:8px">${[[300, 480], [980, 1480], [2500, 3600]].map(([s, y]) => `<button class="card" data-buy="${s}" style="display:flex; justify-content:space-between; align-items:center"><b>SO ${yen(s)}</b><span class="chip" style="background:var(--gold); color:#2A1D05; font-weight:900">¥${yen(y)}</span></button>`).join('')}
+      <button class="card" data-buy="pass" style="display:flex; justify-content:space-between; align-items:center; text-align:left"><span><b>月間パス</b><br><span class="small muted">30日間、毎日SO 60（合計1,800）</span></span><span class="chip" style="background:var(--gold); color:#2A1D05; font-weight:900">¥610</span></button></div>
+    <p class="small muted">課金はデモです。ボタンを押してもSOが増えるだけで、支払い情報の入力や請求はありません。</p><div style="height:16px"></div></div>` + tabs('scout');
+  bindTabs();
+  $('#p1').onclick = async () => { if (!free) { if (G.so < 100) return toast('SOが足りません'); G.so -= 100; } else G.freeTs = Date.now() + 12 * 36e5; G.daily.m.scout++; save(); await openEnvelopes(pull(1)); go('scout'); };
+  $('#p10').onclick = async () => { if (G.so < 1000) return toast('SOが足りません'); G.so -= 1000; G.daily.m.scout++; save(); await openEnvelopes(pull(10, true)); go('scout'); };
+  $('.scroll').addEventListener('click', e => { const b = e.target.closest('[data-buy]'); if (!b) return; const v = b.dataset.buy === 'pass' ? 60 : +b.dataset.buy; G.so += v; save(); sfx('win'); toast(`SO +${v}（デモ）`); go('scout'); });
+}
+
+/* 仲間 */
+function viewParty() {
+  const own = Object.keys(G.cards).sort((a, b) => CARD[b].r - CARD[a].r);
+  $('#app').innerHTML = hud() + `<div class="scroll side"><div class="sec">編成 <small>決算ランなどに出る2人</small></div>
+    <div class="pslot">${[0, 1].map(i => G.party[i] ? `<button data-c="${G.party[i]}">${cardHtml(G.party[i])}</button>` : `<div class="ccard" style="--rc:var(--line); display:grid; place-items:center; color:var(--muted)">空き</div>`).join('')}</div>
+    <div class="sec">仲間 <small>${own.length}/${CARDS.length}種　研修資料 ${G.mats}</small></div>
+    ${own.length ? `<div class="cgrid">${own.map(id => `<button data-c="${id}" style="position:relative">${cardHtml(id)}<span class="chip" style="position:absolute; right:4px; top:4px; font-size:.58rem">Lv${G.cards[id].lv}${G.cards[id].dup ? '+' + G.cards[id].dup : ''}</span></button>`).join('')}</div>` : '<p class="muted small">まだ仲間がいません。ストーリーを進めよう。</p>'}
+    <div class="sec">設定</div><div class="card" style="display:grid; gap:8px"><button class="btn dark" id="snd">効果音：${SND ? 'オン' : 'オフ'}</button><button class="btn dark" id="rename">名前を変える</button><button class="btn dark" id="reset" style="color:var(--shu)">データを消して最初から</button></div><div style="height:16px"></div></div>` + tabs('party');
+  bindTabs();
+  $('.scroll').addEventListener('click', e => { const c = e.target.closest('[data-c]'); if (c) cardModal(c.dataset.c); });
+  $('#snd').onclick = () => { SND = !SND; go('party'); };
+  $('#rename').onclick = () => modal(`<h2>名前を変える</h2><input class="nm" id="rn" maxlength="8" value="${esc(G.name)}"><button class="btn gold" id="rnok">変更</button>`, m => $('#rnok', m).onclick = () => { G.name = $('#rn', m).value.trim() || G.name; save(); m.remove(); go('party'); });
+  $('#reset').onclick = () => modal(`<h2>データを消しますか？</h2><p class="muted small">レベル・仲間・ストーリーの進み具合がすべて消えます。</p><div style="display:grid; gap:8px"><button class="btn shu" id="ry">消して最初から</button><button class="btn dark" id="rnn">やめる</button></div>`, m => { $('#ry', m).onclick = () => { G = NEW(); save(); m.remove(); boot(); }; $('#rnn', m).onclick = () => m.remove(); });
+}
+function cardModal(id) {
+  const c = CARD[id], o = G.cards[id], p = cardPow(id), canLv = o.lv < maxLv(c.r);
+  modal(`<div style="display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:start">${cardHtml(id)}<div><div class="small" style="color:var(--r${c.r})">${'★'.repeat(c.r)}</div><h2>「${esc(c.title)}」<br>${esc(P[c.char].name)}</h2><p class="small muted">「${esc(c.quote)}」</p></div></div>
+    <div class="card small" style="margin-top:10px; line-height:1.8">Lv ${o.lv}/${maxLv(c.r)}　限界突破 ${o.dup}/5<br>攻撃力 ${p.atk}　必殺技の威力 ×${p.ult.toFixed(2)}<br><b>必殺技「${esc(SKILL[c.char].name)}」</b>：${esc(SKILL[c.char].desc)}<br>絆 Lv.${bondLv(c.char)}</div>
+    <div style="display:grid; gap:8px; margin-top:10px"><button class="btn gold" id="lvup" ${canLv && G.mats >= 1 && G.coins >= 100 ? '' : 'disabled'}>研修する（資料1・100円で Lv+3）</button>
+    <button class="btn dark" id="setp">${G.party.includes(id) ? '編成から外す' : '編成に入れる'}</button></div>`, m => {
+    $('#lvup', m).onclick = () => { G.mats--; G.coins -= 100; o.lv = Math.min(maxLv(c.r), o.lv + 3); save(); sfx('ok'); m.remove(); cardModal(id); };
+    $('#setp', m).onclick = () => { if (G.party.includes(id)) G.party = G.party.filter(x => x !== id); else { G.party = G.party.filter(x => CARD[x].char !== c.char); if (G.party.length >= 2) G.party.shift(); G.party.push(id); } save(); m.remove(); go('party'); };
+  });
+}
+
+/* ═════════ ルーター ═════════ */
+let VIEW = 'home';
+function go(v) { VIEW = v; daily(); regen(); save(); ({ home:viewHome, story:viewStory, run:runSetup, scout:viewScout, party:viewParty })[v](); }
+const render = () => go(VIEW);
+function boot() { daily(); if (!G.cold) return coldOpen(); if (!G.tutScout && epDone('e1')) return tutorialScout().then(() => go('home')); go('home'); }
+setInterval(() => { const b = document.querySelector('.cur.sta .num'); if (b) { regen(); b.textContent = `${G.sta}/${staMax()}`; } }, 30000);
+boot();
 </script>
