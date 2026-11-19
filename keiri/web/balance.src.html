@@ -38,7 +38,7 @@ button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
 .who .por{height:100%; max-width:90%; transition:opacity .35s, transform .35s}
 .who .por.in{animation:porIn .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes porIn{from{opacity:0; transform:translateY(16px)}}
-.who img{height:100%; width:auto; object-fit:contain; object-position:bottom}
+.who img{height:100%; width:auto; max-width:none; object-fit:contain; object-position:bottom}
 .chap-title{position:absolute; inset:0; z-index:5; display:grid; place-items:center; text-align:center; background:#000; animation:fadeOut 2.8s forwards; pointer-events:none}
 .chap-title b{display:block; font-family:var(--f-head); font-size:2.6rem; letter-spacing:.3em; padding-left:.3em}
 .chap-title span{color:var(--muted); font-size:.85rem; letter-spacing:.2em}
@@ -154,7 +154,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const yen = n => Number(n).toLocaleString('ja-JP');
 
 /* ───────── 登場人物（絵は画像ができたら IMG に入れると差し替わる） ───────── */
-const IMG = {}; // 例: IMG['akeno:normal'] = 'img/akeno_normal.png'
+const IMG = /*__IMG__*/{}; // keiri/web/img/人物_表情.webp をビルド時に埋め込む（例：akeno_normal.webp → 'akeno:normal'）
 const P = {
   you:{ name:'', c:'#8FA6C8' },
   akeno:{ name:'朱野 志乃', role:'経理の先輩', c:'#C24A3A', ch:'朱' },

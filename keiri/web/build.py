@@ -2,6 +2,7 @@
 
 使い方:  python keiri/web/build.py
 """
+import base64
 import json
 import sys
 from pathlib import Path
@@ -22,12 +23,16 @@ data = {
     "promote": PROMOTE_RATIO,
 }
 chars = (HERE / "chars.js").read_text(encoding="utf-8")
+# 立ち絵：img/人物_表情.webp を data URI にして埋め込む（Streamlit でも表示できるように）
+imgs = {p.stem.replace("_", ":", 1): "data:image/webp;base64," + base64.b64encode(p.read_bytes()).decode()
+        for p in sorted((HERE / "img").glob("*.webp"))}
 
 
 def build(src_name: str, out_name: str) -> None:
     src = (HERE / src_name).read_text(encoding="utf-8")
     out = (src.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
-              .replace("/*__CHARS__*/", chars))
+              .replace("/*__CHARS__*/", chars)
+              .replace("/*__IMG__*/{}", json.dumps(imgs)))
     (HERE / out_name).write_text(out, encoding="utf-8")
     print(f"wrote {out_name} ({len(out) // 1024} KB)")
 
