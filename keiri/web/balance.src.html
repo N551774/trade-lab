@@ -1,0 +1,601 @@
+<title>バランスシート</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 縦長スマホの1画面ゲーム。上に人生のバランスシート、中央に人物、下に台詞。バトルは上に業務（敵）、下にコマンド。 */
+:root{
+  --bg:#101318; --bg2:#171B22; --panel:#1D222B; --panel2:#262C37; --line:#323A47; --ink:#EEF0F3; --muted:#9AA3B1;
+  --gold:#D9B45B; --shu:#E0563C; --green:#4FBF8F; --blue:#6A9BE0; --violet:#A98BE6;
+  --work:#6A9BE0; --family:#E59A5A; --health:#4FBF8F; --money:#D9B45B;
+  --f-head:"Noto Serif JP","Hiragino Mincho ProN",serif; --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); overscroll-behavior:none; -webkit-tap-highlight-color:transparent}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+.app{max-width:480px; margin:0 auto; height:100%; position:relative; overflow:hidden; display:flex; flex-direction:column}
+.side{padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* 人生のバランスシート */
+.bs{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; padding-block:10px 8px; font-size:.72rem; border-bottom:1px solid var(--line); background:var(--bg2)}
+.bs .t{grid-column:1/-1; display:flex; justify-content:space-between; color:var(--muted); letter-spacing:.08em}
+.bs .t b{font-family:var(--f-head); color:var(--ink); letter-spacing:.04em}
+.meter{display:grid; grid-template-columns:2.6em 1fr 2.2em; align-items:center; gap:6px}
+.meter i{height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; display:block}
+.meter i s{display:block; height:100%; border-radius:6px; transition:width .6s}
+.meter em{font-style:normal; text-align:right; font-variant-numeric:tabular-nums; color:var(--muted)}
+.meter.flash{animation:flash .8s}
+@keyframes flash{30%{transform:scale(1.04); filter:brightness(1.6)}}
+
+/* 舞台 */
+.stage{flex:1; position:relative; overflow:hidden; background:var(--scene, linear-gradient(#1A2130,#101318))}
+.stage::after{content:""; position:absolute; inset:0; background:linear-gradient(transparent 55%, rgba(0,0,0,.55)); pointer-events:none}
+.place{position:absolute; top:10px; left:max(16px,env(safe-area-inset-left,0px)); z-index:3; font-size:.72rem; letter-spacing:.12em; color:rgba(255,255,255,.75);
+  background:rgba(0,0,0,.35); padding:4px 10px; border-radius:6px}
+.who{position:absolute; inset:auto 0 0 0; height:88%; display:flex; justify-content:center; align-items:flex-end; z-index:1}
+.who .por{height:100%; max-width:90%; transition:opacity .35s, transform .35s}
+.who .por.in{animation:porIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes porIn{from{opacity:0; transform:translateY(16px)}}
+.who img{height:100%; width:auto; object-fit:contain; object-position:bottom}
+.chap-title{position:absolute; inset:0; z-index:5; display:grid; place-items:center; text-align:center; background:#000; animation:fadeOut 2.8s forwards; pointer-events:none}
+.chap-title b{display:block; font-family:var(--f-head); font-size:2.6rem; letter-spacing:.3em; padding-left:.3em}
+.chap-title span{color:var(--muted); font-size:.85rem; letter-spacing:.2em}
+@keyframes fadeOut{0%,70%{opacity:1}100%{opacity:0}}
+
+/* 台詞 */
+.box{position:relative; min-height:178px; background:var(--panel); border-top:1px solid var(--line); padding-block:14px calc(14px + env(safe-area-inset-bottom,0px))}
+.name{display:inline-block; font-family:var(--f-head); font-weight:900; font-size:1rem; padding:2px 12px 2px 10px; border-left:4px solid var(--c, var(--gold)); margin-bottom:6px}
+.name small{font-family:var(--f-body); font-weight:400; color:var(--muted); font-size:.7rem; margin-left:8px}
+.text{font-size:1.02rem; line-height:1.85; min-height:3.7em; white-space:pre-wrap}
+.text.narr{color:#C9CED8; font-family:var(--f-head)}
+.next{position:absolute; right:max(18px,env(safe-area-inset-right,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); color:var(--gold); font-size:.8rem; animation:bob 1.2s infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.choices{display:grid; gap:8px; margin-top:6px}
+.choice{text-align:left; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; line-height:1.55; font-size:.92rem; transition:background .15s}
+.choice:hover{background:#2E3542}
+.choice small{display:block; color:var(--muted); font-size:.72rem; margin-top:2px}
+.tap{position:absolute; inset:0; z-index:2}
+.effects{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.fx{font-size:.75rem; padding:2px 8px; border-radius:6px; background:var(--panel2)}
+.fx.up{color:var(--green)} .fx.down{color:var(--shu)}
+.point{margin-top:8px; font-size:.84rem; line-height:1.7; background:rgba(217,180,91,.1); border-left:3px solid var(--gold); padding:8px 10px; border-radius:6px; color:#E7DFC8}
+input.nm{width:100%; font:inherit; font-size:1.1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); margin:6px 0 10px}
+.btn{display:block; width:100%; text-align:center; padding:14px; border-radius:12px; font-weight:700; background:var(--gold); color:#1A1408}
+.btn.ghost{background:var(--panel2); color:var(--ink); border:1px solid var(--line)}
+
+/* バトル */
+.battle{flex:1; display:flex; flex-direction:column; overflow:hidden}
+.enemy{position:relative; padding-block:14px 10px; background:radial-gradient(120% 90% at 50% 0%, #2A2230, var(--bg) 70%); text-align:center}
+.enemy .card{display:inline-block; min-width:62%; max-width:100%; background:#F4F1E8; color:#1B1B1B; border-radius:6px; padding:14px 16px 12px; box-shadow:0 10px 30px rgba(0,0,0,.5);
+  transform:rotate(-1.5deg); transition:transform .2s}
+.enemy .card .k{font-size:.66rem; letter-spacing:.2em; color:#7A6F5A}
+.enemy .card b{display:block; font-family:var(--f-head); font-size:1.25rem; margin:2px 0 4px}
+.enemy .card p{margin:0; font-size:.75rem; color:#5A5448}
+.enemy .card.hit{animation:hit .4s}
+@keyframes hit{20%{transform:translateX(-10px) rotate(-4deg); filter:brightness(1.4)}60%{transform:translateX(8px) rotate(2deg)}}
+.hp{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; font-size:.72rem; color:var(--muted); margin-top:10px}
+.hp i{height:8px; border-radius:8px; background:var(--panel2); overflow:hidden; display:block}
+.hp i s{display:block; height:100%; transition:width .5s; border-radius:8px}
+.dmg{position:absolute; left:50%; top:40%; font-family:var(--f-head); font-weight:900; font-size:2rem; color:var(--gold); text-shadow:0 2px 8px #000; animation:dmg .9s forwards; pointer-events:none}
+@keyframes dmg{0%{transform:translate(-50%,10px) scale(.6); opacity:0}25%{transform:translate(-50%,-8px) scale(1.15); opacity:1}100%{transform:translate(-50%,-40px); opacity:0}}
+.party{display:flex; gap:8px; padding-block:8px}
+.mem{flex:1; display:flex; gap:8px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:6px 8px; min-width:0}
+.mem .av{width:34px; height:34px; border-radius:50%; flex:none; display:grid; place-items:center; font-family:var(--f-head); font-weight:900; background:var(--c); color:#fff}
+.mem div{min-width:0; font-size:.72rem}
+.mem b{display:block; font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.log{flex:1; overflow-y:auto; font-size:.86rem; line-height:1.7; color:#C9CED8; padding-block:6px}
+.log p{margin:0 0 4px}
+.cmds{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-block:10px calc(12px + env(safe-area-inset-bottom,0px)); background:var(--panel); border-top:1px solid var(--line)}
+.cmd{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 10px; text-align:left}
+.cmd b{display:block; font-size:.95rem}
+.cmd small{color:var(--muted); font-size:.7rem}
+.cmd:disabled{opacity:.4; cursor:default}
+.cmd.main{grid-column:1/-1; background:linear-gradient(135deg,#3A3220,#2A2418); border-color:#6B5A2E}
+.cmd.main b{color:var(--gold)}
+.flashred{position:fixed; inset:0; background:rgba(224,86,60,.28); pointer-events:none; animation:fr .45s forwards; z-index:50}
+@keyframes fr{to{opacity:0}}
+
+/* 問題 */
+.q{position:fixed; inset:0; z-index:40; background:var(--bg); display:flex; flex-direction:column; max-width:480px; margin:0 auto; animation:porIn .25s}
+.q .head{display:flex; align-items:center; gap:10px; padding-block:calc(10px + env(safe-area-inset-top,0px)) 8px; border-bottom:1px solid var(--line)}
+.q .head b{font-size:.8rem; color:var(--muted); font-weight:500}
+.q .body{flex:1; overflow-y:auto; padding-block:14px}
+.q .kind{font-size:.72rem; letter-spacing:.14em; color:var(--gold)}
+.q .qt{font-family:var(--f-head); font-weight:700; font-size:1.12rem; line-height:1.7; margin:6px 0 14px}
+.opt{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px; line-height:1.55}
+.opt.sel{border-color:var(--gold); background:#2E2A1E}
+.opt.ok{border-color:var(--green); background:#1C3328}
+.opt.ng{border-color:var(--shu); background:#3A211C}
+.opt.gone{opacity:.25; text-decoration:line-through}
+.cats{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.cats .opt{text-align:center; margin:0}
+.acct{font-family:var(--f-head); font-size:1.9rem; font-weight:900; text-align:center; padding:26px 0; background:#F4F1E8; color:#1B1B1B; border-radius:6px; margin-bottom:14px}
+.je{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px}
+.zone{min-height:96px; border:1px dashed var(--line); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px}
+.zone.on{border-style:solid; border-color:var(--gold); background:#221F17}
+.zone h4{margin:0; font-size:.75rem; color:var(--muted); font-weight:500}
+.zone.on h4{color:var(--gold)}
+.chip{display:inline-block; padding:8px 12px; border-radius:10px; background:var(--panel2); border:1px solid var(--line); font-size:.88rem; margin:3px}
+.chip.used{visibility:hidden}
+.bank{text-align:center}
+.paper{background:#F4F1E8; color:#1B1B1B; border-radius:6px; padding:12px 14px; margin-bottom:12px}
+.paper .pk{font-family:var(--f-head); font-weight:900; text-align:center; letter-spacing:.3em; border-bottom:1.5px solid #1B1B1B; padding-bottom:4px}
+.paper table{width:100%; border-collapse:collapse; font-size:.82rem; margin-top:6px}
+.paper td{padding:4px 2px; vertical-align:top}
+.paper td:first-child{color:#6A6455; width:38%}
+.q .foot{padding-block:10px calc(12px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--line); background:var(--bg2)}
+.exp{font-size:.88rem; line-height:1.75; margin-bottom:10px}
+.exp b.ok{color:var(--green)} .exp b.ng{color:var(--shu)}
+table.ent{width:100%; border-collapse:collapse; font-size:.82rem; margin:6px 0}
+table.ent td,table.ent th{padding:4px 6px; border-bottom:1px solid var(--line); text-align:left}
+table.ent td.a{text-align:right; font-variant-numeric:tabular-nums}
+
+/* タイトル */
+.title{flex:1; display:flex; flex-direction:column; justify-content:center; gap:18px; background:radial-gradient(90% 60% at 50% 30%, #23293A, var(--bg))}
+.title h1{font-family:var(--f-head); font-size:2.6rem; font-weight:900; letter-spacing:.12em; margin:0}
+.title p{color:var(--muted); margin:0; line-height:1.8}
+.title .sub{font-size:.75rem; letter-spacing:.3em; color:var(--gold)}
+.ledger{font-family:var(--f-head); font-size:.9rem; color:#C9CED8; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:10px 0; display:grid; grid-template-columns:repeat(4,1fr); text-align:center}
+.ledger span+span{border-left:1px solid var(--line)}
+.end-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:6px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}}
+</style>
+
+<div class="app" id="app"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const yen = n => Number(n).toLocaleString('ja-JP');
+
+/* ───────── 登場人物（絵は画像ができたら IMG に入れると差し替わる） ───────── */
+const IMG = {}; // 例: IMG['akeno:normal'] = 'img/akeno_normal.png'
+const P = {
+  you:{ name:'', c:'#8FA6C8' },
+  akeno:{ name:'朱野 志乃', role:'経理の先輩', c:'#C24A3A', ch:'朱' },
+  sumiya:{ name:'墨谷 誠一', role:'経理課長', c:'#6B6B78', ch:'墨' },
+  hayase:{ name:'早瀬 駆', role:'営業部の同期', c:'#D9772E', ch:'駆' },
+  amagi:{ name:'天城 豪', role:'社長', c:'#C9A23A', ch:'天' },
+  father:{ name:'父', role:'', c:'#7C8794', ch:'父' },
+  narr:{ name:'', c:'#000' },
+};
+function portrait(id, expr = 'normal') {
+  const p = P[id]; if (!p || id === 'narr' || id === 'you') return '';
+  const src = IMG[`${id}:${expr}`] || IMG[`${id}:normal`];
+  if (src) return `<img class="por in" src="${src}" alt="${esc(p.name)}">`;
+  // 仮の影絵（人物の色）
+  const tilt = { happy:-2, angry:3, sad:-4, surprised:0 }[expr] || 0;
+  return `<svg class="por in" viewBox="0 0 300 380" role="img" aria-label="${esc(p.name)}" style="transform:rotate(${tilt}deg)">
+    <defs><linearGradient id="g-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.c}" stop-opacity=".95"/><stop offset="1" stop-color="${p.c}" stop-opacity=".15"/></linearGradient></defs>
+    <path d="M150 40 C196 40 214 78 212 118 C210 160 188 196 150 196 C112 196 90 160 88 118 C86 78 104 40 150 40Z" fill="url(#g-${id})"/>
+    <path d="M30 380 C34 280 80 232 150 228 C220 232 266 280 270 380Z" fill="url(#g-${id})"/>
+    <text x="150" y="330" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="96" fill="#fff" opacity=".18">${p.ch}</text></svg>`;
+}
+
+/* ───────── 状態 ───────── */
+const KEY = 'balance-sheet-v1';
+const NEW = () => ({ name:'', stat:{ work:30, family:50, health:70, money:20 }, aff:{}, ch:0, step:0, flags:{}, know:0, cleared:[] });
+let G = (() => { try { return { ...NEW(), ...JSON.parse(localStorage.getItem(KEY)) }; } catch (e) { return NEW(); } })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
+const nm = s => s.replaceAll('{name}', G.name || 'あなた');
+const STAT = [['work','仕事','--work'],['family','家族','--family'],['health','元気','--health'],['money','貯金','--money']];
+const clamp = v => Math.max(0, Math.min(100, v));
+function bump(fx) {
+  for (const [k, v] of Object.entries(fx || {})) {
+    if (k in G.stat) G.stat[k] = clamp(G.stat[k] + v);
+    else if (k.startsWith('aff_')) { const c = k.slice(4); G.aff[c] = clamp((G.aff[c] ?? 30) + v); }
+  }
+  save(); drawBS(Object.keys(fx || {}));
+}
+const fxHtml = fx => `<div class="effects">${Object.entries(fx || {}).map(([k, v]) => {
+  const lab = STAT.find(s => s[0] === k)?.[1] || (k.startsWith('aff_') ? `${P[k.slice(4)].name.split(' ')[0]}の信頼` : k);
+  return `<span class="fx ${v >= 0 ? 'up' : 'down'}">${lab} ${v >= 0 ? '+' : ''}${v}</span>`; }).join('')}</div>`;
+
+/* ───────── 画面の骨組み ───────── */
+function shell(inner) {
+  $('#app').innerHTML = `<div class="bs side" id="bs"></div>${inner}`;
+  drawBS();
+}
+function drawBS(flash = []) {
+  const el = $('#bs'); if (!el) return;
+  const ch = CHAPTERS[G.ch];
+  el.innerHTML = `<div class="t"><span>人生のバランスシート</span><b>${ch ? `${ch.no}「${ch.title}」` : ''}</b></div>` + STAT.map(([k, l, c]) =>
+    `<div class="meter ${flash.includes(k) ? 'flash' : ''}"><span>${l}</span><i><s style="width:${G.stat[k]}%; background:var(${c})"></s></i><em>${G.stat[k]}</em></div>`).join('');
+}
+
+/* ───────── ノベル（台詞）エンジン ───────── */
+let tapResolve = null;
+function stageHtml(scene, place) {
+  return `<div class="stage" style="--scene:${scene || ''}"><div class="place" id="place">${esc(place || '')}</div><div class="who" id="who"></div></div>
+    <div class="box side" id="box"><div id="nameplate"></div><div class="text" id="text"></div><div id="extra"></div><div class="next" id="nx" hidden>▼</div></div>`;
+}
+let curWho = null;
+function setWho(id, expr) {
+  const w = $('#who'); if (!w) return;
+  if (id === null) { w.innerHTML = ''; curWho = null; return; }
+  if (id === 'narr' || id === 'you') return;
+  if (curWho !== id + expr) { w.innerHTML = portrait(id, expr); curWho = id + expr; }
+}
+async function say(id, text, expr = 'normal') {
+  setWho(id, expr);
+  const p = P[id], np = $('#nameplate'), tx = $('#text'), nx = $('#nx'); $('#extra').innerHTML = '';
+  np.innerHTML = id === 'narr' ? '' : `<span class="name" style="--c:${p.c}">${esc(id === 'you' ? (G.name || 'あなた') : p.name)}${p.role ? `<small>${esc(p.role)}</small>` : ''}</span>`;
+  tx.className = 'text' + (id === 'narr' ? ' narr' : '');
+  const full = nm(text); tx.textContent = ''; nx.hidden = true;
+  let i = 0, done = false;
+  await new Promise(res => {
+    const tick = setInterval(() => { i += 2; tx.textContent = full.slice(0, i); if (i >= full.length) { clearInterval(tick); done = true; nx.hidden = false; } }, 28);
+    tapResolve = () => { if (!done) { clearInterval(tick); tx.textContent = full; done = true; nx.hidden = false; return; } tapResolve = null; res(); };
+  });
+}
+async function choose(opts) {
+  $('#nx').hidden = true;
+  const ex = $('#extra');
+  return new Promise(res => {
+    ex.innerHTML = `<div class="choices">${opts.map((o, i) => `<button class="choice" data-i="${i}">${esc(nm(o.t))}${o.hint ? `<small>${esc(o.hint)}</small>` : ''}</button>`).join('')}</div>`;
+    ex.onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ex.onclick = null; ex.innerHTML = ''; res(+b.dataset.i); };
+  });
+}
+async function note(html) { // 解説や数値の変化を見せて、タップで進む
+  $('#extra').innerHTML = html; $('#nx').hidden = false;
+  await new Promise(res => { tapResolve = () => { tapResolve = null; res(); }; });
+}
+document.addEventListener('click', e => { if (e.target.closest('#box') && !e.target.closest('button,input') && tapResolve) tapResolve(); });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && tapResolve && !e.target.closest('input,button')) { e.preventDefault(); tapResolve(); } });
+
+/* 台本の実行。行の形：['人物', '台詞', '表情'] / {place, scene} / {fn} */
+async function run(lines) {
+  for (const l of lines) {
+    if (Array.isArray(l)) await say(l[0], l[1], l[2]);
+    else if (l.place !== undefined) { const p = $('#place'); if (p) p.textContent = l.place; if (l.scene) $('.stage').style.setProperty('--scene', l.scene); if (l.clear) setWho(null); }
+    else if (l.fn) await l.fn();
+  }
+}
+
+/* ───────── 事件（選択肢） ───────── */
+const SPEAKER = { 心構え:'sumiya', 期ズレ:'hayase', 二重払い:'akeno', 期限:'akeno', 残高照合:'sumiya' };
+const EV = Object.fromEntries(DATA.career.flatMap(s => s.events).map(e => [e.tag, e]));
+async function incident(tag) {
+  const e = EV[tag], who = SPEAKER[tag] || 'akeno';
+  await say(who, e.text.replace(/^[^「]*「/, '「').replace(/^(?!「)/, ''));
+  const order = shuffle(e.choices.map((_, i) => i));
+  const pick = order[await choose(order.map(i => ({ t:e.choices[i][0] })))];
+  const [t, pts, fb] = e.choices[pick], best = Math.max(...e.choices.map(c => c[1]));
+  const fx = { work: Math.round(pts / 2), [`aff_${who}`]: pts === best ? 8 : -4 };
+  bump(fx);
+  await say(who, pts === best ? rnd(['……なるほど。それでいい。','助かった。その判断で合ってる。','さすがだね。']) : pts < 0 ? rnd(['……本気で言ってる？','それは、まずいな。','ちょっと待って。']) : 'うーん、悪くはないけど……', pts === best ? 'happy' : pts < 0 ? 'angry' : 'normal');
+  await note(`<div class="point"><b>${pts === best ? '◎ ベストな判断' : pts < 0 ? '× 危ない判断' : '△ もう一歩'}</b>　${esc(fb)}<br><span style="color:var(--muted)">実務ポイント：${esc(e.point)}</span></div>${fxHtml(fx)}`);
+}
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+
+/* ───────── 業務バトル（コマンド制） ───────── */
+const A = DATA.accounts, CATS = ['資産','負債','純資産','収益','費用'];
+const drill = Object.fromEntries(DATA.drill.map(d => [d.id, d]));
+const docs = Object.fromEntries(DATA.docs.map(d => [d.id, d]));
+const Qs = {
+  je: id => ({ t:'je', ...drill[id] }),
+  cat: a => ({ t:'cat', acct:a }),
+  mcq: o => ({ t:'mcq', ...o }),
+  doc: id => ({ t:'doc', ...docs[id] }),
+  chk: (l, i) => ({ t:'mcq', ...DATA.checks[l][i] }),
+};
+const SKILLS = {
+  akeno:{ name:'朱書きチェック', cost:1, desc:'次の問題で、まちがいの選択肢を消す' },
+  sumiya:{ name:'そろばん検算', cost:2, desc:'次の正解のダメージが2倍' },
+  hayase:{ name:'勢いで押し切る', cost:1, desc:'相手の次の攻撃を1回止める' },
+};
+async function battle(cfg) {
+  // cfg: { enemy, kind, desc, hp, atk, pool:()=>[q], party:['akeno'], taunts:[] }
+  let hp = cfg.hp, mp = 2, buff = {}, qi = 0, pool = shuffle(cfg.pool()), combo = 0;
+  const party = cfg.party || [];
+  shell(`<div class="battle"><div class="enemy side" id="en"></div><div class="party side" id="pt"></div><div class="log side" id="log"></div><div class="cmds side" id="cm"></div></div>`);
+  const log = t => { const p = document.createElement('p'); p.innerHTML = t; $('#log').prepend(p); };
+  const drawEnemy = () => { $('#en').innerHTML = `<div class="card" id="ecard"><div class="k">${esc(cfg.kind)}</div><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
+    <div class="hp"><span>残り</span><i><s style="width:${hp / cfg.hp * 100}%; background:var(--shu)"></s></i><span>${hp}/${cfg.hp}</span></div>`; };
+  const drawParty = () => { $('#pt').innerHTML = `<div class="mem" style="--c:${P.you.c}"><span class="av">${esc((G.name || 'あ')[0])}</span><div><b>${esc(G.name || 'あなた')}</b>元気 ${G.stat.health} ／ 気力 ${'●'.repeat(mp)}${'○'.repeat(Math.max(0, 4 - mp))}</div></div>`
+    + party.map(id => `<div class="mem" style="--c:${P[id].c}"><span class="av">${P[id].ch}</span><div><b>${esc(P[id].name)}</b>${esc(SKILLS[id].name)}</div></div>`).join(''); };
+  drawEnemy(); drawParty(); drawBS();
+  log(`<b>${esc(cfg.enemy)}</b> が あらわれた。`);
+  return new Promise(resolve => {
+    const cmds = () => {
+      $('#cm').innerHTML = `<button class="cmd main" data-c="atk"><b>処理する</b><small>問題に答えて片づける</small></button>`
+        + party.map(id => `<button class="cmd" data-c="sk:${id}" ${mp < SKILLS[id].cost ? 'disabled' : ''}><b>${esc(SKILLS[id].name)}</b><small>${esc(P[id].name.split(' ')[0])}／気力${SKILLS[id].cost}　${esc(SKILLS[id].desc)}</small></button>`).join('')
+        + `<button class="cmd" data-c="coffee" ${G.stat.money < 2 ? 'disabled' : ''}><b>缶コーヒー</b><small>元気+12　貯金−2</small></button>`;
+      $('#cm').onclick = async e => {
+        const b = e.target.closest('[data-c]'); if (!b || b.disabled) return;
+        const c = b.dataset.c; $('#cm').onclick = null;
+        if (c === 'coffee') { bump({ health:12, money:-2 }); drawParty(); log('缶コーヒーを飲んだ。元気が少し戻った。'); return enemyTurn(); }
+        if (c.startsWith('sk:')) {
+          const id = c.slice(3); mp -= SKILLS[id].cost; buff[id] = true; drawParty();
+          log(`<b>${esc(P[id].name)}</b>の「${esc(SKILLS[id].name)}」！`);
+          if (id === 'hayase') log('相手の次の攻撃を止めた。');
+          return cmds();
+        }
+        // 処理する → 問題
+        if (qi >= pool.length) { pool = shuffle(cfg.pool()); qi = 0; }
+        const q = pool[qi++];
+        const ok = await ask(q, { hint: buff.akeno, title: cfg.enemy });
+        buff.akeno = false;
+        if (ok) {
+          combo++; G.know++;
+          let d = 22 + Math.min(10, Math.floor(G.know / 5)) + (combo >= 3 ? 8 : 0);
+          if (buff.sumiya) { d *= 2; buff.sumiya = false; }
+          hp = Math.max(0, hp - d); mp = Math.min(4, mp + 1);
+          drawEnemy(); $('#ecard').classList.add('hit');
+          const dm = document.createElement('div'); dm.className = 'dmg'; dm.textContent = d; $('#en').append(dm); setTimeout(() => dm.remove(), 900);
+          log(`処理完了！ ${combo >= 3 ? `<b>${combo}連続</b>で ` : ''}${d} 件を片づけた。`);
+          drawParty();
+          if (hp <= 0) { await sleep(700); return finish(true); }
+        } else { combo = 0; log('処理ミス……。やり直しが発生した。'); }
+        enemyTurn();
+      };
+    };
+    const enemyTurn = async () => {
+      await sleep(350);
+      if (buff.hayase) { buff.hayase = false; log(`${esc(P.hayase.name)}が勢いで押し切った。相手は動けない。`); return cmds(); }
+      const d = cfg.atk + Math.floor(Math.random() * 4);
+      bump({ health: -d }); drawParty();
+      const fl = document.createElement('div'); fl.className = 'flashred'; document.body.append(fl); setTimeout(() => fl.remove(), 500);
+      log(`<span style="color:var(--shu)">${esc(rnd(cfg.taunts))}</span>　元気 −${d}`);
+      if (G.stat.health <= 0) { await sleep(600); return finish(false); }
+      cmds();
+    };
+    const finish = win => { save(); resolve(win); };
+    cmds();
+  });
+}
+
+/* 問題の出題（全画面） */
+function ask(q, o = {}) {
+  return new Promise(resolve => {
+    const el = document.createElement('div'); el.className = 'q';
+    let sel = null, picked = [], placed = { 借方:[], 貸方:[] }, side = '借方';
+    const right = q.t === 'je' ? [...new Set([...q.dr, ...q.cr].map(x => x[0]))] : [];
+    const bank = q.t === 'je' ? shuffle([...right, ...shuffle(Object.keys(A).filter(a => !right.includes(a) && right.some(r => A[r].cat === A[a].cat))).slice(0, 3), ...shuffle(Object.keys(A).filter(a => !right.includes(a))).slice(0, 1)]) : [];
+    const gone = new Set();
+    if (o.hint) {
+      if (q.t === 'mcq') shuffle(q.choices.map((_, i) => i).filter(i => i !== q.a)).slice(0, Math.max(0, q.choices.length - 2)).forEach(i => gone.add(i));
+      if (q.t === 'cat') shuffle(CATS.filter(c => c !== A[q.acct].cat)).slice(0, 3).forEach(c => gone.add(c));
+    }
+    const kind = { je:'仕訳を切る', cat:'勘定科目の区分', mcq:'判断', doc:'証憑チェック' }[q.t];
+    const body = () => {
+      if (q.t === 'mcq') return `<div class="qt">${esc(q.q)}</div>` + q.choices.map((c, i) => `<button class="opt ${sel === i ? 'sel' : ''} ${gone.has(i) ? 'gone' : ''}" data-i="${i}" ${gone.has(i) ? 'disabled' : ''}>${esc(c)}</button>`).join('');
+      if (q.t === 'cat') return `<div class="acct">${esc(q.acct)}</div><div class="cats">` + CATS.map(c => `<button class="opt ${sel === c ? 'sel' : ''} ${gone.has(c) ? 'gone' : ''}" data-c="${c}" ${gone.has(c) ? 'disabled' : ''}>${c}</button>`).join('') + '</div>';
+      if (q.t === 'doc') return `<div class="paper"><div class="pk">${esc(q.kind)}</div><div style="text-align:center; font-size:.72rem; color:#6A6455">${esc(q.title)}</div><table>${q.fields.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table></div>`
+        + `<div class="kind" style="margin-bottom:6px">問題があるものをすべて選ぶ（なければ選ばない）</div>` + q.issues.map((s, i) => `<button class="opt ${picked.includes(i) ? 'sel' : ''}" data-t="${i}">${esc(s)}</button>`).join('');
+      return `<div class="qt">${esc(q.q)}</div><div class="je">${['借方','貸方'].map(s => `<div class="zone ${side === s ? 'on' : ''}" data-z="${s}"><h4>${s}（${s === '借方' ? '左' : '右'}）${side === s ? '　← ここに入る' : ''}</h4>${placed[s].map(a => `<button class="chip" data-p="${s}|${esc(a)}">${esc(a)}</button>`).join('')}</div>`).join('')}</div>`
+        + `<div class="bank">${bank.map(a => `<button class="chip ${placed.借方.includes(a) || placed.貸方.includes(a) ? 'used' : ''}" data-b="${esc(a)}">${esc(a)}</button>`).join('')}</div>`;
+    };
+    const can = () => q.t === 'mcq' || q.t === 'cat' ? sel !== null : q.t === 'je' ? placed.借方.length && placed.貸方.length : true;
+    const draw = () => {
+      el.innerHTML = `<div class="head side"><b>${esc(o.title || '')}</b></div><div class="body side"><div class="kind">${kind}</div>${body()}</div>
+        <div class="foot side"><button class="btn" id="go" ${can() ? '' : 'disabled style="opacity:.4"'}>${q.t === 'doc' && !picked.length ? '問題なし' : '決定'}</button></div>`;
+      $('#go', el).onclick = () => can() && judge();
+    };
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b || b.id === 'go' || el.dataset.done) return;
+      if (b.dataset.i) sel = +b.dataset.i; else if (b.dataset.c) sel = b.dataset.c;
+      else if (b.dataset.t) { const i = +b.dataset.t; picked = picked.includes(i) ? picked.filter(x => x !== i) : [...picked, i]; }
+      else if (b.dataset.b) { if (!placed.借方.includes(b.dataset.b) && !placed.貸方.includes(b.dataset.b)) placed[side].push(b.dataset.b); }
+      else if (b.dataset.p) { const [s, a] = b.dataset.p.split('|'); placed[s] = placed[s].filter(x => x !== a); }
+      else return;
+      draw();
+    });
+    el.addEventListener('click', e => { const z = e.target.closest('[data-z]'); if (z && !e.target.closest('button') && !el.dataset.done) { side = z.dataset.z; draw(); } });
+    const judge = () => {
+      let ok;
+      if (q.t === 'mcq') ok = sel === q.a; else if (q.t === 'cat') ok = sel === A[q.acct].cat;
+      else if (q.t === 'doc') { const f = a => a.filter(i => !/特に不備はない/.test(q.issues[i])).sort().join(); ok = f(q.answer) === f(picked); }
+      else { const s = x => [...new Set(x.map(y => y[0]))].sort().join(); ok = s(q.dr) === [...placed.借方].sort().join() && s(q.cr) === [...placed.貸方].sort().join(); }
+      el.dataset.done = 1;
+      let exp = '';
+      if (q.t === 'mcq') exp = `正解：<b>${esc(q.choices[q.a])}</b><br>${esc(q.exp)}`;
+      else if (q.t === 'cat') exp = `<b>${esc(q.acct)}</b>は<b>${A[q.acct].cat}</b>。${esc(A[q.acct].desc)}`;
+      else if (q.t === 'doc') exp = `正解：<b>${q.answer.map(i => esc(q.issues[i])).join('／')}</b><br>${esc(q.exp)}`;
+      else { const n = Math.max(q.dr.length, q.cr.length); exp = `<table class="ent"><tr><th>借方</th><th></th><th>貸方</th><th></th></tr>${Array.from({length:n}, (_, i) => `<tr><td>${q.dr[i] ? esc(q.dr[i][0]) : ''}</td><td class="a">${q.dr[i] ? yen(q.dr[i][1]) : ''}</td><td>${q.cr[i] ? esc(q.cr[i][0]) : ''}</td><td class="a">${q.cr[i] ? yen(q.cr[i][1]) : ''}</td></tr>`).join('')}</table>${esc(q.exp)}`; }
+      $('.foot', el).innerHTML = `<div class="exp"><b class="${ok ? 'ok' : 'ng'}">${ok ? '○ 処理完了' : '× 処理ミス'}</b><br>${exp}</div><button class="btn" id="cont">戦闘に戻る</button>`;
+      $('#cont', el).onclick = () => { el.remove(); resolve(ok); };
+    };
+    draw(); document.body.append(el);
+  });
+}
+
+/* ───────── 1章「期首」 ───────── */
+const CHAPTERS = [
+  { no:'1章', title:'期首', rank:'新入社員', age:22 },
+  { no:'2章', title:'仮勘定', rank:'担当者', age:25 },
+];
+const SCN = {
+  night:'linear-gradient(#0B0D12,#141822)', office:'linear-gradient(#24324A,#141A26)', hall:'linear-gradient(#3A3426,#16140F)',
+  lunch:'linear-gradient(#3B2D22,#17120E)', room:'linear-gradient(#20252E,#0F1116)', dusk:'linear-gradient(#4A2E35,#16121A)',
+};
+async function chapterTitle(ch) {
+  const d = document.createElement('div'); d.className = 'chap-title'; d.innerHTML = `<div><span>${ch.no}</span><b>${ch.title}</b><span>${ch.rank}・${ch.age}歳</span></div>`;
+  $('.stage').append(d); await sleep(2400);
+}
+const STEPS = [
+  // 0: プロローグ
+  async () => {
+    shell(stageHtml(SCN.night, '15年前・冬　蒲田の雑居ビル3階'));
+    await run([
+      ['narr','深夜。古いモニターの光だけが、事務所を照らしていた。'],
+      ['narr','父の机の上に、印刷した資金繰り表。来月の欄が、赤い数字で埋まっている。'],
+      ['father','……。'],
+      ['narr','中学3年の冬。父の会社「有限会社ランタン」が、明日、倒産する。'],
+      ['narr','「父さん、うちって儲かってたんじゃないの？」'],
+      ['father','……儲かってたよ。だから、悔しいんだ。'],
+      ['narr','黒字なのに、会社は潰れた。その理由が、15歳には分からなかった。'],
+      ['narr','分からないまま、簿記の教科書を買った。'],
+    ]);
+  },
+  // 1: 名前
+  async () => {
+    shell(stageHtml(SCN.night, ''));
+    setWho(null);
+    $('#nameplate').innerHTML = ''; $('#text').textContent = 'あなたの名前を教えてください。';
+    $('#extra').innerHTML = `<input class="nm" id="nmi" maxlength="8" placeholder="例：沢村 ひかる" value="${esc(G.name)}" aria-label="あなたの名前"><button class="btn" id="nmok">決定</button>`;
+    await new Promise(res => { $('#nmok').onclick = () => { const v = $('#nmi').value.trim(); G.name = v || '新人'; save(); res(); }; });
+  },
+  // 2: 入社式
+  async () => {
+    shell(stageHtml(SCN.hall, '7年後・4月1日　五反田　株式会社カサネ本社'));
+    await chapterTitle(CHAPTERS[0]);
+    await run([
+      ['narr','株式会社カサネ。中小企業向けの受発注・請求管理SaaSをつくる、社員300人の会社。3年前に東証グロース市場に上場した。'],
+      ['amagi','新入社員のみんな、ようこそカサネへ！','happy'],
+      ['amagi','うちの社名はね、「重ねる」から来てる。ゼロになっても、また一つずつ重ねればいい。','normal'],
+      ['amagi','前例がないなら、つくればいい！ 以上！','happy'],
+      ['narr','入社式が終わった直後。社長が、まっすぐこちらに歩いてきた。'],
+      ['amagi','君が{name}くんか。経理配属だったね。','normal'],
+      ['amagi','ちょうどよかった！ 来月の役員会で、全社のコスト削減案を発表してくれないかな。','happy'],
+      ['narr','入社して、まだ3時間しか経っていない。'],
+    ]);
+    const i = await choose([
+      { t:'「入社初日なので、まだ会社の数字を何も知りません。お受けできません」', hint:'正面から断る' },
+      { t:'「まず1か月、経費の明細を全部見させてください。そのうえで、削れそうな項目を3つ報告します」', hint:'代わりの案を出す' },
+      { t:'「やります！」', hint:'全部引き受ける' },
+    ]);
+    const R = [
+      { fx:{ aff_amagi:-6, health:+2 }, l:[['amagi','そうか……。新人らしくないなあ。','sad']], p:'断るのも正しい判断。ただ、社長の期待はしぼむ。' },
+      { fx:{ work:+6, aff_amagi:+6, health:-4 }, l:[['amagi','おお、いいね！ 地に足がついてる。それで頼むよ！','happy']], p:'無茶振りには、根拠のある「できる範囲」で返すのが経理の腕の見せどころ。' },
+      { fx:{ aff_amagi:+10, health:-14, family:-4 }, l:[['amagi','頼もしい！ 楽しみにしてるよ！','happy'],['narr','その夜から、終電の日々が始まった。']], p:'全部引き受けると評価は上がるが、元気が削れる。社内ではこれを「天城案件」と呼ぶ。' },
+    ][i];
+    bump(R.fx); await run(R.l);
+    await note(`<div class="point">${esc(R.p)}</div>${fxHtml(R.fx)}`);
+  },
+  // 3: 経理部
+  async () => {
+    shell(stageHtml(SCN.office, '本社6階　経理部'));
+    await run([
+      ['narr','経理部は、フロアの一番奥にあった。'],
+      ['sumiya','墨谷です。課長をしています。','normal'],
+      ['sumiya','……{name}さん。','normal'],
+      ['narr','課長は、履歴書と私の顔を、しばらく見比べていた。'],
+      ['sumiya','いえ。よろしくお願いします。最初に一つだけ。','normal'],
+      ['sumiya','1円合わないのは、1円の問題じゃありません。覚えておいてください。','normal'],
+      ['akeno','課長、初日から重いですよ。……朱野です。あなたの教育係。','happy'],
+      ['akeno','うちの合言葉は「証憑は？」。根拠のない数字は、1円も入れない。いい？','normal'],
+      ['akeno','あと、8月の第1週は話しかけないで。理由は、そのうち分かるから。','normal'],
+    ]);
+    await incident('心構え');
+  },
+  // 4: 駆と事件
+  async () => {
+    shell(stageHtml(SCN.lunch, '昼休み　ビル1階のカフェ'));
+    await run([
+      ['hayase','よっ、{name}！ 同期の早瀬。営業部！ 経理だって？ じゃあこれからお世話になるわ〜','happy'],
+      ['narr','差し出された名刺の下から、くしゃくしゃの領収書が3枚こぼれ落ちた。'],
+      ['hayase','あ、それ先月の。宛名、上様でいいよね？','normal'],
+      {place:'翌月・2日　経理部'},
+      ['hayase','なあ{name}、ちょっと相談。','normal'],
+    ]);
+    await incident('期ズレ');
+  },
+  // 5: 業務バトル（雑魚）
+  async () => {
+    shell(stageHtml(SCN.office, '翌月・5日　経理部'));
+    await run([
+      ['akeno','早瀬くんの経費精算が、まとめて47件。全部くしゃくしゃ。','angry'],
+      ['akeno','一緒に片づけるよ。わたしの「朱書きチェック」も使って。','normal'],
+    ]);
+    const win = await battle({ enemy:'くしゃくしゃの経費精算 47件', kind:'業務', desc:'宛名は上様、日付はにじんで読めない。', hp:90, atk:5,
+      party:['akeno'], taunts:['領収書の日付が読めない……','「上様」の領収書がまた出てきた','但し書きが「お品代」だ'],
+      pool:() => [Qs.je('b05'), Qs.je('b06'), Qs.je('b14'), Qs.doc('d2'), Qs.doc('d4'), Qs.cat('旅費交通費'), Qs.cat('交際費'), Qs.cat('消耗品費'), Qs.je('b15')] });
+    await afterBattle(win, 'akeno');
+  },
+  // 6: 二重払い・期限
+  async () => {
+    shell(stageHtml(SCN.office, '月末　経理部'));
+    await incident('二重払い');
+    await incident('期限');
+  },
+  // 7: ライフイベント：住民税
+  async () => {
+    shell(stageHtml(SCN.dusk, '2年目・6月　給料日の夜'));
+    await run([
+      ['hayase','おい{name}！ 見てくれよ、給与明細！','surprised'],
+      ['hayase','手取りが、先月より2万円も少ない！ 会社のミスじゃね？ 給与担当に文句言いに行こうぜ！','angry'],
+      ['narr','自分の明細を見る。……同じく、減っている。「住民税」の欄に、先月まではなかった数字があった。'],
+    ]);
+    const i = await choose([
+      { t:'「住民税は前の年の所得にかかって、2年目の6月から引かれるんだ」と説明する', hint:'仕事の知識で返す' },
+      { t:'「本当だ、ひどい！」一緒に給与担当へ乗り込む', hint:'ノリで動く' },
+      { t:'黙って家計簿アプリを開き、来月からの節約計画を立てる', hint:'自分の生活を守る' },
+    ]);
+    const R = [
+      { fx:{ work:+4, aff_hayase:+6 }, l:[['hayase','……マジか。1年目って、実は得してたんだな。','surprised'],['hayase','さすが経理。今度焼肉おごるわ。経費で。','happy'],['narr','（それは落ちない）']] },
+      { fx:{ work:-6, aff_hayase:+10, aff_akeno:-6 }, l:[['akeno','……ふたりとも。住民税って知ってる？','angry'],['narr','経理部の自分が言われたことは、しばらく部内の笑い話になった。']] },
+      { fx:{ money:+8, health:-3 }, l:[['hayase','え、無視？ ……まあいいや、ひとりで行ってくる。','sad'],['narr','その月から、昼は弁当になった。']] },
+    ][i];
+    bump(R.fx); await run(R.l);
+    await note(`<div class="point">住民税は、前の年の1〜12月の所得をもとに計算され、翌年の6月から給与天引き（特別徴収）が始まる。1年目は前年の所得がほぼないので、かからないことが多い。</div>${fxHtml(R.fx)}`);
+  },
+  // 8: ボス：初めての月次決算
+  async () => {
+    shell(stageHtml(SCN.night, '月次決算・締め日前夜　経理部'));
+    await run([
+      ['sumiya','明日が締めです。今月から、{name}さんにも決算を手伝ってもらいます。','normal'],
+      ['sumiya','預金の残高が、帳簿と5,500円合いません。','normal'],
+      ['akeno','残り312枚。……朝までに終わらせるよ。','normal'],
+    ]);
+    await incident('残高照合');
+    const win = await battle({ enemy:'初めての月次決算', kind:'ボス', desc:'未処理の伝票 312枚。締めは明朝9時。', hp:160, atk:8,
+      party:['akeno', 'sumiya'], taunts:['未処理の請求書が、さらに20枚届いた','社長からチャット「数字、明日の朝イチで見たい！」','差異 5,500円が、まだ合わない','終電が、行ってしまった'],
+      pool:() => [Qs.je('b01'), Qs.je('b02'), Qs.je('b03'), Qs.je('b04'), Qs.je('b07'), Qs.je('b08'), Qs.je('b09'), Qs.je('b12'), Qs.chk('l03', 0), Qs.chk('l03', 1), Qs.chk('l08', 0), Qs.cat('売掛金'), Qs.cat('未払金'), Qs.cat('前受金')] });
+    await afterBattle(win, 'sumiya');
+  },
+  // 9: 辞令
+  async () => {
+    shell(stageHtml(SCN.office, '1年後・4月1日　経理部'));
+    await run([
+      ['sumiya','{name}さん。','normal'],
+      ['sumiya','本日付で、経理部 担当者として、支払と入金の担当を任せます。','normal'],
+      ['sumiya','……よく、やりました。','happy'],
+      ['akeno','ちょっと、課長が褒めた！ 今の録音しておけばよかった。','happy'],
+    ]);
+    G.cleared.push(0); G.ch = 1; save(); drawBS();
+    await note(`<div class="end-card"><div style="font-family:var(--f-head); font-size:1.3rem; font-weight:900">1章「期首」クリア</div>
+      <p style="color:var(--muted); margin:6px 0 0; font-size:.88rem">次は 2章「仮勘定」。支払・入金の担当として、振込詐欺のメール、個人への報酬、そして過労で倒れた先での出会いが待っている。</p></div>`);
+    await note(`<p style="color:var(--muted); font-size:.85rem">このデモは1章までです。2章以降は制作中です。</p><button class="btn ghost" id="again" style="margin-top:8px">最初からやり直す</button>`);
+  },
+];
+async function afterBattle(win, helper) {
+  shell(stageHtml(SCN.office, ''));
+  if (win) {
+    bump({ work:+6, [`aff_${helper}`]:+6 });
+    await run([[helper, helper === 'akeno' ? 'おつかれ。……あなた、伸びるよ。' : '検算も合っています。おつかれさまでした。', 'happy']]);
+  } else {
+    bump({ health:+40, family:-6, work:-4 });
+    await run([['narr','気がつくと、デスクに突っ伏して朝を迎えていた。'], [helper, '……残りは、わたしたちで片づけておいた。今日は帰って寝なさい。', 'sad']]);
+    await note(`<div class="point">元気が尽きると、仲間が助けてくれるが、仕事と家族の数値が下がる。缶コーヒーやスキルで元気を保とう。</div>`);
+  }
+}
+
+/* ───────── 進行 ───────── */
+async function play() {
+  while (G.step < STEPS.length) {
+    await STEPS[G.step]();
+    G.step++; save();
+  }
+  title();
+}
+function title() {
+  $('#app').innerHTML = `<div class="title side">
+    <div class="sub">経理ラボ　ストーリーモード</div>
+    <h1>バランスシート</h1>
+    <div class="ledger"><span>仕事</span><span>家族</span><span>元気</span><span>貯金</span></div><p style="font-family:var(--f-head); color:var(--ink)">人生の左右は、釣り合うか。</p>
+    <p>新入社員からCFOへ。仕事と人生の両方で、答えのない選択を重ねていく約30年の物語。</p>
+    <p style="font-size:.8rem">登場する人物・会社はすべて架空です。</p>
+    <button class="btn" id="start">${G.step > 0 ? '続きから' : 'はじめる'}</button>
+    ${G.step > 0 ? '<button class="btn ghost" id="reset">最初から</button>' : ''}</div>`;
+  $('#start').onclick = () => play();
+  const r = $('#reset'); if (r) r.onclick = () => { G = NEW(); save(); title(); };
+}
+document.addEventListener('click', e => { if (e.target.id === 'again') { G = NEW(); save(); title(); } });
+title();
+</script>
