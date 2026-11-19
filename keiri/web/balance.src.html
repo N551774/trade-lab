@@ -39,6 +39,7 @@ button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
 .who .por.in{animation:porIn .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes porIn{from{opacity:0; transform:translateY(16px)}}
 .who img{height:100%; width:auto; max-width:none; object-fit:contain; object-position:bottom}
+.who img.cg{-webkit-mask-image:radial-gradient(70% 62% at 50% 42%, #000 55%, transparent 100%); mask-image:radial-gradient(70% 62% at 50% 42%, #000 55%, transparent 100%)}
 .chap-title{position:absolute; inset:0; z-index:5; display:grid; place-items:center; text-align:center; background:#000; animation:fadeOut 2.8s forwards; pointer-events:none}
 .chap-title b{display:block; font-family:var(--f-head); font-size:2.6rem; letter-spacing:.3em; padding-left:.3em}
 .chap-title span{color:var(--muted); font-size:.85rem; letter-spacing:.2em}
@@ -164,10 +165,12 @@ const P = {
   father:{ name:'父', role:'', c:'#7C8794', ch:'父' },
   narr:{ name:'', c:'#000' },
 };
+const CG = new Set(['father']); // 背景ごと使う絵（周りをぼかして場面になじませる）
+const face = id => IMG[`${id}:normal`];
 function portrait(id, expr = 'normal') {
   const p = P[id]; if (!p || id === 'narr' || id === 'you') return '';
   const src = IMG[`${id}:${expr}`] || IMG[`${id}:normal`];
-  if (src) return `<img class="por in" src="${src}" alt="${esc(p.name)}">`;
+  if (src) return `<img class="por in ${CG.has(id) ? 'cg' : ''}" src="${src}" alt="${esc(p.name)}">`;
   // 仮の影絵（人物の色）
   const tilt = { happy:-2, angry:3, sad:-4, surprised:0 }[expr] || 0;
   return `<svg class="por in" viewBox="0 0 300 380" role="img" aria-label="${esc(p.name)}" style="transform:rotate(${tilt}deg)">
@@ -298,7 +301,7 @@ async function battle(cfg) {
   const drawEnemy = () => { $('#en').innerHTML = `<div class="card" id="ecard"><div class="k">${esc(cfg.kind)}</div><b>${esc(cfg.enemy)}</b><p>${esc(cfg.desc)}</p></div>
     <div class="hp"><span>残り</span><i><s style="width:${hp / cfg.hp * 100}%; background:var(--shu)"></s></i><span>${hp}/${cfg.hp}</span></div>`; };
   const drawParty = () => { $('#pt').innerHTML = `<div class="mem" style="--c:${P.you.c}"><span class="av">${esc((G.name || 'あ')[0])}</span><div><b>${esc(G.name || 'あなた')}</b>元気 ${G.stat.health} ／ 気力 ${'●'.repeat(mp)}${'○'.repeat(Math.max(0, 4 - mp))}</div></div>`
-    + party.map(id => `<div class="mem" style="--c:${P[id].c}"><span class="av">${P[id].ch}</span><div><b>${esc(P[id].name)}</b>${esc(SKILLS[id].name)}</div></div>`).join(''); };
+    + party.map(id => `<div class="mem" style="--c:${P[id].c}"><span class="av" ${face(id) ? `style="background:url(${face(id)}) center 12%/cover"` : ''}>${face(id) ? '' : P[id].ch}</span><div><b>${esc(P[id].name)}</b>${esc(SKILLS[id].name)}</div></div>`).join(''); };
   drawEnemy(); drawParty(); drawBS();
   log(`<b>${esc(cfg.enemy)}</b> が あらわれた。`);
   return new Promise(resolve => {
