@@ -1,0 +1,165 @@
+<title>経理ラボ 画像生成プロンプト集</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 制作資料。上に手順と共通スタイル、下に人物ごとの折りたたみ。各プロンプトにコピーボタン。 */
+:root{
+  --bg:#F5F3EE; --paper:#FFFFFF; --paper2:#F0EDE5; --line:#DDD7CA; --ink:#1F2421; --muted:#68706A;
+  --accent:#1D6B57; --accent-soft:#DCEFE7; --warn:#A8461F; --warn-soft:#F8E6DC;
+  --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#151816; --paper:#1D211F; --paper2:#252A27; --line:#343B37; --ink:#ECEFEC; --muted:#9BA39E; --accent:#5FC3A2; --accent-soft:#1F3A31; --warn:#F09A72; --warn-soft:#3A251C; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151816; --paper:#1D211F; --paper2:#252A27; --line:#343B37; --ink:#ECEFEC; --muted:#9BA39E; --accent:#5FC3A2; --accent-soft:#1F3A31; --warn:#F09A72; --warn-soft:#3A251C; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.7; font-size:15px}
+.wrap{max-width:860px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:24px 48px}
+h1{font-size:1.7rem; font-weight:900; margin:0; text-wrap:balance}
+h2{font-size:1.15rem; font-weight:900; margin:34px 0 10px}
+h3{font-size:.95rem; font-weight:700; margin:18px 0 6px}
+.lead{color:var(--muted); margin:6px 0 0}
+.steps{counter-reset:s; display:grid; gap:8px; padding:0; margin:12px 0 0; list-style:none}
+.steps li{counter-increment:s; display:grid; grid-template-columns:28px 1fr; gap:10px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+.steps li::before{content:counter(s); width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-weight:900; display:grid; place-items:center; font-size:.85rem}
+.box{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-top:10px}
+.warn{background:var(--warn-soft); border-color:transparent; color:var(--ink)}
+.warn b{color:var(--warn)}
+.p{position:relative; margin-top:6px}
+.p pre{margin:0; background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:12px 12px 12px 12px; padding-right:72px;
+  font-family:var(--f-mono); font-size:.78rem; line-height:1.6; white-space:pre-wrap; word-break:break-word; overflow-x:auto}
+.p button{position:absolute; top:8px; right:8px; font:inherit; font-size:.75rem; font-weight:700; border:0; border-radius:8px; padding:6px 10px; background:var(--accent); color:#fff; cursor:pointer}
+.p button.done{background:var(--ink); color:var(--bg)}
+.p button:focus-visible, summary:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.tag{display:inline-block; font-size:.7rem; font-weight:700; padding:1px 8px; border-radius:6px; background:var(--accent-soft); color:var(--accent); margin-right:6px; vertical-align:2px}
+details{background:var(--paper); border:1px solid var(--line); border-radius:16px; margin-top:12px; overflow:hidden}
+summary{cursor:pointer; list-style:none; padding:14px 16px; display:grid; grid-template-columns:1fr auto; gap:4px 10px; align-items:center}
+summary::-webkit-details-marker{display:none}
+summary b{font-size:1.05rem; font-weight:900}
+summary small{grid-column:1; color:var(--muted); font-size:.8rem; line-height:1.5}
+summary .chev{grid-row:1 / span 2; grid-column:2; color:var(--muted); transition:transform .2s}
+details[open] summary .chev{transform:rotate(90deg)}
+details .in{padding:0 16px 16px; border-top:1px solid var(--line)}
+.anchors{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 0; padding:0; list-style:none}
+.anchors li{font-size:.78rem; background:var(--accent-soft); color:var(--ink); padding:3px 10px; border-radius:999px}
+.muted{color:var(--muted)}
+table{width:100%; border-collapse:collapse; font-size:.85rem}
+td,th{border-bottom:1px solid var(--line); padding:6px 4px; text-align:left; vertical-align:top}
+.tw{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <h1>経理ラボ 画像生成プロンプト集</h1>
+  <p class="lead">ゲーム用のリアル寄りの立ち絵と、グッズ用のデフォルメを、同じ人物として作るためのプロンプトです。英語のプロンプトをそのまま画像生成ツールに貼り付けてください。</p>
+
+  <h2>作り方の手順</h2>
+  <ol class="steps">
+    <li><span><b>共通スタイル</b>と<b>人物の「基準の顔」</b>をつなげて、4〜8枚生成します。一番イメージに近い1枚を「基準画像」に決めます。</span></li>
+    <li><span>表情差分・年齢差分は、ツールの<b>画像参照（キャラクター参照）機能</b>に基準画像を指定して作ります。参照機能がない場合は、基準画像と同じ<b>シード値</b>を使い、人物の説明文を一字一句変えないでください。</span></li>
+    <li><span>顔がブレたときは、人物ごとの<b>「固定の特徴」</b>（ほくろ・眼鏡・髪型など）がプロンプトに入っているか確認します。この特徴が「同じ人だ」と見分ける目印になります。</span></li>
+    <li><span>グッズ用デフォルメは、基準画像を参照に入れたうえで<b>グッズ用スタイル</b>に差し替えて作ります。</span></li>
+  </ol>
+  <div class="box warn"><b>商品化の前に確認してください。</b>画像生成ツールごとに、商用利用できるかどうかの規約が違います。また、AIが生成した画像は著作権で保護されないと判断される場合があり、グッズを真似されても守れない可能性があります。試作で方向が決まったら、最終的なグッズ用の絵はイラストレーターに清書を依頼するのが安全です。</div>
+
+  <h2>共通スタイル</h2>
+  <h3><span class="tag">ゲーム用</span>リアル寄りの立ち絵（すべての人物の先頭に付ける）</h3>
+  <div class="p"><pre>Semi-realistic digital painting for a premium Japanese office-drama visual novel. Bust-up portrait, facing slightly to the side, eyes toward the viewer. Natural proportions, believable adult faces with real skin texture and subtle imperfections, soft window light from the left, muted cinematic color palette, shallow depth of field, plain warm light-gray background, no props unless described. Consistent character design, same face across all images.</pre><button type="button">コピー</button></div>
+  <h3><span class="tag">ゲーム用</span>ネガティブ（避けたい要素。入力欄があるツールで使用）</h3>
+  <div class="p"><pre>anime style, cartoon, chibi, big anime eyes, text, letters, watermark, logo, signature, extra fingers, deformed hands, blurry face, heavy makeup, glamour pose, overly beautiful idealized face</pre><button type="button">コピー</button></div>
+  <h3><span class="tag">グッズ用</span>デフォルメ（人物の説明の前に、ゲーム用スタイルの代わりに付ける）</h3>
+  <div class="p"><pre>Chibi anime character for merchandise, 2.5 heads tall, full body, thick clean outline, flat cel shading with one soft shadow, cheerful pastel colors, simple pose, isolated on white background with a thick white die-cut sticker border. Keep the character's signature features clearly recognizable:</pre><button type="button">コピー</button></div>
+  <h3>表情差分（基準画像を参照に入れて、末尾の表情だけ差し替える）</h3>
+  <div class="tw"><table>
+    <tr><th>表情</th><th>末尾に付ける英語</th></tr>
+    <tr><td>ふつう</td><td><code>neutral expression, calm</code></td></tr>
+    <tr><td>ほほえみ</td><td><code>gentle closed-mouth smile</code></td></tr>
+    <tr><td>笑う</td><td><code>laughing naturally, eyes slightly squinted</code></td></tr>
+    <tr><td>厳しい・怒り</td><td><code>stern expression, furrowed brows, lips pressed</code></td></tr>
+    <tr><td>困る・不安</td><td><code>worried expression, eyebrows raised in the middle</code></td></tr>
+    <tr><td>驚く</td><td><code>surprised, eyes wide, mouth slightly open</code></td></tr>
+    <tr><td>涙</td><td><code>holding back tears, glossy eyes, trembling lips</code></td></tr>
+  </table></div>
+
+  <h2>登場人物</h2>
+  <p class="muted" style="margin:0">タップで開きます。「固定の特徴」は、どの画像にも必ず入れてください。</p>
+  <div id="cast"></div>
+</div>
+
+<script>
+const CAST = [
+  { name:'真壁 さやか', sub:'経理の先輩・34歳。税理士試験の「法人税法」に7年落ち続けている完璧主義者。3章で合格して独立し、最終章で顧問税理士として戻ってくる。',
+    anchors:['左目の下の小さなほくろ','べっ甲の四角い眼鏡','ゆるく結んだ低めのひとつ結び','胸ポケットに赤ペン'],
+    base:'Sayaka, a 34-year-old Japanese woman, slim build, shoulder-length black hair tied in a loose low ponytail with a few stray strands, rectangular tortoiseshell glasses, a small mole under her left eye, sharp tired eyes with faint dark circles, navy cardigan over a white blouse, a red pen clipped to the cardigan pocket. Focused, slightly stern, but kind eyes.',
+    ages:[['46歳・独立した税理士','Same woman at 46, now a confident licensed tax accountant running her own office. Chin-length bob, the same tortoiseshell glasses and mole under her left eye, charcoal tailored suit, small enamel lapel pin, relaxed and assured smile.']],
+    chibi:'Sayaka: loose low ponytail, tortoiseshell glasses, mole under left eye, navy cardigan, holding a giant red pen like a sword, determined face.' },
+  { name:'古賀 誠一', sub:'経理課長・56歳。怒鳴らない、そろばんがExcelより速い。20年前、前の会社で粉飾を止められなかった過去を持つ。定年の日に手書きの引継ぎノートを渡す。',
+    anchors:['白髪まじりの短い角刈り','首から紐で下げた老眼鏡','黒いアームカバー','使い込んだ古い腕時計'],
+    base:'Koga, a 56-year-old Japanese man, stocky build, graying short crew cut, deep smile lines and a furrowed brow, half-rim reading glasses hanging on a cord around his neck, white dress shirt with the sleeves rolled up, black cotton arm covers on his forearms, dark tie slightly loosened, an old worn leather wristwatch. Quiet, observant, calm expression.',
+    ages:[['63歳・定年の日','Same man at 63 on his retirement day. Hair almost fully gray, the same reading glasses on a cord, a beige cardigan over a white shirt, holding a thick worn handwritten notebook with both hands, faint tearful smile.'],
+          ['36歳・20年前の回想','Same man at 36, twenty years earlier, black hair in the same crew cut, thinner face, white shirt and black arm covers, standing in a dim office at night, guilty and shaken expression.']],
+    chibi:'Koga: graying crew cut, reading glasses on a cord, black arm covers, rolled-up white sleeves, flicking an abacus with one finger, serious tiny frown.' },
+  { name:'早瀬 ケント', sub:'営業部の同期・22歳。夢を語る側の人。30歳で起業して資金繰りに苦しむ。CFO編では、買収候補が彼の会社で、帳簿に載っていない借金が見つかる。',
+    anchors:['ゆるい癖のある茶色の髪','少しだけ欠けた前歯','少し大きすぎる紺のスーツ','胸ポケットのくしゃくしゃの領収書'],
+    base:'Kento, a 22-year-old Japanese man, tall and lean, slightly tanned skin, wavy medium-length light brown hair, a wide bright grin showing a small chip on one front tooth, navy suit that is a little too big for him, loosened tie, crumpled receipts sticking out of his breast pocket. Energetic and optimistic.',
+    ages:[['32歳・苦しむ起業家','Same man at 32, founder of a struggling startup. The same wavy brown hair now messier, light stubble, the same chipped front tooth, dark hoodie under an unstructured blazer, tired eyes but a stubborn smile.'],
+          ['40歳・再起','Same man at 40, calmer and wiser, short neat hair with a little gray, the same chipped front tooth when he smiles, simple white shirt, sincere expression.']],
+    chibi:'Kento: wavy brown hair, big grin with a chipped front tooth, oversized navy suit, crumpled receipts bursting out of his pocket, giving a thumbs-up.' },
+  { name:'宮下 ユイ', sub:'後輩・22歳。手作業を片っ端から自動化するデジタル世代で、古賀課長とぶつかる。最終章で子会社の不正を内部通報する。',
+    anchors:['左右で長さの違うショートボブ','片耳にだけ小さなシルバーのピアス','大きめのグレーのニット','ステッカーだらけのノートPC'],
+    base:'Yui, a 22-year-old Japanese woman, petite, short asymmetrical black bob with one side tucked behind her ear, a single small silver stud earring visible on that ear, oversized gray knit sweater, holding a laptop covered in small stickers. Curious, sharp eyes and a slight confident smirk.',
+    ages:[['30歳・内部通報の決意','Same woman at 30, the same asymmetrical bob now slightly longer, the same single silver stud earring, structured black blazer over a gray knit, holding a sealed envelope, resolute but frightened expression.']],
+    chibi:'Yui: asymmetrical short bob, single silver earring, oversized gray sweater, typing on a sticker-covered laptop with sparkles, smug face.' },
+  { name:'天野 豪', sub:'社長・52歳。父の会社が潰れたあと、ガレージから会社を興した。数字をごまかしたがるのは、従業員300人の家族の顔を全部知っているから。',
+    anchors:['こめかみが白い、なでつけた黒髪','日焼けした肌と深い笑いじわ','ノーネクタイの白シャツにチャコールのスーツ','手のひらの古い傷あと（工場時代）'],
+    base:'Amano, a 52-year-old Japanese man, broad shoulders, slicked-back black hair graying at the temples, sun-tanned skin, deep laugh lines, warm but intense eyes, white open-collar shirt without a tie under a charcoal suit, an old scar across the palm of his right hand. Charismatic, passionate, a little tired.',
+    ages:[['28歳・ガレージ創業','Same man at 28 in a small garage workshop, black hair messy, work overalls with grease stains, the same scar on his right palm, fierce hopeful eyes.'],
+          ['62歳・会長','Same man at 62, hair mostly silver and still slicked back, the same laugh lines, navy cardigan instead of a suit, gentle reflective smile.']],
+    chibi:'Amano: slicked-back hair with gray temples, white shirt and charcoal suit, arms spread wide in a big dream pose, sparkling eyes.' },
+  { name:'霧島 レイ', sub:'監査法人の会計士。2章ではミスをして泣いていた新人の監査補助で、あなたが助けた。最終章で監査の責任者として戻り、誰よりも厳しく向き合う。',
+    anchors:['まっすぐな黒髪','細い銀縁の眼鏡（40歳）','鋼のようなグレーのスーツ','監査法人の小さな銀のピンバッジ'],
+    base:'Rei, a 24-year-old Japanese woman, straight black hair in a neat low ponytail, minimal makeup, plain dark gray suit, a small silver lapel pin, holding a stack of audit files to her chest, nervous eyes that look like she has just been crying.',
+    ages:[['40歳・監査の責任者','Same woman at 40, straight black hair now in a sharp chin-length bob, thin silver-rimmed glasses, steel-gray tailored suit, the same small silver lapel pin, composed posture, piercing calm gaze.']],
+    chibi:'Rei: sharp black bob, thin silver glasses, steel-gray suit, holding up a huge magnifying glass, cool expressionless face with a tiny sparkle.' },
+  { name:'パートナー（妻の場合）ナギサ', sub:'夜勤のある看護師。支える役ではなく、自分のキャリアを持つ対等な相手。転勤、育休の分け方、どちらの仕事を優先するかでぶつかる。',
+    anchors:['実用的なお団子の栗色の髪','紺のスクラブ（仕事中）／からし色のニット（家）','細いシルバーの結婚指輪','腕時計を内側に付けるくせ'],
+    base:'Nagisa, a 30-year-old Japanese woman, warm features, chestnut-brown hair in a practical messy bun, navy nursing scrubs, a thin silver wedding ring, wristwatch worn on the inside of her wrist, tired but strong eyes, honest expression.',
+    ages:[['家での姿','Same woman at home, mustard-yellow knit sweater, the same chestnut bun and thin silver ring, sitting at a kitchen table at night, half-amused, half-exasperated look.'],
+          ['50歳','Same woman at 50, chestnut hair with a few gray strands in the same bun, the same silver ring, laugh lines, calm confident smile.']],
+    chibi:'Nagisa: chestnut messy bun, navy scrubs, tiny silver ring, hands on hips, pouting playfully.' },
+  { name:'パートナー（夫の場合）ナギサ', sub:'妻の場合と同じ設定の、夫の版です。',
+    anchors:['無造作な栗色の短髪','紺のスクラブ（仕事中）／からし色のニット（家）','細いシルバーの結婚指輪','腕時計を内側に付けるくせ'],
+    base:'Nagisa, a 30-year-old Japanese man, gentle features, short tousled chestnut-brown hair, navy nursing scrubs, a thin silver wedding ring, wristwatch worn on the inside of his wrist, tired but kind eyes, honest expression.',
+    ages:[['家での姿','Same man at home, mustard-yellow knit sweater, the same tousled chestnut hair and thin silver ring, sitting at a kitchen table at night, half-amused, half-exasperated look.'],
+          ['50歳','Same man at 50, chestnut hair graying at the sides, the same silver ring, laugh lines, calm smile.']],
+    chibi:'Nagisa: tousled chestnut hair, navy scrubs, tiny silver ring, arms crossed, pouting playfully.' },
+  { name:'子ども ソラ', sub:'3歳で大事な日に熱を出し、14歳で「経理なんて地味な仕事、絶対やらない」と言い、24歳で起業して「簿記を教えて」と頭を下げに来る。',
+    anchors:['つむじのアホ毛','右のほっぺのえくぼ','恐竜のもの（3歳はパジャマ、14歳はキーホルダー、24歳はステッカー）'],
+    base:'Sora, a 3-year-old Japanese child, round face, short black hair with a stubborn cowlick sticking up at the crown, a dimple on the right cheek, green dinosaur-pattern pajamas, a cooling gel sheet on the forehead, flushed cheeks from a fever, sleepy teary eyes, hugging a toy calculator.',
+    ages:[['14歳・反抗期','Same child at 14, the same cowlick and right-cheek dimple, school uniform with the jacket open, wireless earphones, a small dinosaur keychain on the school bag, sulky sideways glance.'],
+          ['24歳・起業','Same person at 24, the same cowlick and dimple, simple hoodie, laptop with a dinosaur sticker, bowing slightly with an embarrassed sincere smile.']],
+    chibi:'Sora: round face, cowlick, dimple, green dinosaur pajamas, cooling gel sheet on forehead, hugging a toy calculator, pressing buttons happily.' },
+  { name:'主人公の父', sub:'町工場の社長。主人公が15歳のとき、利益は出ていたのに資金繰りが回らず黒字倒産した。終盤、介護で実家を片付けると当時の帳簿が出てくる。',
+    anchors:['油のしみが落ちない手','ネーム刺繍入りの作業着','太い黒縁眼鏡','頭に巻いた手ぬぐい（工場時代）'],
+    base:'The protagonist\'s father, a 52-year-old Japanese man, small factory owner, short black hair under a rolled cotton headband, thick black-framed glasses, gray work uniform with an embroidered name patch, hands stained with machine oil, sitting at a cluttered desk at night under a single desk lamp, staring at a handwritten cash-flow ledger, exhausted and silent.',
+    ages:[['80歳・介護','Same man at 80, thin and frail, white hair, the same thick black-framed glasses, beige cardigan, the faint oil stains still on his hands, sitting by a window, gentle distant smile.']],
+    chibi:'Father: thick black glasses, cotton headband, gray work uniform with name patch, holding a wrench and a tiny ledger, proud smile.' },
+];
+const STYLE = document.querySelectorAll('.p pre')[0].textContent;
+const MERCH = document.querySelectorAll('.p pre')[2].textContent;
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const block = (label, text) => `<h3>${label}</h3><div class="p"><pre>${esc(text)}</pre><button type="button">コピー</button></div>`;
+document.getElementById('cast').innerHTML = CAST.map(c => `<details>
+  <summary><b>${c.name}</b><small>${c.sub}</small><span class="chev" aria-hidden="true">▶</span></summary>
+  <div class="in">
+    <ul class="anchors">${c.anchors.map(a => `<li>${a}</li>`).join('')}</ul>
+    ${block('<span class="tag">ゲーム用</span>① 基準の顔（共通スタイル込み）', STYLE + '\n\n' + c.base + ' Neutral expression, calm.')}
+    ${block('② 表情差分のもと（基準画像を参照に入れ、末尾を表の表情に差し替え）', c.base + ' [EXPRESSION]')}
+    ${c.ages.map(([l, t]) => block('<span class="tag">ゲーム用</span>③ 年齢差分：' + l, STYLE + '\n\n' + t)).join('')}
+    ${block('<span class="tag">グッズ用</span>④ デフォルメ', MERCH + ' ' + c.chibi)}
+  </div></details>`).join('');
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.p button'); if (!b) return;
+  const pre = b.previousElementSibling, text = pre.textContent;
+  try { await navigator.clipboard.writeText(text); b.textContent = 'コピー済み'; b.classList.add('done'); setTimeout(() => { b.textContent = 'コピー'; b.classList.remove('done'); }, 1600); }
+  catch (err) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '選択しました'; }
+});
+document.querySelector('details')?.setAttribute('open', '');
+</script>
