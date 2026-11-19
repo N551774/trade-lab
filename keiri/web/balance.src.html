@@ -474,6 +474,7 @@ const P = {
   father:{ name:'父', role:'', c:'#7C8794', ch:'父' },
   kirishima:{ name:'霧島 玲', role:'監査法人の会計士', c:'#3E6E9C', ch:'玲' },
   nagisa:{ name:'渚', role:'救急の看護師', c:'#C9922F', ch:'渚' },
+  yui:{ name:'新堂 結', role:'後輩', c:'#5E5CB8', ch:'結' },
   narr:{ name:'', c:'#000' }, you:{ name:'', c:'#8FA6C8' },
 };
 const CG = new Set(['father']);
@@ -499,6 +500,7 @@ const CARDS = [
   { id:'amagi4', char:'amagi', r:4, title:'月曜9時2分', quote:'おはよう！ 週末考えたんだけど……' },
   { id:'kirishima4', char:'kirishima', r:4, title:'非常階段の新人', quote:'……次は、間違えません。' },
   { id:'nagisa4', char:'nagisa', r:4, title:'点滴中です', quote:'点滴中に仕訳しないでください。' },
+  { id:'yui4', char:'yui', r:4, title:'それ、なんで手で？', quote:'それ、なんで手でやってるんですか？' },
   { id:'akeno5', char:'akeno', r:5, title:'8月の第1週', quote:'今週だけは、話しかけないで。', pickup:true },
   { id:'sumiya5', char:'sumiya', r:5, title:'墨は消えない', quote:'墨で書いたものは、消せません。' },
   { id:'amagi5', char:'amagi', r:5, title:'前例がないなら', quote:'つくればいい！' },
@@ -511,6 +513,7 @@ const SKILL = {
   amagi:{ name:'天城案件', desc:'効果はやってみないと分からない' },
   kirishima:{ name:'監査意見', desc:'ダメージ＋次の2問の正解でダメージ2倍' },
   nagisa:{ name:'看護', desc:'チームの元気を大きく回復' },
+  yui:{ name:'マクロ一括処理', desc:'3回連続でダメージ' },
 };
 const cardPow = id => { const c = CARD[id], o = G.cards[id] || { lv:1, dup:0 }; return { atk: [0,0,0,5,8,12][c.r] + Math.floor(o.lv * .4) + o.dup * 2, ult: [0,0,0,1,1.25,1.6][c.r] + o.dup * .1 }; };
 const maxLv = r => ({ 3:30, 4:40, 5:50 })[r];
@@ -682,6 +685,7 @@ function battle(cfg) {
       if (m.char === 'sumiya') d = Math.round(80 * m.ult);
       if (m.char === 'hayase') { d = Math.round(25 * m.ult); stun = 2; }
       if (m.char === 'kirishima') { d = Math.round(25 * m.ult); dbl = 2; toast('次の2問、正解ならダメージ2倍'); }
+      if (m.char === 'yui') { const c = center($('#edoc')); for (let k = 0; k < 3; k++) { await sleep(180); const h = Math.round(18 * m.ult); FX.burst(c.x + (k - 1) * 40, c.y, '#9C97FF', 18, 7); hitEnemy(h); pop(h, false); sfx('hit'); if (hp <= 0) break; } }
       if (m.char === 'nagisa') { const h = Math.round(40 * m.ult); team = Math.min(teamMax, team + h); toast(`元気が ${h} 回復した`); }
       if (m.char === 'amagi') { const r = Math.random(); d = r < .5 ? Math.round(150 * m.ult) : r < .8 ? Math.round(40 * m.ult) : 0; toast(d >= 150 ? '天城案件、大当たり！' : d ? 'まあまあの天城案件' : '……天城案件、空振り。'); }
       if (d) { const c = center($('#edoc')); FX.burst(c.x, c.y, P[m.char].c, 46, 11); FX.burst(c.x, c.y, '#FFE7A6', 30, 8); hitEnemy(d); pop(d, true); sfx('crit'); }
@@ -839,7 +843,7 @@ async function decide(opts, point) {
   await note(((o.point || point) ? `<div class="point">${esc(o.point || point)}</div>` : '') + fxHtml(o.fx));
   return i;
 }
-const SPEAKER = { 心構え:'sumiya', 期ズレ:'hayase', 二重払い:'akeno', 期限:'akeno', 残高照合:'sumiya', 不正防止:'akeno', 源泉徴収:'hayase', 入金消込:'akeno', 交際費:'hayase', 電子帳簿保存法:'akeno' };
+const SPEAKER = { 心構え:'sumiya', 期ズレ:'hayase', 二重払い:'akeno', 期限:'akeno', 残高照合:'sumiya', 不正防止:'akeno', 源泉徴収:'hayase', 入金消込:'akeno', 交際費:'hayase', 電子帳簿保存法:'akeno', 後輩指導:'sumiya', 固定資産:'yui', 修繕費:'sumiya', 決算:'sumiya', 月次分析:'sumiya' };
 const EV = Object.fromEntries(DATA.career.flatMap(s => s.events).map(e => [e.tag, e]));
 async function incident(tag) {
   const e = EV[tag], who = SPEAKER[tag] || 'akeno';
@@ -980,10 +984,76 @@ const EPISODES = [
     vnOpen('office', '翌年4月1日　経理部');
     await run([['sumiya','{name}さん。本日付で、主任に任命します。'], ['sumiya','来月、新人が入ります。……あなたが教えてください。','happy'], ['akeno','主任かあ。追いつかれちゃうね。……今年こそ、受かってみせる。','happy'], ['narr','3章「連結」へ続く。']]);
   }},
+  { id:'e11', ch:3, no:'第11話', title:'新人、新堂結', desc:'「それ、なんで手でやってるんですか？」', rew:{ exp:60, coins:600, so:50 }, async run() {
+    vnOpen('office', '4年目・4月　経理部');
+    await chapterCard('3章', '連結', '主任・28歳');
+    await run([['yui','新堂結です。よろしくお願いします。……あの、ひとつ聞いていいですか。'], ['yui','その手書きの台帳、なんで手でやってるんですか？ 全部自動にできますよ。'], ['sumiya','……。'], ['narr','経理部の空気が、3度くらい下がった。']]);
+    await decide([
+      { t:'「課長のやり方には理由がある。まず1か月、手で覚えて」', hint:'今のやり方を教える', fx:{ b_sumiya:+6, b_yui:-4 }, then:[['yui','……わかりました。1か月だけ。','sad']] },
+      { t:'「試しに、結さんの自動化を全部入れてみよう」', hint:'新しいやり方に乗る', fx:{ b_yui:+8, b_sumiya:-5, work:+2 }, then:[['sumiya','……結果を見てから、判断します。']] },
+      { t:'「小さい作業1つだけ自動化して、課長の手作業と結果を突き合わせよう」', hint:'両方の良さを試す', fx:{ b_yui:+5, b_sumiya:+5, work:+4, health:-3 }, then:[['yui','検証してから広げる、ですね。……いいと思います。','happy'], ['sumiya','そろばんとExcel、どちらが速いか。楽しみです。','happy']] },
+    ], '新しい道具を入れるときは、いきなり全部置き換えず、今のやり方と並べて結果を突き合わせる（並行稼働）のが経理の鉄則。');
+    await incident('後輩指導');
+  }},
+  { id:'e12', ch:3, no:'第12話', title:'8回目の夏', desc:'朱野先輩、最後の挑戦。そして台帳の棚卸し。', rew:{ exp:70, coins:700, so:50 }, async run() {
+    vnOpen('office', '7月　経理部');
+    await run([['akeno','……今年で最後にする。受からなかったら、税理士はあきらめる。'], ['narr','先輩は、いつもより小さな声でそう言った。']]);
+    await incident('固定資産');
+    await incident('修繕費');
+    await run([['sumiya','期末の前に、固定資産台帳の棚卸しをします。現物と台帳を、1つずつ突き合わせてください。'], ['yui','タブレットで写真を撮って、台帳と自動で照合します！','happy']]);
+    return battle({ enemy:'固定資産台帳の棚卸し', kind:'ボス', desc:'台帳に載っているのに見つからないPCが3台。', hp:230, atk:12, every:3, pool:() => [...POOLS.close(), Q.je('k01'), Q.je('b13'), Q.term(1), Q.term(18), Q.chk('l10', 0), Q.chk('l07', 0)], party:fixedParty(['akeno', 'yui']), freeRevive:true,
+      taunts:['廃棄済みのはずのPCが倉庫から出てきた','台帳の取得価額が空欄','「それ、誰の席の机ですか？」'] });
+  }},
+  { id:'e13', ch:3, no:'第13話', title:'受かった', desc:'12月の昼休み、非常階段。', rew:{ exp:80, coins:800, so:100 }, async run() {
+    vnOpen('night', '12月　合格発表の日の昼休み　非常階段');
+    await run([['narr','先輩が、スマホを握ったまま非常階段に座っていた。'], ['akeno','……。'], ['akeno','……受かった。8回目で、受かった。','happy'], ['akeno','ねえ。今だけ、赤ペン置いてもいいかな。','sad']]);
+    await decide([
+      { t:'黙って隣に座る', hint:'そばにいる', fx:{ b_akeno:+12 }, then:[['narr','先輩は、しばらく声を出さずに泣いていた。']] },
+      { t:'「おめでとうございます！ 今夜はお祝いしましょう！」', hint:'一緒に喜ぶ', fx:{ b_akeno:+8, money:-3 }, then:[['akeno','……うん。あなたのおごりね。','happy']] },
+      { t:'「先輩なら受かると思ってました」', hint:'信じていたと伝える', fx:{ b_akeno:+10 }, then:[['akeno','……7回落ちた人に言うセリフじゃないよ、それ。','happy']] },
+    ]);
+    setScene('lunch', '3月　送別会');
+    await run([['akeno','4月から、自分の事務所を開きます。「朱野税理士事務所」。……ひねりがないって言わないで。','happy'], ['akeno','母みたいな小さなお店を、税金で泣かせないために。'], ['sumiya','……誘ってよかった。おめでとう、朱野さん。','happy'], ['narr','先輩が置いていった赤ペンは、まだインクが残っていた。']]);
+    setScene('office', '4月　経理部');
+    await incident('月次分析');
+  }},
+  { id:'e14', ch:3, no:'第14話', title:'連結', desc:'プロポーズと、決算期と、年収の壁。', rew:{ exp:80, coins:800, so:100 }, async run() {
+    vnOpen('dusk', '5月　渚の夜勤明けの朝');
+    await run([['nagisa','おはよう。……どうしたの、そんなに改まって。'], ['narr','ポケットの中の小さな箱が、やけに重かった。']]);
+    await decide([
+      { t:'「一緒に、人生のバランスシートをつくってください」', hint:'経理らしく', fx:{ family:+10, b_nagisa:+8 }, then:[['nagisa','……なにそれ。ふふ、いいよ。貸借、ちゃんと合わせてね。','happy']] },
+      { t:'「結婚してください」', hint:'まっすぐに', fx:{ family:+12, b_nagisa:+10 }, then:[['nagisa','……はい。','happy']] },
+      { t:'「決算が終わったら、ちゃんと言うから」', hint:'後回しにする', fx:{ family:-4, b_nagisa:-3 }, then:[['nagisa','……それ、もう言ってるのと同じだよ。','sad'], ['nagisa','でも、決算が終わったら、ちゃんと言ってね。']] },
+    ]);
+    setScene('office', '翌年1月　式場の打ち合わせと決算準備');
+    await run([['narr','式は3月。ちょうど期末決算と重なった。'], ['nagisa','招待状の宛名、今週中に決めないと。……聞いてる？']]);
+    await decide([
+      { t:'式の準備は全部まかせて、決算に集中する', hint:'仕事を優先', fx:{ work:+6, family:-10, b_nagisa:-6 }, then:[['nagisa','……私の結婚式でもあるんだけど。','sad']] },
+      { t:'毎晩1時間だけ、必ず式の準備にあてる', hint:'時間を決める', fx:{ family:+6, health:-8 }, then:[['nagisa','1時間ね。……タイマーかけとく。','happy']] },
+      { t:'結さんに決算の一部を任せて、式の準備も半分やる', hint:'人に任せる', fx:{ family:+8, b_yui:+6, work:-2 }, then:[['yui','任せてください。マクロ、組んでおきます。','happy']] },
+    ]);
+    await run([['nagisa','あと、相談。結婚したら、私、夜勤を減らしてパートにしようか迷ってて。……年収の「壁」って、どうなってるの？']]);
+    await decide([
+      { t:'「壁の手前に抑えるより、働けるだけ働いて社会保険に入るのも手だよ」', hint:'長い目で考える', fx:{ money:+4, b_nagisa:+5 } },
+      { t:'「扶養に入れる範囲に抑えた方が、手取りは減らないよ」', hint:'目の前の手取り', fx:{ money:+6, b_nagisa:+2 } },
+      { t:'「渚がやりたい働き方で決めよう。数字は全部計算するから」', hint:'相手の気持ちを先に', fx:{ family:+8, b_nagisa:+8 } },
+    ], '税金の「壁」は改正で引き上げが続いている（2025年分から、給与だけなら年160万円まで所得税がかからない）。一方、社会保険の扶養から外れる「130万円の壁」や、勤め先によっては「106万円の壁」もある。一時的に手取りが減るラインと、将来の年金が増えるメリットの両方で考える。');
+  }},
+  { id:'e15', ch:3, no:'第15話', title:'年次決算', desc:'式の翌週。今度は、会社の決算。', rew:{ exp:120, coins:1200, so:150, mats:8 }, async run() {
+    vnOpen('office', '4月　年次決算');
+    await run([['sumiya','結婚おめでとうございます。……そして、おかえりなさい。今日から年次決算です。','happy']]);
+    await incident('決算');
+    const r = await battle({ enemy:'年次決算', kind:'ボス', desc:'未払計上、減価償却、税金の計算。上場会社の決算短信まであと30日。', hp:280, atk:13, every:3, pool:() => [...POOLS.close(), Q.je('k01'), Q.je('k03'), Q.je('k04'), Q.je('k05'), Q.je('k06'), Q.chk('l07', 0), Q.chk('l07', 1), Q.term(0), Q.term(7)], party:fixedParty(['sumiya', 'yui']), freeRevive:true,
+      taunts:['監査法人から追加の質問が20件','未払計上の見積もりが合わない','決算短信の数字に誤字が見つかった'] });
+    if (!r.win) return r;
+    vnOpen('office', '翌年4月1日　経理部');
+    await run([['sumiya','{name}さん。本日付で、係長に任命します。'], ['yui','先輩が係長……。じゃあ私、主任を目指していいですか？','happy'], ['narr','その年の秋。渚から、小さな知らせが届いた。'], ['nagisa','……ねえ。家族が、ひとり増えるよ。','happy'], ['narr','4章「引当金」へ続く。']]);
+    return r;
+  }},
 ];
-const CHAPS = [{ ch:1, no:'1章', title:'期首', sub:'新入社員・22歳' }, { ch:2, no:'2章', title:'仮勘定', sub:'担当者・25歳' }];
+const CHAPS = [{ ch:1, no:'1章', title:'期首', sub:'新入社員・22歳' }, { ch:2, no:'2章', title:'仮勘定', sub:'担当者・25歳' }, { ch:3, no:'3章', title:'連結', sub:'主任・28歳' }];
 const epDone = id => G.story.includes(id);
-const chapsCleared = () => (epDone('e5') ? 1 : 0) + (epDone('e10') ? 1 : 0);
+const chapsCleared = () => ['e5', 'e10', 'e15'].filter(epDone).length;
 const nextEp = () => EPISODES.find(e => !epDone(e.id));
 async function playEpisode(ep) {
   VN.skip = false;
@@ -1173,6 +1243,10 @@ const CHAT = [
   { id:'k3', from:'akeno', when:() => epDone('e8'), time:'19:20', text:'言っておく。……ありがとう。あの1週間、あなたが回してくれたの、知ってる。', replies:[{ t:'来年は合格祝いですね', b:6, back:'……プレッシャーかけないで。' }, { t:'何のことですか', b:4, back:'……そういうとこ、嫌いじゃない。' }] },
   { id:'r1', from:'kirishima', when:() => epDone('e9'), time:'23:40', text:'霧島です。先日は、ありがとうございました。もう少しだけ、監査を続けてみます。', replies:[{ t:'応援しています', b:6, back:'また、どこかで。……次は、間違えません。' }, { t:'無理しないでくださいね', b:4, back:'それ、あなたにだけは言われたくないです。' }] },
   { id:'n1', from:'nagisa', when:() => epDone('e10'), time:'2:14', text:'退院おめでとうございます。……ちゃんと寝てますか？ 今、夜中の2時ですけど。', replies:[{ t:'寝ます', b:4, back:'よろしい。' }, { t:'今、仕訳中です', b:6, back:'……点滴中じゃなければ、許します。' }] },
+  { id:'y1', from:'yui', when:() => epDone('e11'), time:'20:12', text:'先輩、こっちで失礼します。墨谷課長の手書き台帳、全部スキャンしてもいいですか？ 課長には、まだ言えてなくて……', replies:[{ t:'一緒に課長に頼みに行こう', b:6, back:'……ありがとうございます。先輩がいると、言える気がします。' }, { t:'勝手にやったら怒られるよ', b:3, back:'ですよね。……じゃあ、正面から行きます。' }] },
+  { id:'k4', from:'akeno', when:() => epDone('e13'), time:'21:05', text:'事務所の看板、届いた。「朱野税理士事務所」。……顧問先、まだゼロ。あなたの会社、いつか顧問にしてよね。', replies:[{ t:'いつか必ず', b:6, back:'約束ね。その時は、私があなたの味方をする番。' }, { t:'赤ペン、返しましょうか？', b:4, back:'あげる。あなたが使って。' }] },
+  { id:'n2', from:'nagisa', when:() => epDone('e14'), time:'0:40', text:'夜勤の休憩中。招待状の宛名、半分書いたよ。……残り半分、あなたの字で書いて。', replies:[{ t:'今から帰って書く', b:6, back:'うん。……ちゃんと寝てからでいいよ。' }, { t:'決算が終わったら必ず', b:2, back:'……決算、いつ終わるんだっけ。' }] },
+  { id:'s2', from:'sumiya', when:() => epDone('e15'), time:'22:10', text:'ご結婚、改めておめでとうございます。……ご祝儀の仕訳は、しなくていいですよ。', replies:[{ t:'課長でも冗談言うんですね', b:6, back:'……たまには。おやすみなさい。' }, { t:'ありがとうございます', b:3, back:'お幸せに。' }] },
   { id:'a2', from:'amagi', when:() => epDone('e5'), time:'9:02', text:'月次おつかれ！ ところで来月から、3日で締められるよね？笑', replies:[{ t:'今は10日です。まず7日を目指します', b:5, back:'現実的！ 嫌いじゃない！ それでいこう！' }, { t:'無理です', b:1, back:'……前例がないなら、つくればいい！' }] },
 ];
 const unreadChat = () => CHAT.filter(c => c.when() && G.chat[c.id] === undefined).length;
@@ -1240,6 +1314,7 @@ const HOME_LINES = {
   sumiya:['検算はしましたか。','1円合わないのは、1円の問題じゃありません。','そろばんは、手が覚えています。','……今日は、早く帰りなさい。'],
   hayase:['これ、経費で落ちる？','宛名、上様でいいよね？','今月の売上、見た？ 俺のおかげ！','焼肉行こうぜ！ 割り勘で！'],
   kirishima:['根拠を示してください。','……次は、間違えません。'],
+  yui:['それ、なんで手でやってるんですか？','マクロ、組んでおきました。','電話じゃなくてチャットでお願いします。'],
   nagisa:['ちゃんと寝てますか？','点滴中に仕訳しないでください。','今日は何の日か、覚えてる？'],
   amagi:['前例がないなら、つくればいい！','それ、明日までにできる？','来年、プライム市場に行こう！','数字は、なんとかなるだろ？'],
 };
@@ -1273,7 +1348,7 @@ function viewHome() {
     </div>
     <div class="hm-bottom side">
       <div class="bsstrip glass">${STAT.map(([k, l, c]) => `<div><span>${l}</span><i><s style="width:0; background:var(${c})" data-w="${G.stat[k]}"></s></i></div>`).join('')}</div>
-      <button class="story-cta shine" id="cta"><span><span class="k">${ep ? `STORY　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」` : 'STORY'}</span><b>${ep ? `${ep.no}「${ep.title}」` : '3章「連結」は制作中'}</b><span class="small muted">${ep ? esc(ep.desc) : '月次決算ランで仲間を育てよう'}</span></span><span class="go">${ep ? 'PLAY' : 'RUN'}</span></button>
+      <button class="story-cta shine" id="cta"><span><span class="k">${ep ? `STORY　${CHAPS[ep.ch - 1].no}「${CHAPS[ep.ch - 1].title}」` : 'STORY'}</span><b>${ep ? `${ep.no}「${ep.title}」` : '4章「引当金」は制作中'}</b><span class="small muted">${ep ? esc(ep.desc) : '月次決算ランで仲間を育てよう'}</span></span><span class="go">${ep ? 'PLAY' : 'RUN'}</span></button>
     </div></div>` + tabs('home');
   bindTabs();
   requestAnimationFrame(() => document.querySelectorAll('.bsstrip s').forEach(e => e.style.width = e.dataset.w + '%'));
@@ -1296,13 +1371,13 @@ function missionModal() {
 }
 
 /* ストーリー一覧 */
-const CHAP_ART = { 1:{ face:'akeno', c1:'#4A2018' }, 2:{ face:'nagisa', c1:'#4A3818' } };
+const CHAP_ART = { 1:{ face:'akeno', c1:'#4A2018' }, 2:{ face:'nagisa', c1:'#4A3818' }, 3:{ face:'yui', c1:'#2A2A5A' } };
 function viewStory() {
   $('#app').innerHTML = hud() + `<div class="scroll side">${CHAPS.map(c => { const eps = EPISODES.filter(e => e.ch === c.ch), done = eps.filter(e => epDone(e.id)).length, art = CHAP_ART[c.ch];
     return `<div class="chaphead" style="--c1:${art.c1}">${face(art.face) ? `<img src="${face(art.face)}" alt="">` : ''}<span>CHAPTER ${c.ch}</span><b>${c.no}「${c.title}」</b><span style="letter-spacing:.06em; font-family:var(--f-body)">${c.sub}　${done}/${eps.length}話</span><i><s style="width:${done / eps.length * 100}%"></s></i></div>
       <div class="timeline">${eps.map(e => { const i = EPISODES.indexOf(e), d = epDone(e.id), open = i === 0 || epDone(EPISODES[i - 1].id);
         return `<button class="ep ${d ? 'done' : ''} ${open ? '' : 'lock'}" data-e="${i}"><span class="no">EP.${String(i + 1).padStart(2, '0')}</span><span style="flex:1; min-width:0"><b>${e.title}</b><br><span class="small muted">${esc(e.desc)}</span></span><span class="small" style="flex:none; color:${d ? 'var(--teal)' : 'var(--muted)'}">${d ? 'CLEAR' : open ? '<span class="new">NEW</span>' : 'LOCK'}</span></button>`; }).join('')}</div>`; }).join('')}
-    <div class="chaphead" style="--c1:#1E2A44; opacity:.6"><span>CHAPTER 3</span><b>3章「連結」</b><span style="font-family:var(--f-body)">制作中　後輩・新堂結の入社、志乃の8回目の挑戦、そして結婚。</span></div>
+    <div class="chaphead" style="--c1:#1E2A44; opacity:.6"><span>CHAPTER 4</span><b>4章「引当金」</b><span style="font-family:var(--f-body)">制作中　宙の誕生、税務調査の初日の発熱、そして同期の不正。</span></div>
     <p class="small muted">ストーリーは気力を使わずに読めます。</p><div style="height:12px"></div></div>` + tabs('story');
   bindTabs();
   $('.scroll').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; const i = +b.dataset.e; if (i > 0 && !epDone(EPISODES[i - 1].id)) return toast('前の話をクリアすると読めます'); playEpisode(EPISODES[i]); };
