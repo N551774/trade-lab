@@ -40,3 +40,4 @@ def build(src_name: str, out_name: str) -> None:
 build("app.src.html", "index.html")            # ゲーム本体
 build("characters.src.html", "characters.html")  # キャラクター図鑑
 build("balance.src.html", "balance.html")        # ストーリーモード「バランスシート」
+build("drill.src.html", "drill.html")            # 勉強アプリ「経理ドリル」
