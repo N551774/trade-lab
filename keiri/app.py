@@ -1,7 +1,9 @@
-"""経理ラボ『バランスシート』— Streamlit でスマホゲーム版を表示する。
+"""経理ラボ — Streamlit で2つのアプリを表示する。
 
 起動:  streamlit run keiri/app.py
-本体は keiri/web/balance.html（keiri/web/build.py で生成）。前の学習アプリ版は keiri/web/index.html。
+  ・経理ドリル（勉強用）：keiri/web/drill.html
+  ・バランスシート（ゲーム）：keiri/web/balance.html
+どちらも keiri/web/build.py で生成する。前の学習アプリ版は keiri/web/index.html。
 旧版（表形式の学習ツール）は keiri/classic.py。
 """
 from pathlib import Path
@@ -17,7 +19,9 @@ header[data-testid="stHeader"], footer, #MainMenu {display:none !important}
 iframe {display:block; border:0}
 </style>""", unsafe_allow_html=True)
 
-body = (Path(__file__).parent / "web" / "balance.html").read_text(encoding="utf-8")
+APPS = {"経理ドリル": "drill.html", "バランスシート": "balance.html"}
+mode = st.segmented_control("アプリ", list(APPS), default="経理ドリル", label_visibility="collapsed") or "経理ドリル"
+body = (Path(__file__).parent / "web" / APPS[mode]).read_text(encoding="utf-8")
 doc = ('<!doctype html><html lang="ja"><head><meta charset="utf-8">'
        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>html,body{height:100%;margin:0}</style></head>'
        f'<body>{body}</body></html>')

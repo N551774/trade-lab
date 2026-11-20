@@ -13,11 +13,21 @@
 
 ---
 
-# 経理ラボ『バランスシート』
+# 経理ラボ
 
-`keiri/` フォルダにある、経理の仕事を学ぶスマホゲームです。新入社員からCFOまで、仕事と人生の選択を重ねる物語。
+`keiri/` フォルダにある2つのアプリです。`streamlit run keiri/app.py` で起動し、画面上部で切り替えます（Streamlit Cloud の Main file path も `keiri/app.py`）。どちらも `python keiri/web/build.py` で生成します。
 
-- 起動：`streamlit run keiri/app.py`（Streamlit Cloud の Main file path も `keiri/app.py`）
+## 経理ドリル（勉強用）
+
+- 本体：`keiri/web/drill.html`（`drill.src.html` と問題データから生成）
+- 1回5・10・20問。勘定科目・仕訳・経理の基本・書類チェック・実務の判断の約180問
+- まちがえた問題は翌日、正解するたびに2日後・4日後・8日後…と間をあけて出す（3回続けて正解で「覚えた」）
+- 記録は端末のブラウザに保存。連続日数、まちがえた問題だけの復習、分野別の練習
+
+## バランスシート（ゲーム）
+
+新入社員からCFOまで、仕事と人生の選択を重ねる物語。恋愛ADVへの作り替えを検討中（設計案：`keiri/web/heroines.html`）。
+
 - 本体：`keiri/web/balance.html`（`python keiri/web/build.py` で `balance.src.html`・問題データ・立ち絵から生成）
 - 遊び
   - **ストーリー**（無料）：1話3〜5分。1章「期首」〜7章「決算」の全35話＋終章（人生のバランスシートと選択で5種類のエンディング）。物語の中のバトルは仲間固定
@@ -26,7 +36,7 @@
   - **スカウト**：辞令封筒で仲間カードを集める。提供割合・天井を表示。課金はデモで請求なし
   - **社内チャット**：キャラクターとのやりとりで絆が上がる
   - ログインボーナス、デイリーミッション、12時間ごとの無料スカウト、結果画面で間違えた問題を見直し
-- 設定資料：`keiri/web/cast.html`（登場人物）、`keiri/web/prompts.html`（画像生成プロンプト）、`keiri/web/analysis.html`（ヒットRPGの分析）
+- 設定資料：`keiri/web/heroines.html`（ヒロインとルートの設計案、アニメ調の画像指示文）、`keiri/web/cast.html`（登場人物）、`keiri/web/prompts.html`（画像生成プロンプト）、`keiri/web/analysis.html`（ヒットRPGの分析）
 - 立ち絵：`keiri/web/img/人物_表情.webp`。元画像は `python keiri/web/tools/prep_portrait.py 元画像 出力.webp` で背景を抜いて作る（`pip install "rembg[cpu]"`）
 - 旧版：`keiri/web/index.html`（学習アプリ版）、`streamlit run keiri/classic.py`（表形式の学習ツール）
 - 登場する人物・会社はすべて架空です

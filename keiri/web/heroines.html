@@ -1,0 +1,219 @@
+<title>バランスシート ヒロイン設計</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* 帳簿の罫線を下地に、ヒロインごとの色を「科目の色」として使う。縦に読む設計書。 */
+:root {
+  --bg:#F3F4F7; --paper:#FFFFFF; --ink:#1B2030; --muted:#5D6478; --rule:#DCE0E8; --accent:#B8322A;
+  --shino:#C2412F; --rei:#2F6497; --yui:#5B54B4; --nagisa:#B7801F;
+  --code-bg:#EEF0F5;
+  --f-disp:"Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-body:"Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#10141D; --paper:#171C28; --ink:#E6E9F0; --muted:#9AA2B5; --rule:#2A3142; --accent:#E2665B;
+  --shino:#E86F5C; --rei:#6FA6DA; --yui:#9C96EC; --nagisa:#E0AE52; --code-bg:#1E2433; color-scheme:dark } }
+:root[data-theme="dark"] {
+  --bg:#10141D; --paper:#171C28; --ink:#E6E9F0; --muted:#9AA2B5; --rule:#2A3142; --accent:#E2665B;
+  --shino:#E86F5C; --rei:#6FA6DA; --yui:#9C96EC; --nagisa:#E0AE52; --code-bg:#1E2433; color-scheme:dark }
+* { box-sizing:border-box }
+body { background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.85;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:0 64px }
+.wrap { max-width:860px; margin:0 auto }
+header { padding-block:40px 24px; border-bottom:2px solid var(--ink) }
+.eyebrow { font-size:12px; letter-spacing:.18em; color:var(--muted) }
+h1 { font-family:var(--f-disp); font-weight:800; font-size:clamp(28px, 6vw, 44px); line-height:1.25; margin:6px 0 10px; text-wrap:balance }
+h1 em { font-style:normal; color:var(--accent) }
+.lead { max-width:40em; color:var(--muted); margin:0 }
+h2 { font-family:var(--f-disp); font-size:24px; margin:48px 0 12px; text-wrap:balance; display:flex; gap:10px; align-items:baseline }
+h2 small { font-family:var(--f-body); font-size:12px; color:var(--muted); letter-spacing:.12em; font-weight:500 }
+h3 { font-size:15px; margin:18px 0 6px }
+p { margin:0 0 10px; max-width:42em }
+ul { margin:0 0 10px; padding-left:1.2em } li { margin:2px 0 }
+.muted { color:var(--muted) }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px }
+.box { background:var(--paper); border:1px solid var(--rule); border-radius:6px; padding:14px 16px; min-width:0 }
+.box b.k { display:block; font-size:12px; letter-spacing:.12em; color:var(--muted); font-weight:500 }
+/* ルート表 */
+.scroll-x { overflow-x:auto; border:1px solid var(--rule); border-radius:6px; background:var(--paper) }
+table { border-collapse:collapse; width:100%; min-width:640px; font-size:13.5px }
+th, td { border-bottom:1px solid var(--rule); padding:9px 10px; text-align:left; vertical-align:top }
+th { font-weight:700; background:var(--code-bg); white-space:nowrap }
+td.ch { white-space:nowrap; font-weight:700 }
+.tag { display:inline-block; font-size:11.5px; padding:0 7px; border-radius:3px; border:1px solid currentColor; margin-right:4px; line-height:1.7; white-space:nowrap }
+/* ヒロイン */
+.heroine { margin-top:28px; background:var(--paper); border:1px solid var(--rule); border-top:4px solid var(--c); border-radius:6px; padding:18px 18px 8px }
+.hhead { display:flex; flex-wrap:wrap; gap:4px 16px; align-items:baseline }
+.hname { font-family:var(--f-disp); font-size:28px; font-weight:800; color:var(--c) }
+.hkana { font-size:12px; color:var(--muted); letter-spacing:.1em }
+.hrole { font-size:13px; color:var(--muted); width:100% }
+.quote { font-family:var(--f-disp); font-size:19px; margin:14px 0 6px; padding-left:12px; border-left:3px solid var(--c) }
+dl { display:grid; grid-template-columns:7.5em 1fr; gap:6px 12px; margin:12px 0 }
+dt { font-size:12.5px; color:var(--muted); padding-top:2px }
+dd { margin:0; min-width:0 }
+@media (max-width:520px) { dl { grid-template-columns:1fr } dt { padding-top:6px } }
+/* プロンプト */
+.prompt { position:relative; background:var(--code-bg); border-radius:6px; padding:12px 12px 12px; margin:8px 0 12px; min-width:0 }
+.prompt .lbl { font-size:12px; font-weight:700; color:var(--c, var(--ink)); margin-bottom:4px; padding-right:72px }
+.prompt pre { margin:0; white-space:pre-wrap; word-break:break-word; font-family:var(--f-mono); font-size:12px; line-height:1.65 }
+.copy { position:absolute; top:8px; right:8px; font:inherit; font-size:12px; padding:3px 10px; border-radius:4px; border:1px solid var(--rule); background:var(--paper); color:var(--ink); cursor:pointer }
+.copy:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+.exprs { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px }
+.exprs span { font-size:12.5px; background:var(--code-bg); border-radius:3px; padding:1px 8px }
+.ol { counter-reset:n; list-style:none; padding:0 }
+.ol li { counter-increment:n; padding-left:2em; position:relative; margin:8px 0 }
+.ol li::before { content:counter(n); position:absolute; left:0; top:1px; width:1.5em; height:1.5em; border-radius:50%; background:var(--ink); color:var(--bg); font-size:12px; display:grid; place-items:center }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">バランスシート　恋愛ルート化　設計書（案）</div>
+  <h1>誰と、<em>貸借</em>を<br>合わせるか。</h1>
+  <p class="lead">経理の新人からCFOまでの物語はそのままに、「誰と結婚するか」をルートで選べる恋愛ADVに作り替える。ヒロインは4人。立ち絵はアニメ調に切り替える。</p>
+</header>
+
+<h2>誰に向けるか <small>TARGET</small></h2>
+<div class="grid2">
+  <div class="box"><b class="k">遊ぶ人</b>20〜30代の会社員の男性。恋愛ADVやソシャゲに慣れている人。仕事帰りの電車で1話ずつ読む。</div>
+  <div class="box"><b class="k">ほかの恋愛ゲームとの違い</b>ヒロインが全員「働く大人の女性」。恋の障害が、締め日・監査の独立性・評価制度・夜勤など、仕事のルールそのもの。</div>
+  <div class="box"><b class="k">経理の扱い</b>勉強ではなく「お仕事パート」の味付け。戦闘はゲームとして短く残し、学習は別アプリ（経理ドリル）に任せる。</div>
+  <div class="box"><b class="k">お金の取り方</b>★5カードを各ヒロインの「スチル（一枚絵）」にする。物語は無料、絵を集めたい人が引く。</div>
+</div>
+
+<h2>ルートの組み立て <small>ROUTE</small></h2>
+<p>1〜2章は全員と出会う共通パート。3章の終わり（第14話「連結」）で、好感度と選択によってプロポーズの相手が決まる。4章以降は、選んだ相手との家庭パートと、その人ならではの山場に変わる。子どもの宙は、どのルートでも生まれる。</p>
+<div class="scroll-x"><table>
+  <thead><tr><th>章</th><th>共通の流れ</th><th style="color:var(--shino)">志乃</th><th style="color:var(--rei)">玲</th><th style="color:var(--yui)">結</th><th style="color:var(--nagisa)">渚</th></tr></thead>
+  <tbody>
+  <tr><td class="ch">1章 期首</td><td>入社、初めての月次決算</td><td>指導役として出会う</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ch">2章 仮勘定</td><td>支払担当、期末監査、過労</td><td>8月、休暇の札の理由</td><td>監査で出会う（第9話）</td><td>内定者アルバイトで登場（新設）</td><td>救急外来で出会う（第10話）</td></tr>
+  <tr><td class="ch">3章 連結</td><td>後輩ができる、年次決算</td><td>8回目の税理士試験</td><td>主査に昇格、担当が重なる</td><td>正式入社、マクロ事件</td><td>すれ違い勤務</td></tr>
+  <tr><td class="ch">3章末</td><td colspan="5"><b>第14話「連結」：プロポーズの相手が決まる</b>（休日イベントの回数と好感度の合計で、選べる相手が出る）</td></tr>
+  <tr><td class="ch">4章 引当金</td><td>宙の誕生、税務調査</td><td>独立開業、夫婦の繁忙期が重なる</td><td>独立性のため、担当を外れる</td><td>上司と部下の評価問題</td><td>夜勤と38.5℃の朝</td></tr>
+  <tr><td class="ch">5〜6章</td><td>課長、部長、父が倒れる</td><td>父の会社の帳簿を一緒に読む</td><td>監査法人のパートナー試験</td><td>DXで部署を変える</td><td>介護と看護の現場</td></tr>
+  <tr><td class="ch">7章 決算</td><td>CFO、買収、内部通報</td><td>税務の顧問として外から支える</td><td>規則上、助けられない夜</td><td>通報者になる</td><td>燃え尽きを止める</td></tr>
+  <tr><td class="ch">終章</td><td>貸借一致</td><td>専用ED</td><td>専用ED</td><td>専用ED</td><td>専用ED</td></tr>
+  </tbody>
+</table></div>
+<p class="muted" style="margin-top:8px">ほかに、誰も選ばずに仕事を取る「孤高のCFO」、元気を使い果たす「燃え尽き」のEDを残す。</p>
+
+<h2>ヒロイン <small>HEROINES</small></h2>
+
+<section class="heroine" style="--c:var(--shino)">
+  <div class="hhead"><span class="hname">朱野 志乃</span><span class="hkana">あけの しの</span><span class="hrole">経理の先輩（28歳）→ 税理士として独立　｜　年上・厳しい・努力家</span></div>
+  <div class="quote">「証憑は？」</div>
+  <dl>
+    <dt>表の顔</dt><dd>赤ペンで容赦なく直す。締め日の週は「話しかけないで」。新人には一番こわい先輩。</dd>
+    <dt>本音</dt><dd>税理士試験に7回落ちている。毎年8月の第1週だけ休暇を取るのは、試験のため。誰にも言っていない。</dd>
+    <dt>ルートの山場</dt><dd>3章、8回目の試験。合格発表の昼休み、非常階段で泣き笑いする。4章で独立して「朱野税理士事務所」を開く。妻は確定申告、夫は決算期で、2月と3月は家が戦場になる。</dd>
+    <dt>恋の障害</dt><dd>年の差と、先輩としてのプライド。「あなたに追い越されるのが、一番こわい」。</dd>
+    <dt>ED</dt><dd>「あなたの帳簿、一生チェックしてあげる。……赤ペンで」</dd>
+    <dt>グッズ</dt><dd>朱色の赤ペン、付箋「証憑は？」</dd>
+  </dl>
+</section>
+
+<section class="heroine" style="--c:var(--rei)">
+  <div class="hhead"><span class="hname">霧島 玲</span><span class="hkana">きりしま れい</span><span class="hrole">監査法人の公認会計士（同い年）　｜　クール・不器用・正義</span></div>
+  <div class="quote">「根拠を示してください」</div>
+  <dl>
+    <dt>表の顔</dt><dd>無表情で質問を64回。会社側から一番嫌われる監査人。</dd>
+    <dt>本音</dt><dd>新人で初めての現場がこわくて、非常階段で缶コーヒーを握っていた（第9話）。正しさでしか、自分を守れない。</dd>
+    <dt>ルートの山場</dt><dd>恋と<b>独立性</b>。監査人は、担当する会社の経理の人と親しい関係になると公正さを疑われるため、担当を外れる必要がある。玲はキャリアに響くと分かっていて、自分から外れる申請を出す。</dd>
+    <dt>恋の障害</dt><dd>職業上のルールそのもの。7章、会社が一番苦しい夜に、玲は規則上なにも手伝えない。</dd>
+    <dt>ED</dt><dd>「根拠は……好きだから。それ以外に、ありますか」</dd>
+    <dt>グッズ</dt><dd>缶コーヒー柄のマグ、監査調書風ノート</dd>
+  </dl>
+</section>
+
+<section class="heroine" style="--c:var(--yui)">
+  <div class="hhead"><span class="hname">新堂 結</span><span class="hkana">しんどう ゆい</span><span class="hrole">後輩（主人公の6歳下）　｜　合理主義・無表情・実はさみしがり</span></div>
+  <div class="quote">「それ、なんで手でやってるんですか？」</div>
+  <dl>
+    <dt>表の顔</dt><dd>Excelのマクロとプログラムで、3日かかる作業を10分にする。先輩にも遠慮なく言う。</dd>
+    <dt>本音</dt><dd>学生時代のアルバイト先が、売上の水増しで倒産した。「データは嘘をつかない。嘘をつくのは人」。</dd>
+    <dt>ルートの山場</dt><dd>2章で内定者アルバイトとして出会い、3章で正式入社。付き合うと、上司が恋人の人事評価をする問題が出る。評価者を変えてもらうため、二人で部長に打ち明ける。</dd>
+    <dt>恋の障害</dt><dd>年の差と社内の目。7章で彼女は内部通報者になり、守れるかどうかが試される。</dd>
+    <dt>ED</dt><dd>「先輩の残業、全部自動化しておきました。……だから、早く帰ってきてください」</dd>
+    <dt>グッズ</dt><dd>アクリルスタンド（ノートPC付き）、キーキャップ</dd>
+  </dl>
+</section>
+
+<section class="heroine" style="--c:var(--nagisa)">
+  <div class="hhead"><span class="hname">渚</span><span class="hkana">なぎさ</span><span class="hrole">救急の看護師（同い年）　｜　さばさば・まっすぐ・会社の外の人</span></div>
+  <div class="quote">「点滴中に仕訳しないでください」</div>
+  <dl>
+    <dt>表の顔</dt><dd>夜勤明けでも元気。思ったことはすぐ言う。会計のことは何も知らない。</dd>
+    <dt>本音</dt><dd>救えなかった患者の夜を覚えている。「数字で、人って助けられるの？」とずっと聞きたかった。</dd>
+    <dt>ルートの山場</dt><dd>今の本編の流れ。夜勤と締め日のすれ違い、年収の壁、宙の熱と税務調査の朝。</dd>
+    <dt>恋の障害</dt><dd>生活のリズムが合わないこと。会社の外の目線で、主人公の働き方を止める役。</dd>
+    <dt>ED</dt><dd>「おつかれさま。……あなたの左右、ちゃんと釣り合ってたね」</dd>
+    <dt>グッズ</dt><dd>「ちゃんと寝てますか？」のアイマスク</dd>
+  </dl>
+</section>
+
+<h2>恋愛ゲームとして足すもの <small>SYSTEM</small></h2>
+<div class="grid2">
+  <div class="box"><b class="k">休日イベント</b>各章に1〜2回、「日曜日、誰と過ごす？」。会いに行った相手の好感度が上がり、専用の短い話が見られる。</div>
+  <div class="box"><b class="k">好感度の表示</b>今の「絆」をハートで見せる。チャットの返事でも上がる。</div>
+  <div class="box"><b class="k">スチル回収</b>大事な場面は一枚絵。見た絵はアルバムに残る。★5カードもスチルにする。</div>
+  <div class="box"><b class="k">表情に「照れ」</b>立ち絵の表情に「照れ」を足す。恋愛ものでは一番使う顔。</div>
+  <div class="box"><b class="k">主人公は男性に固定</b>顔は出さない（一人称視点）。名前は変えられる。</div>
+  <div class="box"><b class="k">お仕事パート</b>経理の問題を解く戦闘は、1話1回・3分以内に短くする。</div>
+</div>
+
+<h2>アニメ調の立ち絵の作り方 <small>IMAGE PROMPTS</small></h2>
+<ol class="ol">
+  <li>まず「基本の立ち絵」を1枚作る。気に入るまで何回か作り直してOK。</li>
+  <li>同じ画像をもとに「表情だけ変えて」と指示して、表情を作る（画像をアップして編集できるツールだと、顔や服がぶれにくい）。</li>
+  <li>背景は白か単色に。こちらで背景を抜いてゲームに入れる。縦長（2:3）だと助かります。</li>
+</ol>
+
+<div class="prompt" style="--c:var(--ink)"><div class="lbl">全員共通の絵柄（各プロンプトの先頭に付ける）</div><button class="copy" type="button">コピー</button><pre>anime style visual novel character sprite, waist-up, standing, slight three-quarter view facing left, clean lineart, soft cel shading, modern Japanese office setting character, adult woman, natural proportions, plain white background, high resolution, consistent character design</pre></div>
+
+<h3 style="color:var(--shino)">朱野 志乃</h3>
+<div class="prompt" style="--c:var(--shino)"><div class="lbl">基本の立ち絵</div><button class="copy" type="button">コピー</button><pre>28-year-old Japanese woman, senior accountant, long straight black hair tied in a low ponytail over one shoulder, thin red-framed glasses, sharp but tired eyes, small mole under left eye, white blouse with navy cardigan, office ID lanyard, red pen tucked behind her ear, holding a stack of receipts, stern expression, slight frown</pre></div>
+<div class="exprs"><span>通常：stern, slight frown</span><span>笑顔：soft rare smile, eyes gentle</span><span>怒り：annoyed, pointing red pen at viewer</span><span>悲しい：looking down, glasses slightly lowered</span><span>照れ：blushing, looking away, adjusting glasses</span></div>
+<div class="prompt" style="--c:var(--shino)"><div class="lbl">スチル：合格発表の非常階段</div><button class="copy" type="button">コピー</button><pre>anime illustration, visual novel event CG, 16:9, 28-year-old Japanese woman with low black ponytail and red glasses, crying and laughing at the same time, holding a smartphone showing exam results, sitting on an outdoor emergency staircase of an office building, winter noon sunlight, navy cardigan, emotional, cinematic lighting</pre></div>
+
+<h3 style="color:var(--rei)">霧島 玲</h3>
+<div class="prompt" style="--c:var(--rei)"><div class="lbl">基本の立ち絵</div><button class="copy" type="button">コピー</button><pre>23-year-old Japanese woman, certified public accountant at an audit firm, sleek black bob cut with side-swept bangs, cool gray-blue eyes, expressionless, navy pantsuit, white shirt buttoned to the top, audit firm ID card, holding a thin laptop and a clipboard, straight posture, cool and serious</pre></div>
+<div class="exprs"><span>通常：expressionless</span><span>笑顔：faint small smile, surprised at herself</span><span>怒り：narrowed eyes, cold stare</span><span>悲しい：eyes wet, biting lip</span><span>照れ：blushing hard, hiding face behind clipboard</span></div>
+<div class="prompt" style="--c:var(--rei)"><div class="lbl">スチル：非常階段の缶コーヒー</div><button class="copy" type="button">コピー</button><pre>anime illustration, visual novel event CG, 16:9, young Japanese woman with black bob cut in navy pantsuit, sitting alone on an office emergency staircase at night, holding a can of hot coffee with both hands, tears in her eyes, city lights below, cold blue night lighting, lonely mood</pre></div>
+
+<h3 style="color:var(--yui)">新堂 結</h3>
+<div class="prompt" style="--c:var(--yui)"><div class="lbl">基本の立ち絵</div><button class="copy" type="button">コピー</button><pre>22-year-old Japanese woman, junior accountant at an IT company, straight black hair with blunt bangs, shoulder length, large calm eyes, slightly sleepy expression, oversized light gray hoodie over a collared shirt, office ID card, holding an open laptop against her chest, small purple hair clip, deadpan expression</pre></div>
+<div class="exprs"><span>通常：deadpan</span><span>笑顔：tiny proud smile</span><span>怒り：puffed cheeks, unimpressed stare</span><span>悲しい：hood pulled up, looking down</span><span>照れ：blushing, covering mouth with hoodie sleeve</span></div>
+<div class="prompt" style="--c:var(--yui)"><div class="lbl">スチル：深夜のオフィス</div><button class="copy" type="button">コピー</button><pre>anime illustration, visual novel event CG, 16:9, young Japanese woman with blunt bangs in a gray hoodie, sitting at an office desk late at night, face lit by multiple monitors showing spreadsheets and code, turning around to look at the viewer with a slight smile, empty dark office, purple and blue monitor glow</pre></div>
+
+<h3 style="color:var(--nagisa)">渚</h3>
+<div class="prompt" style="--c:var(--nagisa)"><div class="lbl">基本の立ち絵</div><button class="copy" type="button">コピー</button><pre>23-year-old Japanese woman, emergency room nurse, light brown hair in a short high ponytail, bright energetic eyes, navy blue medical scrubs, hospital PHS phone clipped to pocket, pen light, wristwatch, hands on hips, confident friendly grin</pre></div>
+<div class="exprs"><span>通常：confident grin</span><span>笑顔：big laugh, eyes closed</span><span>怒り：hands on hips, scolding</span><span>悲しい：tired, after night shift, looking away</span><span>照れ：blushing, scratching cheek</span></div>
+<div class="prompt" style="--c:var(--nagisa)"><div class="lbl">スチル：点滴中に仕訳しないでください</div><button class="copy" type="button">コピー</button><pre>anime illustration, visual novel event CG, 16:9, first-person view from a hospital bed, a young nurse with light brown ponytail in navy scrubs leaning over and taking away a smartphone showing a spreadsheet, mildly angry but caring expression, IV drip stand, soft morning light through hospital curtains</pre></div>
+
+<h3>ほかの人物（男性・家族）</h3>
+<p class="muted">恋愛の相手ではないので優先度は低め。同じ絵柄で、表情は通常と笑顔の2つで十分。</p>
+<div class="prompt" style="--c:var(--ink)"><div class="lbl">墨谷 誠一（経理課長・54歳）</div><button class="copy" type="button">コピー</button><pre>54-year-old Japanese man, quiet accounting manager, short gray hair, rimless glasses, calm narrow eyes, plain gray suit, sleeve covers, holding an old wooden abacus, reserved expression</pre></div>
+<div class="prompt" style="--c:var(--ink)"><div class="lbl">早瀬 駆（営業の同期・22歳）</div><button class="copy" type="button">コピー</button><pre>22-year-old Japanese man, energetic sales rep, messy short brown hair, big grin, loosened tie, dark suit jacket over one shoulder, holding a crumpled receipt, friendly</pre></div>
+<div class="prompt" style="--c:var(--ink)"><div class="lbl">天城 豪（社長・52歳）</div><button class="copy" type="button">コピー</button><pre>52-year-old Japanese man, charismatic startup CEO, slicked back hair with gray streaks, tan skin, black turtleneck under an expensive blazer, holding a smartphone, wide confident smile, pointing forward</pre></div>
+<div class="prompt" style="--c:var(--ink)"><div class="lbl">宙（子ども・14歳）</div><button class="copy" type="button">コピー</button><pre>14-year-old Japanese child, junior high school uniform, short black hair, curious eyes, holding an old calculator, slightly rebellious but kind expression</pre></div>
+
+<h2>このあと作るもの <small>NEXT</small></h2>
+<ul>
+  <li>この設計で良ければ、第14話のプロポーズを4人に分岐させ、4章以降の家庭パートを相手ごとに書き分ける。</li>
+  <li>結を2章に登場させる話を1話足す。休日イベントを各章に入れる。</li>
+  <li>アルバム（スチル回収）と、ヒロインごとのED。</li>
+  <li>立ち絵は届いたものから差し替える。届くまでは今の絵とシルエットで進める。</li>
+</ul>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+  const pre = b.parentElement.querySelector('pre'), t = pre.textContent;
+  const done = () => { b.textContent = 'コピーしました'; setTimeout(() => b.textContent = 'コピー', 1600); };
+  try {
+    navigator.clipboard.writeText(t).then(done, () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '選択しました'; });
+  } catch (e) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+}));
+</script>
