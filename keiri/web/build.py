@@ -12,6 +12,7 @@ sys.path.insert(0, str(HERE.parent))
 
 from content import ACCOUNTS, DRILL, LESSONS, TERMS  # noqa: E402
 from content_jitsumu import CAREER, DOCS, PRACTICE_LESSONS, PROMOTE_RATIO  # noqa: E402
+from content_drill import JR, MC  # noqa: E402
 
 data = {
     "accounts": {k: {"cat": v["cat"], "desc": v["desc"]} for k, v in ACCOUNTS.items()},
@@ -21,6 +22,8 @@ data = {
     "docs": [{**d, "answer": sorted(d["answer"])} for d in DOCS],
     "career": [{k: v for k, v in s.items()} for s in CAREER],
     "promote": PROMOTE_RATIO,
+    "drill2": JR,
+    "mc2": MC,
 }
 chars = (HERE / "chars.js").read_text(encoding="utf-8")
 # 立ち絵：img/人物_表情.webp を data URI にして埋め込む（Streamlit でも表示できるように）

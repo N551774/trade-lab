@@ -99,6 +99,9 @@ h1 { font-size:22px; font-weight:900; margin:0 }
 .miss .a { color:var(--ok); font-weight:700; margin-top:2px }
 .toggle { display:flex; gap:6px; background:var(--soft); border-radius:10px; padding:4px; margin-top:12px }
 .toggle button { flex:1; border:0; background:none; border-radius:7px; padding:7px; font-size:14px; font-weight:700; color:var(--muted) }
+.toggle.goal { margin-top:14px; background:var(--card); border:1px solid var(--line) }
+.toggle.goal button { font-size:13px; padding:7px 2px }
+.toggle.goal button.on { background:var(--brand); color:var(--brand-ink) }
 .toggle button.on { background:var(--card); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.08) }
 @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important } }
 </style>
@@ -112,17 +115,21 @@ const DATA = /*__DATA__*/null;
 const CATS = [
   { id:'acc', name:'勘定科目', desc:'科目が5つのどれに入るか' },
   { id:'jr',  name:'仕訳', desc:'取引を借方・貸方に分ける' },
-  { id:'mcq', name:'経理の基本', desc:'用語、月次・年次の仕事' },
+  { id:'mcq', name:'用語・知識', desc:'簿記の決まり、税金の期限、実務の常識' },
   { id:'doc', name:'書類チェック', desc:'請求書・領収書の不備を見つける' },
   { id:'ev',  name:'実務の判断', desc:'現場で迷う場面の正しい対応' },
 ];
 const ITEMS = [];
-for (const [name, v] of Object.entries(DATA.accounts)) ITEMS.push({ id:'acc:' + name, cat:'acc', name, ans:v.cat, exp:v.desc });
-for (const d of DATA.drill) ITEMS.push({ id:'jr:' + d.id, cat:'jr', d });
-DATA.terms.forEach((t, i) => ITEMS.push({ id:'t:' + i, cat:'mcq', q:t.q, choices:t.choices, a:t.a, exp:t.exp }));
-for (const [l, arr] of Object.entries(DATA.checks)) arr.forEach((t, i) => ITEMS.push({ id:`c:${l}:${i}`, cat:'mcq', q:t.q, choices:t.choices, a:t.a, exp:t.exp }));
-for (const d of DATA.docs) ITEMS.push({ id:'d:' + d.id, cat:'doc', d });
-for (const s of DATA.career) for (const e of s.events) ITEMS.push({ id:'ev:' + e.tag, cat:'ev', e, rank:s.rank });
+for (const [name, v] of Object.entries(DATA.accounts)) ITEMS.push({ id:'acc:' + name, cat:'acc', lv:'3級', name, ans:v.cat, exp:v.desc });
+for (const d of DATA.drill) ITEMS.push({ id:'jr:' + d.id, cat:'jr', lv:'3級', d });
+for (const d of DATA.drill2) ITEMS.push({ id:'jr:' + d.id, cat:'jr', lv:d.lv, d });
+DATA.terms.forEach((t, i) => ITEMS.push({ id:'t:' + i, cat:'mcq', lv:'実務', q:t.q, choices:t.choices, a:t.a, exp:t.exp }));
+for (const [l, arr] of Object.entries(DATA.checks)) arr.forEach((t, i) => ITEMS.push({ id:`c:${l}:${i}`, cat:'mcq', lv:'実務', q:t.q, choices:t.choices, a:t.a, exp:t.exp }));
+for (const m of DATA.mc2) ITEMS.push({ id:'m:' + m.id, cat:'mcq', lv:m.lv, q:m.q, choices:m.choices, a:m.a, exp:m.exp });
+for (const d of DATA.docs) ITEMS.push({ id:'d:' + d.id, cat:'doc', lv:'実務', d });
+for (const s of DATA.career) for (const e of s.events) ITEMS.push({ id:'ev:' + e.tag, cat:'ev', lv:'実務', e, rank:s.rank });
+const GOALS = [['all', 'すべて'], ['3級', '簿記3級'], ['2級', '簿記2級'], ['実務', '経理の実務']];
+const IN = () => ITEMS.filter(x => S.goal === 'all' || x.lv === S.goal);
 const BY_ID = Object.fromEntries(ITEMS.map(x => [x.id, x]));
 const ACC_CATS = ['資産', '負債', '純資産', '収益', '費用'];
 
@@ -157,7 +164,7 @@ const KEY = 'keiri-drill-v1';
 let S = load();
 function load() {
   let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
-  return Object.assign({ items:{}, days:[], log:[], size:10 }, s || {});
+  return Object.assign({ items:{}, days:[], log:[], size:10, goal:'all' }, s || {});
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
@@ -181,7 +188,7 @@ function streak() {
 
 /* ───── セッションの組み立て ───── */
 function buildSession(opt = {}) {
-  const pool = ITEMS.filter(x => !opt.cat || x.cat === opt.cat);
+  const pool = IN().filter(x => !opt.cat || x.cat === opt.cat);
   if (opt.ids) return opt.ids.map(id => BY_ID[id]);
   if (opt.weak) return shuffle(pool.filter(x => S.items[x.id] && S.items[x.id].miss > 0 && S.items[x.id].box < 3)).slice(0, S.size);
   const due = shuffle(pool.filter(x => isDue(x.id))).sort((a, b) => S.items[a.id].due - S.items[b.id].due);
@@ -203,27 +210,30 @@ document.addEventListener('keydown', e => keyHandler && keyHandler(e));
 
 function home() {
   keyHandler = e => { if (e.key === 'Enter') start(); };
-  const due = ITEMS.filter(x => isDue(x.id)).length, fresh = ITEMS.filter(x => isNew(x.id)).length;
-  const done = ITEMS.filter(x => mastered(x.id)).length, weak = ITEMS.filter(x => S.items[x.id] && S.items[x.id].miss > 0 && S.items[x.id].box < 3).length;
+  const ALL = IN();
+  const due = ALL.filter(x => isDue(x.id)).length, fresh = ALL.filter(x => isNew(x.id)).length;
+  const done = ALL.filter(x => mastered(x.id)).length, weak = ALL.filter(x => S.items[x.id] && S.items[x.id].miss > 0 && S.items[x.id].box < 3).length;
   const todayN = S.log.filter(l => l.day === today()).reduce((a, l) => a + l.n, 0);
   const min = Math.max(2, Math.round(S.size * 0.35));
   app.innerHTML = `
     <div class="top"><h1>経理ドリル</h1><div class="streak">連続 <b>${streak()}</b> 日</div></div>
+    <div class="toggle goal" role="group" aria-label="目的">${GOALS.map(([k, t]) => `<button type="button" data-goal="${k}" class="${S.goal === k ? 'on' : ''}">${t}</button>`).join('')}</div>
     <div class="hero">
       <div class="small muted">今日の復習</div>
       <div class="big"><b class="num">${due}</b><span>問</span></div>
-      <div class="row"><span>覚えた ${done} / ${ITEMS.length}問</span><span>まだ出ていない ${fresh}問</span><span>今日解いた ${todayN}問</span></div>
+      <div class="row"><span>覚えた ${done} / ${ALL.length}問</span><span>まだ出ていない ${fresh}問</span><span>今日解いた ${todayN}問</span></div>
       <div class="toggle" role="group" aria-label="1回の問題数">${[5, 10, 20].map(n => `<button type="button" data-size="${n}" class="${S.size === n ? 'on' : ''}">${n}問</button>`).join('')}</div>
       <div class="stack"><button class="btn pri" id="go" type="button">はじめる（約${min}分）</button>
       ${weak ? `<button class="btn sec" id="weak" type="button">まちがえた問題だけ（${weak}問）</button>` : ''}</div>
     </div>
     <div class="sec-t">分野をえらぶ</div>
-    <div class="cats">${CATS.map(c => { const xs = ITEMS.filter(x => x.cat === c.id), m = xs.filter(x => mastered(x.id)).length, l = xs.filter(x => S.items[x.id] && !mastered(x.id)).length;
+    <div class="cats">${CATS.filter(c => ALL.some(x => x.cat === c.id)).map(c => { const xs = ALL.filter(x => x.cat === c.id), m = xs.filter(x => mastered(x.id)).length, l = xs.filter(x => S.items[x.id] && !mastered(x.id)).length;
       return `<button class="cat" type="button" data-cat="${c.id}"><span><span class="nm">${c.name}</span>　<span class="ct">${c.desc}</span></span><span class="num ct">${m}/${xs.length}</span><span class="bar"><i class="m" style="width:${m / xs.length * 100}%"></i><i class="l" style="width:${l / xs.length * 100}%"></i></span></button>`; }).join('')}</div>
     <div class="legend"><span><i style="background:var(--brand)"></i>覚えた（3回続けて正解）</span><span><i style="background:color-mix(in srgb, var(--brand) 35%, transparent)"></i>練習中</span></div>
     <p class="small muted" style="margin-top:22px">まちがえた問題は次の日にもう一度、正解するたびに2日後、4日後、8日後…と間をあけて出ます。記録はこの端末のブラウザに保存されます。</p>`;
   app.querySelector('#go').onclick = () => start();
   const w = app.querySelector('#weak'); if (w) w.onclick = () => start({ weak:true });
+  app.querySelectorAll('[data-goal]').forEach(b => b.onclick = () => { S.goal = b.dataset.goal; save(); home(); });
   app.querySelectorAll('[data-size]').forEach(b => b.onclick = () => { S.size = +b.dataset.size; save(); home(); });
   app.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => start({ cat:b.dataset.cat }));
 }
@@ -239,7 +249,7 @@ function start(opt = {}) {
 function ask() {
   const x = SES.list[SES.i], n = SES.list.length;
   const head = `<div class="qhead"><button class="x" type="button" id="quit" aria-label="やめる">×</button><div class="prog"><i style="width:${SES.i / n * 100}%"></i></div><span class="qn num">${SES.i + 1} / ${n}</span></div>`;
-  const kind = { acc:'勘定科目', jr:'仕訳', mcq:'経理の基本', doc:'書類チェック', ev:'実務の判断' }[x.cat] + (isNew(x.id) ? '　NEW' : '');
+  const kind = { acc:'勘定科目', jr:'仕訳', mcq:'用語・知識', doc:'書類チェック', ev:'実務の判断' }[x.cat] + `　${x.lv === '実務' ? '実務' : '簿記' + x.lv}` + (isNew(x.id) ? '　NEW' : '');
   let body = '', opts = [], multi = false;
   if (x.cat === 'acc') {
     body = `<div class="qtext">この科目は、どれに入る？</div><div class="acct">${esc(x.name)}</div>`;
