@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ふたり予報 リサーチ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 調査レポート。結論→市場と競合→ユーザー区分→診断の中身→毎日使う仕組み→通知→課金→リスク→MVP計画→出典。 */
+:root{ --bg:#F6F2F0; --paper:#FFFFFF; --paper2:#F8F3F1; --line:#E4DAD6; --ink:#24202A; --muted:#6F6874; --accent:#C2456B; --accent-soft:#F8E2E9; --ok:#2F7A5B; --warn:#9A5B12; --warn-soft:#F7EBD9;
+  --f-head:"Noto Serif JP",serif; --f-body:"Noto Sans JP",system-ui,sans-serif }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#16141A; --paper:#1F1C24; --paper2:#26222C; --line:#3A3440; --ink:#EEEAF0; --muted:#A39BA8; --accent:#F07FA0; --accent-soft:#3D2230; --ok:#6CCB9F; --warn:#E8B46A; --warn-soft:#3A2D1A; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16141A; --paper:#1F1C24; --paper2:#26222C; --line:#3A3440; --ink:#EEEAF0; --muted:#A39BA8; --accent:#F07FA0; --accent-soft:#3D2230; --ok:#6CCB9F; --warn:#E8B46A; --warn-soft:#3A2D1A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.85; font-size:15px}
+.wrap{max-width:840px; margin:0 auto; padding:28px 16px 56px}
+h1,h2,h3{font-family:var(--f-head); font-weight:900; margin:0; text-wrap:balance}
+h1{font-size:clamp(1.6rem,5.5vw,2.2rem)}
+h2{font-size:1.25rem; margin:40px 0 12px; padding-top:14px; border-top:2px solid var(--ink)}
+h3{font-size:1rem; margin:18px 0 6px}
+p{margin:8px 0}
+.eyebrow{font-size:.74rem; letter-spacing:.16em; color:var(--accent); font-weight:700}
+.lead{color:var(--muted)}
+.verdict{background:var(--ink); color:var(--bg); border-radius:16px; padding:18px 20px; margin-top:18px}
+.verdict ol{margin:8px 0 0; padding-left:1.3em}
+.verdict li{margin:5px 0}
+.tw{overflow-x:auto; background:var(--paper); border:1px solid var(--line); border-radius:14px; margin:10px 0}
+table{border-collapse:collapse; width:100%; font-size:.86rem; min-width:600px}
+th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{background:var(--paper2); font-size:.78rem; color:var(--muted)}
+.cards{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.c{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px}
+.c h3{margin-top:0}
+.c .src{font-size:.78rem; color:var(--muted)}
+.to{margin-top:8px; background:var(--accent-soft); border-radius:10px; padding:8px 12px; font-size:.9rem}
+.to b{color:var(--accent)}
+.warn{background:var(--warn-soft); border-left:4px solid var(--warn); border-radius:10px; padding:10px 14px; margin:10px 0; font-size:.92rem}
+ol.time{list-style:none; padding:0; margin:0; display:grid; gap:8px}
+ol.time li{display:grid; grid-template-columns:74px 1fr; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+ol.time b{font-family:var(--f-head); color:var(--accent)}
+code{background:var(--paper2); padding:1px 5px; border-radius:5px; font-size:.88em}
+.src-list{font-size:.8rem; color:var(--muted); padding-left:1.2em; overflow-wrap:anywhere}
+.src-list a{color:inherit}
+.tag{display:inline-block; font-size:.72rem; font-weight:700; padding:1px 8px; border-radius:99px; background:var(--accent-soft); color:var(--accent); margin-right:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="eyebrow">RESEARCH ・ 2026年11月</div>
+<h1>ふたり予報 ―― 恋人との相性と「ふたりの未来」を毎日のぞくアプリ</h1>
+<p class="lead">対象は16〜34歳。占いで気軽に入ってもらい、子どもの身長・世帯年収・働き方から「結婚したらどんな暮らしになるか」を見せる。アプリ名は仮。</p>
+
+<div class="verdict">
+<b>結論（先に）</b>
+<ol>
+<li><b>空いている場所がある。</b>占いアプリは「ひとりで見るもの」、カップルアプリ（Between・Pairy）は「写真・記念日の保管庫」、海外の Paired は「関係を良くする質問」。<b>占いのノリで入って、お金・子ども・仕事の現実まで見せる</b>カップル向けアプリは見当たらない。</li>
+<li><b>毎日開く理由は「今日のふたり予報」と「1日1問」。</b>天気予報のように毎朝変わる相性と、ふたりとも答えると相手の答えが見える質問。いちばん効く通知は「相手が答えたよ」。</li>
+<li><b>課金は「ふたりで1つの月額」＋「詳しい鑑定の単品」。</b>片方が払えば相手も使える（Paired と同じ形）。学生は安い料金。ガチャはやらない。</li>
+<li><b>区分は年齢×立場で5つ。</b>高校生／大学生・専門学生／新社会人／社会人／30代前半。高校生には年収・子どもの診断を出さない、課金の上限を低くする。</li>
+<li><b>一番のリスクは「相手の年収や会社で人を点数づけする」アプリに見えること。</b>点数は出さず「ふたりの暮らしの特徴とコツ」として見せる。相手の年収は相手本人に入力してもらう。</li>
+</ol>
+</div>
+
+<h2>1. 市場と競合</h2>
+<div class="cards">
+<div class="c"><h3>占いアプリ</h3>
+<p>ゲッターズ飯田・星ひとみなど。無料で入り、「詳しい鑑定」を単品で売る。LINE占いは1分110円〜のチャット鑑定。</p>
+<p class="src">App Store 掲載情報、AppBank 相性診断ランキング</p>
+<div class="to"><b>取り入れる：</b>詳しい鑑定の単品販売、月替わりの限定メニュー</div></div>
+<div class="c"><h3>カップル専用アプリ</h3>
+<p>Between は世界3,500万DL。共有アルバム・カレンダー・記念日カウント。Pairy はデートスポットのクーポンも。</p>
+<p class="src">App Store、ITmedia（2013）</p>
+<div class="to"><b>取り入れる：</b>記念日カウント、ふたりだけの空間。<b>違い：</b>保管庫ではなく「未来を見る」</div></div>
+<div class="c"><h3>Paired / Lovewick（海外）</h3>
+<p>無料は1日1問だけ。月額は1人が払えばふたりとも使える。課金画面は最初の質問に答えた直後。Lovewick は年額$29.99。</p>
+<p class="src">Amplitude 事例、App Store、ScreensDesign</p>
+<div class="to"><b>取り入れる：</b>1日1問、ふたり共有の月額、課金を見せるタイミング</div></div>
+<div class="c"><h3>性格相性診断</h3>
+<p>「100組超のカップルを分析」「臨床心理士監修」と科学らしさを売りにする。</p>
+<p class="src">App Store 掲載情報</p>
+<div class="to"><b>取り入れる：</b>価値観の質問。<b>違い：</b>「科学的に証明」とは言わない（景品表示法）</div></div>
+</div>
+<h3>ユーザーの数字</h3>
+<ul>
+<li>首都圏の大学生600人のうち、恋人がいるのは約3割、結婚したいのは約6割（ワタベウェディング、2025年）。→ 恋人がいない人も使える「ひとりモード」が必要。</li>
+<li>恋愛で生成AIを使いたい大学生は41.2%（GMO NIKKO、2026年）。→ AIの相談役は受け入れられやすい。</li>
+<li>20代後半の月給×12は、大企業473.9万円・中企業415.2万円・小企業377.0万円（賃金構造基本統計調査 令和6年、賞与なし）。→ 年収予測の元データにできる。</li>
+<li>子ども1人を大学まで国公立で出すと約1,100万円。私立大学なら文系717万円・理系822万円が大学分だけでかかる。→ 家計シミュレーションの元データ。</li>
+</ul>
+
+<h2>2. ユーザー区分（年齢×立場）</h2>
+<p>同じ「相性」でも、高校生と28歳の社会人では知りたいことが違う。最初の登録で生年月日と立場を聞き、見せる診断と料金を切り替える。</p>
+<div class="tw"><table>
+<tr><th>区分</th><th>知りたいこと</th><th>見せる診断</th><th>出さないもの</th><th>料金</th></tr>
+<tr><td><b>高校生</b><br>16〜17歳</td><td>相手の気持ち、続くかどうか、デート</td><td>占い・性格・今日のふたり予報・1日1問</td><td>年収、子どもの身長、結婚シミュ</td><td>月額は学生料金。課金は月1,500円まで</td></tr>
+<tr><td><b>大学生・専門学生</b><br>18〜22歳</td><td>将来も一緒にいられるか、就活で離れないか</td><td>上＋「もしも結婚したら」：志望業界から予想年収、子どもの身長</td><td>今の年収での判定（まだ働いていない）</td><td>学生料金（学生証は自己申告）</td></tr>
+<tr><td><b>新社会人</b><br>22〜25歳</td><td>忙しさ、すれ違い、転勤、同棲</td><td>上＋職種・会社の規模から「休み・転勤・残業」の相性</td><td>―</td><td>通常料金（初年度割引）</td></tr>
+<tr><td><b>社会人</b><br>26〜29歳</td><td>結婚・お金・子ども・家</td><td>全部。世帯年収、子育て費、共働き・育休の回し方</td><td>―</td><td>通常料金＋単品レポート</td></tr>
+<tr><td><b>30代前半</b><br>30〜34歳</td><td>結婚の決め手、家・子どもの時期</td><td>全部。住宅・子どもの人数ごとの家計</td><td>―</td><td>通常料金＋単品レポート</td></tr>
+</table></div>
+<p>15歳以下は登録不可にする（結婚・お金の話が中心で、保護者の同意の扱いも重くなるため）。</p>
+
+<h2>3. 診断の中身</h2>
+<p>「占い（遊び）」と「現実（データ）」を画面ではっきり分ける。混ぜると、占いを信じすぎる人と、数字を占い扱いする人の両方が出る。</p>
+<div class="tw"><table>
+<tr><th>診断</th><th>入力</th><th>出し方</th><th>根拠</th></tr>
+<tr><td><span class="tag">占い</span>星座・数秘術</td><td>ふたりの生年月日</td><td>相性％、今日のラッキーデート、月の運勢</td><td>遊びと明記。血液型は差別の問題があるので使わない</td></tr>
+<tr><td><span class="tag">性格</span>価値観の一致</td><td>ふたりが別々に30問（お金・家事・連絡の頻度・子ども・住む場所・休日）</td><td>一致している所／話し合った方がいい所</td><td>実際の結婚生活に一番関係する。ここが本命</td></tr>
+<tr><td><span class="tag">現実</span>子どもの身長</td><td>ふたりの身長</td><td>男の子：(父＋母＋13)÷2、女の子：(父＋母−13)÷2。<b>±9cmの幅</b>をグラフで</td><td>日本人の小児データによる式（Ogata ほか 2007）。一点の数字では出さない</td></tr>
+<tr><td><span class="tag">現実</span>世帯年収の予想</td><td>職種・業種・会社の規模・年齢（学生は志望業界）</td><td>5年後・10年後の世帯年収の幅</td><td>賃金構造基本統計調査（厚生労働省）</td></tr>
+<tr><td><span class="tag">現実</span>暮らしの予報</td><td>上の結果＋子どもの人数・住む場所</td><td>「楽しみポイント」「苦労しそうなポイントとコツ」。例：休みが合わない→平日デートの作り方</td><td>教育費（子供の学習費調査）、家計調査</td></tr>
+</table></div>
+<div class="warn"><b>やらないこと：</b>相手の年収や会社で「結婚相手としての点数」をつけること。「大企業だから◎」「年収が低いから×」は、炎上しやすく、使った人の関係を壊す。出すのは<b>ふたりの組み合わせで起きること</b>（休みのずれ、転勤、収入の差）と、その乗り越え方。</div>
+
+<h2>4. 毎日使いたくなる仕組み</h2>
+<ol class="time">
+<li><b>毎朝</b><span><b>今日のふたり予報</b>：晴れ・くもり・雨で今日の相性。「今日は聞き役が吉」などひと言。見るのに10秒。</span></li>
+<li><b>毎日</b><span><b>1日1問</b>：「結婚式はする？」など。ふたりとも答えると相手の答えが開く。答えは価値観診断に足されていく。</span></li>
+<li><b>毎日</b><span><b>ふたりの連続日数</b>：ふたりとも答えた日だけ伸びる。週1回だけ休める「おやすみ券」で、途切れて辞めるのを防ぐ。</span></li>
+<li><b>週1</b><span><b>相手の答え当てクイズ</b>：相手が何と答えるかを当てる。日曜の夜に配信。</span></li>
+<li><b>月1</b><span><b>未来レポート更新</b>：1か月分の答えで、暮らしの予報と相性が変わる。「先月より○○が近づいた」。</span></li>
+<li><b>記念日</b><span><b>記念日カウント</b>：付き合って100日・1年など。前日に「明日だよ」。</span></li>
+<li><b>季節</b><span>クリスマス・バレンタイン・誕生日の限定診断（単品販売の売り場にもなる）。</span></li>
+</ol>
+<p>恋人がいない人・別れた人向けに<b>ひとりモード</b>（片思いの相手との相性、自分の価値観診断）を用意する。別れたときにアプリごと消されるのを防ぐ。別れたら、ふたりのデータは消すか「思い出」として片方ずつ残すかを選べるようにする。</p>
+
+<h2>5. 通知</h2>
+<div class="tw"><table>
+<tr><th>通知</th><th>きっかけ</th><th>高校生・大学生</th><th>社会人</th></tr>
+<tr><td>今日のふたり予報</td><td>毎朝</td><td>7:30（授業中は送らない）</td><td>7:45（通勤中）</td></tr>
+<tr><td><b>「〇〇さんが今日の質問に答えたよ」</b></td><td>相手が答えたとき</td><td>すぐ</td><td>すぐ（深夜は朝にまとめる）</td></tr>
+<tr><td>連続日数があと少しで切れる</td><td>まだ答えていない日の夜</td><td>21:00</td><td>21:30</td></tr>
+<tr><td>記念日の前日</td><td>記念日</td><td>19:00</td><td>19:00</td></tr>
+<tr><td>未来レポート更新</td><td>月初</td><td>土曜の昼</td><td>土曜の昼</td></tr>
+</table></div>
+<ul>
+<li>1日2回まで。23時〜7時は送らない。種類ごとにオン・オフできる。</li>
+<li>通知の許可は、起動直後ではなく<b>最初の診断結果を見た直後</b>に聞く（「明日の予報を朝お知らせしますか？」）。起動直後に聞くと許可率が下がるという調査がある。</li>
+<li>相手の答えの中身は通知に出さない（ロック画面で他人に見られるため）。</li>
+</ul>
+
+<h2>6. 課金</h2>
+<div class="tw"><table>
+<tr><th>種類</th><th>中身</th><th>値段（案）</th></tr>
+<tr><td>無料</td><td>今日のふたり予報、1日1問、星座の相性、子どもの身長（一点の数字の目安だけ）、広告あり</td><td>0円</td></tr>
+<tr><td><b>ふたりプラス</b>（月額）</td><td>1人が払えばふたりとも使える。過去の質問すべて、価値観診断の詳細、未来レポート、家計シミュ、広告なし</td><td>学生 月380円／社会人 月680円（年額 5,800円）</td></tr>
+<tr><td>単品の詳しい鑑定</td><td>「結婚の時期」「2027年のふたり」など。季節限定</td><td>250〜600円</td></tr>
+<tr><td>結婚準備レポート</td><td>家計・子育て・住まいをまとめた保存用レポート（社会人向け）</td><td>980円</td></tr>
+<tr><td>提携紹介（社会人のみ）</td><td>結婚式場、指輪、お金の相談（FP）。紹介料をもらう。広告と分かるように表示</td><td>ユーザーは0円</td></tr>
+</table></div>
+<ul>
+<li>課金画面を出すのは<b>最初の相性結果を見た直後</b>（Paired と同じ）。「無料で見られるのはここまで／プラスならここまで」を並べて見せる。</li>
+<li>ガチャ・確率で当たる商品はやらない（相性診断の信頼が崩れる。未成年の高額課金問題も避けられる）。</li>
+<li>未成年は親の同意なしの課金を後から取り消せる（民法5条）。高校生は月額上限を設け、購入前に「保護者の同意を得ていますか」と聞く。</li>
+</ul>
+
+<h2>7. リスクと対策</h2>
+<div class="tw"><table>
+<tr><th>リスク</th><th>対策</th></tr>
+<tr><td>相手に無断で年収・会社を入力される</td><td>ふたりの診断は、招待リンクで相手がつながってから。相手の年収・身長は相手本人が入力。ひとりで使うときは「だいたいの幅」だけ</td></tr>
+<tr><td>年収・会社の規模で人をランク付けしているように見える</td><td>点数を出さない。言い方のチェックリストを作る（「格上」「勝ち組」などの言葉を使わない）</td></tr>
+<tr><td>占いを本気にしすぎる</td><td>占いの画面に「遊びとして楽しんでください」。別れを勧める表現は出さない</td></tr>
+<tr><td>「科学的」と言いすぎる（景品表示法）</td><td>身長・年収は「統計による目安」と幅を必ず出す。出典を画面から見られるようにする</td></tr>
+<tr><td>恋人の束縛に使われる</td><td>位置情報・既読の監視機能は作らない</td></tr>
+<tr><td>個人情報（生年月日・年収・身長）</td><td>個人情報保護法に沿ったプライバシーポリシー。退会・別れたらすぐ消せる</td></tr>
+</table></div>
+
+<h2>8. 作る順番（案）</h2>
+<ol class="time">
+<li><b>第1段階</b><span><b>試作品（このリポジトリ内、HTML1枚）</b>：登録（年齢・立場）、占い相性、価値観30問、子どもの身長、家計シミュ、今日のふたり予報、1日1問、連続日数、課金画面（デモ・請求なし）。データは端末に保存。ふたり分は1台で交互に入力。</span></li>
+<li><b>第2段階</b><span><b>ふたりをつなぐ</b>：Supabase などでログインと招待リンク、相手が答えたら届く通知（Web Push）。</span></li>
+<li><b>第3段階</b><span><b>スマホアプリ化</b>：App Store / Google Play の課金、ストア審査、提携紹介。</span></li>
+</ol>
+<h3>見る数字</h3>
+<p>ふたりがつながった割合／ふたりとも答えた日の割合／翌日・7日後・30日後に開いた割合／通知の許可率／有料になった割合（区分ごと）。</p>
+
+<h2>出典</h2>
+<ul class="src-list">
+<li><a href="https://www.appbank.net/app-rank/hobby/uranai/aisyo-test">AppBank 相性診断アプリランキング</a></li>
+<li><a href="https://apps.apple.com/jp/app/id1523246658">性格相性診断（App Store）</a></li>
+<li><a href="https://apps.apple.com/jp/app/id595265709">LINE占い（App Store）</a></li>
+<li><a href="https://apps.apple.com/jp/app/%E5%85%AC%E5%BC%8F%E6%98%9F%E3%81%B2%E3%81%A8%E3%81%BF%E3%81%AE%E5%8D%A0%E3%81%84-2026%E5%B9%B4%E3%81%AE%E9%81%8B%E5%8B%A2%E3%82%92%E9%A9%9A%E7%95%B0%E3%81%AE%E7%9A%84%E4%B8%AD%E5%8A%9B%E3%81%A7%E5%8D%A0%E3%81%84%E3%81%BE%E3%81%99/id6447930100">公式 星ひとみの占い（App Store）</a></li>
+<li><a href="https://apps.apple.com/jp/app/between-%E3%83%93%E3%83%88%E3%82%A6%E3%82%A3%E3%83%BC%E3%83%B3-%E3%82%AB%E3%83%83%E3%83%97%E3%83%AB%E5%B0%82%E7%94%A8%E3%82%A2/id458035189">Between（App Store）</a>／<a href="https://www.itmedia.co.jp/news/article/1310/08/1131008151/">ITmedia：Between の狙い（2013）</a>／<a href="https://vulcanpost.com/3488/japanese-couple-app-pairy-is-on-a-mission-to-connect-human-beings-with-one-another/">Vulcan Post：Pairy</a></li>
+<li><a href="https://amplitude.com/blog/paired-amplitude-engagement-retention">Amplitude：Paired の継続率改善</a>／<a href="https://screensdesign.com/showcase/paired-couples-relationship">ScreensDesign：Paired</a>／<a href="https://apps.apple.com/app/id1516199115">Lovewick（App Store）</a>／<a href="https://mhealth.jmir.org/2025/1/e55433/PDF">JMIR mHealth 2025：Paired の研究</a></li>
+<li><a href="https://www.luft.co.jp/cgi/child-height.php">子どもの身長予測（Ogata ほか 2007 の式）</a>／<a href="https://toyokeizai.net/articles/-/864581">東洋経済オンライン</a>／<a href="https://www.mayoclinic.org/healthy-lifestyle/fitness/expert-answers/exercise/faq-20057990">Mayo Clinic</a>／<a href="https://pubmed.ncbi.nlm.nih.gov/10451401/">PubMed：親の身長による予測の限界</a></li>
+<li><a href="https://www.mhlw.go.jp/toukei/itiran/roudou/chingin/kouzou/z2025/dl/sokuhou.pdf">厚生労働省 令和7年賃金構造基本統計調査</a>／<a href="https://www.jac-recruitment.jp/market/?p=96656">JAC：20代の企業規模別年収（令和6年）</a></li>
+<li><a href="https://financial-field.com/living/entry-426305">ファイナンシャルフィールド：大学卒業までの費用</a>／<a href="https://financial-field.com/living/entry-177937">同：公立・私立の差</a></li>
+<li><a href="https://dime.jp/genre/1957204/">DIME：大学生の恋愛調査（ワタベウェディング）</a>／<a href="https://webtan.impress.co.jp/n/2026/10/14/53433">Web担当者Forum：Z世代とAI恋愛相談（GMO NIKKO）</a>／<a href="https://prtimes.jp/main/html/rd/p/000000140.000029212.html">MERY Z世代研究所</a></li>
+<li><a href="https://www.pushwoosh.com/ja/blog/push-notification-benchmarks/">Pushwoosh：通知のベンチマーク</a>／<a href="https://www.pushwoosh.com/ja/blog/increase-push-notifications-opt-in/">同：許可率を上げる方法</a></li>
+<li><a href="https://www.kokusen.go.jp/t_box/data/t_box-faq_qa2021_17.html">国民生活センター：未成年者の課金</a>／<a href="https://www.bengo4.com/c_8/c_1844/c_1872/n_20948/">弁護士ドットコム</a></li>
+</ul>
+</div>
+</body>
+</html>
