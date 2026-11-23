@@ -413,6 +413,8 @@ function topBar(title,back=true){return `<div class="top">${back?'<button class=
 function seg2(name,arr,val){return `<div class="seg" data-name="${name}">${arr.map(([k,l])=>`<button type="button" data-a="segpick" data-v="${k}" class="${val===k?'on':''}">${l}</button>`).join('')}</div>`}
 function sel(name,arr,val,ph='えらんでください'){return `<select data-name="${name}"><option value="">${ph}</option>${arr.map(([k,l])=>`<option value="${k}" ${val===k?'selected':''}>${l}</option>`).join('')}</select>`}
 function plusLock(text){return `<div class="lockmask"><p class="small"><b>ふたりプラス</b>で見られます</p><p class="small muted">${text}</p><button class="btn sm" data-a="paywall">くわしく見る</button></div>`}
+/* 確認ダイアログの代わり：5秒以内にもう一度押すと実行 */
+function sure(k,msg){if(UI.armed===k&&Date.now()-UI.armedAt<5000){UI.armed=null;return true}UI.armed=k;UI.armedAt=Date.now();toast(msg+' もう一度押すと実行します');return false}
 function toast(t){UI.toast=t;render();clearTimeout(toast._t);toast._t=setTimeout(()=>{UI.toast=null;render()},4200)}
 function notify(title,body){try{if('Notification'in window&&Notification.permission==='granted')new Notification(title,{body})}catch(e){}}
 
@@ -799,7 +801,7 @@ const ACT={
  vqA(v){const qs=valueQs();S.values[UI.vq.who][qs[UI.vq.i][1]]=+v;save();
   if(UI.vq.i<qs.length-1){UI.vq.i++;render()}else{const done=valuesDone('me')&&valuesDone('pt');UI.vq=null;window.scrollTo(0,0);render();toast(S.mode==='solo'?'答えました。分野ごとの傾向を見てみよう':done?'ふたりとも答えました。結果を見てみよう':'おつかれさま！つぎは相手の番です')}},
  vqPrev(){UI.vq.i=Math.max(0,UI.vq.i-1);render()},
- vqReset(){if(!confirm('ふたりの答えを消して、答え直しますか？'))return;S.values={me:{},pt:{}};save();render()},
+ vqReset(){if(!sure('vqReset','ふたりの答えを消して、答え直しますか？'))return;S.values={me:{},pt:{}};save();render()},
  paywall(){UI.modal='pay';UI.pay='m';UI.consent=false;render()},
  payPick(v){UI.pay=v;render()},
  consent(v,el){UI.consent=el.checked;render()},
@@ -822,9 +824,9 @@ const ACT={
  photoGo(){const left=S.plus?Math.max(0,3-(S.photoMonth===ym()?S.photoUses:0)):(S.photoFree?0:1);
   if(left<=0){UI.modal='pay';return render()}
   if(S.plus){if(S.photoMonth!==ym()){S.photoMonth=ym();S.photoUses=0}S.photoUses++}else S.photoFree=true;save();UI.photoDone=true;render()},
- memory(){if(!confirm('ふたりのデータを消して、思い出カードだけ残しますか？'))return;const ms=milestones();const mem=(S.memories||[]).concat([{name:S.pt.name,since:S.since,days:ms?ms.day:0,best:S.streak.best||0}]);
+ memory(){if(!sure('memory','ふたりのデータを消して、思い出カードだけ残しますか？'))return;const ms=milestones();const mem=(S.memories||[]).concat([{name:S.pt.name,since:S.since,days:ms?ms.day:0,best:S.streak.best||0}]);
   const me=S.me,vals=S.values.me;S=newState({me,pt:null});S.values.me=vals;S.memories=mem;S.breakupAt=today();save();UI={...UI,step:0,view:null,tab:'home',modal:null};render();toast('ひとりモードになりました。思い出カードは設定に残っています')},
- wipe(){if(!confirm('すべてのデータを消します。元に戻せません。'))return;try{localStorage.removeItem(KEY)}catch(e){}S=null;UI={...UI,step:0,view:null,tab:'home',modal:null};render()}};
+ wipe(){if(!sure('wipe','すべてのデータを消します。元に戻せません。'))return;try{localStorage.removeItem(KEY)}catch(e){}S=null;UI={...UI,step:0,view:null,tab:'home',modal:null};render()}};
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!el)return;
  if(el.dataset.a==='closeModal'&&el.classList.contains('modal')&&e.target!==el)return;
  if(el.tagName==='INPUT'&&el.type==='checkbox'){ACT[el.dataset.a](el.dataset.v,el,e);return}
