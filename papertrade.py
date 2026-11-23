@@ -285,7 +285,8 @@ def swing_rule_label(r: dict) -> str:
     st_ = "損切り=標準" if r["stop"] == "標準" else f"損切り=ATR×{r['stop']}"
     tg = "利確なし(期限まで)" if r["target_r"] is None else f"利確={r['target_r']}R"
     ea = "／決算回避" if r.get("avoid_earnings") else ""
-    return f"{'相場フィルターあり' if r['filter'] else 'フィルターなし'}{ea}／{st_}／{tg}／{r['patterns']}"
+    rk = f"／並べ方={r['rank']}" if r.get("rank") and r.get("rank") != "品質（標準）" else ""
+    return f"{'相場フィルターあり' if r['filter'] else 'フィルターなし'}{ea}／{st_}／{tg}／{r['patterns']}{rk}"
 
 
 def prepare_swing(frames: dict[str, pd.DataFrame], index_frames: dict[str, pd.DataFrame],
@@ -320,13 +321,38 @@ def prepare_swing(frames: dict[str, pd.DataFrame], index_frames: dict[str, pd.Da
                 dt0 = d.index[i]
                 horizon = dt0 + pd.Timedelta(days=int(cfg["hold"] * 1.5) + 4)
                 earn = any(dt0 < x <= horizon for x in earnings.get(t, []))
+                row = d.iloc[i]
+                cl = float(row["Close"])
+                feats = {"rsi": float(row["RSI14"]), "d50": (cl / float(row["SMA50"]) - 1) * 100 if row["SMA50"] else 0.0,
+                         "atrp": a / cl * 100, "mom20": (cl / float(d["Close"].iloc[i - 20]) - 1) * 100,
+                         "volr": float(row["Volume"] / row["VOLMA"]) if row["VOLMA"] else 1.0}
                 lst.append({"i": i, "date": dt0, "setup": name, "how": cfg["how"], "hold": cfg["hold"],
-                            "entry": e, "stop": s, "target": tg, "atr": a, "q": q, "earn": earn})
+                            "entry": e, "stop": s, "target": tg, "atr": a, "q": q, "earn": earn, **feats})
         raw[t] = lst
         bars[t] = {"o": d["Open"].to_numpy(), "h": d["High"].to_numpy(), "l": d["Low"].to_numpy(),
                    "c": d["Close"].to_numpy(), "idx": d.index}
     days = sorted(set().union(*[set(b["idx"]) for b in bars.values()]))
     return {"bars": bars, "raw": raw, "regime": regime, "days": days}
+
+
+# 候補が空き枠より多い日に「どれから買うか」の並べ方（小さい値ほど先に買う）
+RANKS = {
+    "品質（標準）": lambda s: -s["q"],
+    "RSIが低い順": lambda s: s.get("rsi", 50),
+    "RSIが高い順": lambda s: -s.get("rsi", 50),
+    "50日線に近い順": lambda s: abs(s.get("d50", 0)),
+    "勢いが強い順（20日上昇率）": lambda s: -s.get("mom20", 0),
+    "勢いが弱い順": lambda s: s.get("mom20", 0),
+    "値動きが小さい順": lambda s: s.get("atrp", 0),
+    "値動きが大きい順": lambda s: -s.get("atrp", 0),
+    "出来高が多い順": lambda s: -s.get("volr", 1),
+}
+
+
+def rank_key(s: dict, name: str):
+    f = RANKS.get(name) or RANKS.get("品質（標準）")
+    v = f(s)
+    return v if np.isfinite(v) else 0.0
 
 
 def simulate_swing(prep: dict, names: dict, capital_jpy: float, risk_pct: float, fx: float, rule: dict,
@@ -406,7 +432,7 @@ def simulate_swing(prep: dict, names: dict, capital_jpy: float, risk_pct: float,
                                "R": (ex - ps["entry_px"]) / (ps["entry_px"] - ps["stop"])})
                 del positions[t]
         # 2) 今日のシグナル → 翌日以降に約定（質の高い順に、空き枠ぶんだけ）
-        cands = sorted(by_day.get(day, []), key=lambda x: -x[1]["q"])
+        cands = sorted(by_day.get(day, []), key=lambda x: rank_key(x[1], rule.get("rank", "品質")))
         for t, s in cands:
             if len(positions) + len(pending) >= max_pos:
                 break
@@ -438,6 +464,23 @@ def simulate_swing(prep: dict, names: dict, capital_jpy: float, risk_pct: float,
                       "買値": pdx["entry"], "損切り": pdx["stop"], "現在値": prep["bars"][t]["c"][-1],
                       "含み損益(円)": 0.0, "株数": 0, "残り日数": None})
     return tr, pd.DataFrame(opens)
+
+
+def research_rank(prep_small: dict, prep_wide: dict, names: dict, capital_jpy, risk_pct, fx, rule: dict,
+                  test_frac: float = 0.4, **kw) -> dict:
+    """並べ方ごとに、今の対象（54銘柄）と拡大した対象で、学習・検証期間の成績を比べる"""
+    usable = prep_wide["days"][200:]
+    start, split = usable[0], usable[int(len(usable) * (1 - test_frac))]
+    rows = []
+    for rk in RANKS:
+        for label, prep in (("54銘柄", prep_small), ("拡大", prep_wide)):
+            tr = simulate_swing(prep, names, capital_jpy, risk_pct, fx, {**rule, "rank": rk}, start=start, **kw)
+            a, b = tr[tr["買い日"] < split], tr[tr["買い日"] >= split]
+            rows.append({"並べ方": rk, "対象": label,
+                         "学習_回数": len(a), "学習_平均R": round(a["R"].mean(), 3) if len(a) else None,
+                         "学習_損益": round(a["損益(円)"].sum()), "検証_回数": len(b),
+                         "検証_平均R": round(b["R"].mean(), 3) if len(b) else None, "検証_損益": round(b["損益(円)"].sum())})
+    return {"rows": rows, "from": start, "split": split, "end": usable[-1]}
 
 
 def research_swing(frames, names, index_frames, capital_jpy, risk_pct, fx, test_frac=0.4, min_trades=20,
