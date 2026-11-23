@@ -31,6 +31,9 @@ import strategies as strat
 import scalp
 import importlib as _il
 _il.reload(scalp)  # サーバーが古いまま残らないよう、毎回読み直す（小さいので速い）
+_il.reload(pt)
+if getattr(storage, "VERSION", 1) < 2:  # 古い保存処理がサーバーに残っていたら読み直す
+    _il.reload(storage)
 
 UP, DOWN = charts.UP, charts.DOWN
 # Streamlitのバージョン差を吸収（古い版は plotly_chart に width 指定ができない）
@@ -1064,7 +1067,11 @@ def forward_section():
         stale = time.time() - st.session_state.get("fw_checked", 0) > 1800
         if c1.button("🔄 記録を更新") or stale:
             with st.spinner("終わった取引日を記録中…（初回は1分ほど）"):
-                msgs = run_forward_update(store)
+                try:
+                    msgs = run_forward_update(store)
+                except Exception as e_:  # 保存先の一時エラーで画面を止めない
+                    msgs = []
+                    st.warning(f"記録の保存に一時的に失敗しました（{type(e_).__name__}）。少し待って「🔄 記録を更新」を押してください。")
             st.session_state["fw_checked"] = time.time()
             if msgs:
                 st.toast("、".join(msgs))
@@ -1437,6 +1444,53 @@ if page == P_PAPER:
         st.session_state.pop("scan", None)
         st.rerun()
     st.caption(f"いまの対象：{'拡大（約220銘柄）' if data.WIDE else '標準（54銘柄）'}")
+
+    st.divider()
+    st.markdown("### 🏁 候補の並べ方の検証（どれから買うか）")
+    st.markdown("同時に持てるのは5銘柄までなので、候補が多い日は「どれから買うか」で成績が変わります。"
+                "9通りの並べ方を、今の54銘柄と拡大した約220銘柄の両方で、学習・検証期間に分けて比べます。")
+    if st.button("🏁 並べ方を検証する（3〜6分）"):
+        rule_ = load_rule(swing=True)
+        wide_tk = [(n, t) for _, n, t in data.universe(ALL_CATS, wide=True) if data.is_tradable(t)]
+        narrow_set = {t for _, _, t in data.universe(ALL_CATS, wide=False)}
+        with st.spinner(f"{len(wide_tk)}銘柄の日足（5年分）を取得中…"):
+            got = data.fetch_many([t for _, t in wide_tk], "5y", "1d") if use_yahoo else \
+                {t: fetch(t, "5y", "1d", False) for _, t in wide_tk}
+            idx_ = {}
+            for k_, it_ in (("US", "^GSPC"), ("JP", "^N225")):
+                try:
+                    idx_[k_] = fetch(it_, "5y", "1d", use_yahoo)
+                except Exception:
+                    idx_[k_] = None
+        with st.spinner("9通り×2つの対象で仮想売買を計算中…"):
+            pw_ = pt.prepare_swing(got, idx_, None)
+            ps_ = pt.prepare_swing({t: got[t] for t in got if t in narrow_set}, idx_, None)
+            rr_ = pt.research_rank(ps_, pw_, {t: n for n, t in wide_tk}, capital, risk_pct, fx, rule_,
+                                   allow_odd_lot=True, cost_pct=0.1)
+        info_ = {"rows": rr_["rows"], "from": f"{rr_['from']:%Y/%m/%d}", "split": f"{rr_['split']:%Y/%m/%d}",
+                 "end": f"{rr_['end']:%Y/%m/%d}", "at": datetime.now(JST).strftime("%Y-%m-%d %H:%M")}
+        storage.put("rank_test", info_)
+    rk_ = storage.get("rank_test")
+    if rk_:
+        st.caption(f"学習：{rk_['from']}〜　検証：{rk_['split']}〜{rk_['end']}（実行 {rk_['at']}）")
+        dfr = pd.DataFrame(rk_["rows"])
+        st.dataframe(dfr, hide_index=True, width="stretch")
+        base_ = dfr[(dfr["並べ方"] == "品質（標準）") & (dfr["対象"] == "54銘柄")].iloc[0]
+        cand_ = dfr[dfr["対象"] == "54銘柄"].sort_values("学習_平均R", ascending=False).iloc[0]
+        cw_ = dfr[(dfr["並べ方"] == cand_["並べ方"]) & (dfr["対象"] == "拡大")].iloc[0]
+        st.markdown(f"**学習期間で一番良かった並べ方**：{cand_['並べ方']}（54銘柄：学習 {cand_['学習_平均R']:+.2f}R／検証 {cand_['検証_平均R']:+.2f}R、"
+                    f"拡大：学習 {cw_['学習_平均R']:+.2f}R／検証 {cw_['検証_平均R']:+.2f}R）")
+        better_ = (cand_["並べ方"] != base_["並べ方"] and cand_["検証_平均R"] > base_["検証_平均R"]
+                   and cand_["検証_損益"] > base_["検証_損益"])
+        if better_:
+            st.success("未使用の検証期間でも、今の並べ方より良い成績でした。採用できます。")
+            if st.button(f"並べ方「{cand_['並べ方']}」を採用する"):
+                save_rule({**load_rule(swing=True), "rank": cand_["並べ方"]}, swing=True)
+                st.rerun()
+        else:
+            st.warning("今の並べ方（品質順）を上回る並べ方は、検証期間では確認できませんでした。今のままがおすすめです。")
+    cur_rank = (load_rule(swing=True) or {}).get("rank", "品質（標準）")
+    st.caption(f"いまの並べ方：{cur_rank}")
 
 
 # ===========================================================================
