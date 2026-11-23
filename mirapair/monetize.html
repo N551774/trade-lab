@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ミラペア 収益化</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 収益化の調査と施策。結論→単価→出し分け→導線→試算→法律→やらないこと→出典。 */
+:root{ --bg:#F6F2F0; --paper:#FFFFFF; --paper2:#F8F3F1; --line:#E4DAD6; --ink:#24202A; --muted:#6F6874; --accent:#C2456B; --accent-soft:#F8E2E9; --ok:#2F7A5B; --warn:#9A5B12; --warn-soft:#F7EBD9;
+  --f-head:"Noto Serif JP",serif; --f-body:"Noto Sans JP",system-ui,sans-serif }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#16141A; --paper:#1F1C24; --paper2:#26222C; --line:#3A3440; --ink:#EEEAF0; --muted:#A39BA8; --accent:#F07FA0; --accent-soft:#3D2230; --ok:#6CCB9F; --warn:#E8B46A; --warn-soft:#3A2D1A; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16141A; --paper:#1F1C24; --paper2:#26222C; --line:#3A3440; --ink:#EEEAF0; --muted:#A39BA8; --accent:#F07FA0; --accent-soft:#3D2230; --ok:#6CCB9F; --warn:#E8B46A; --warn-soft:#3A2D1A; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f-body); line-height:1.85; font-size:15px}
+.wrap{max-width:840px; margin:0 auto; padding:28px 16px 56px}
+h1,h2,h3{font-family:var(--f-head); font-weight:900; margin:0; text-wrap:balance}
+h1{font-size:clamp(1.6rem,5.5vw,2.2rem)}
+h2{font-size:1.25rem; margin:40px 0 12px; padding-top:14px; border-top:2px solid var(--ink)}
+h3{font-size:1rem; margin:18px 0 6px}
+p{margin:8px 0}
+.eyebrow{font-size:.74rem; letter-spacing:.16em; color:var(--accent); font-weight:700}
+.lead{color:var(--muted)}
+.verdict{background:var(--ink); color:var(--bg); border-radius:16px; padding:18px 20px; margin-top:18px}
+.verdict ol{margin:8px 0 0; padding-left:1.3em}
+.verdict li{margin:5px 0}
+.tw{overflow-x:auto; background:var(--paper); border:1px solid var(--line); border-radius:14px; margin:10px 0}
+table{border-collapse:collapse; width:100%; font-size:.86rem; min-width:600px}
+th,td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{background:var(--paper2); font-size:.78rem; color:var(--muted)}
+.cards{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.c{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px}
+.c h3{margin-top:0}
+.c .src{font-size:.78rem; color:var(--muted)}
+.to{margin-top:8px; background:var(--accent-soft); border-radius:10px; padding:8px 12px; font-size:.9rem}
+.to b{color:var(--accent)}
+.warn{background:var(--warn-soft); border-left:4px solid var(--warn); border-radius:10px; padding:10px 14px; margin:10px 0; font-size:.92rem}
+ol.time{list-style:none; padding:0; margin:0; display:grid; gap:8px}
+ol.time li{display:grid; grid-template-columns:74px 1fr; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+ol.time b{font-family:var(--f-head); color:var(--accent)}
+code{background:var(--paper2); padding:1px 5px; border-radius:5px; font-size:.88em}
+.src-list{font-size:.8rem; color:var(--muted); padding-left:1.2em; overflow-wrap:anywhere}
+.src-list a{color:inherit}
+.tag{display:inline-block; font-size:.72rem; font-weight:700; padding:1px 8px; border-radius:99px; background:var(--accent-soft); color:var(--accent); margin-right:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="eyebrow">MONETIZE ・ 2026年11月</div>
+<h1>ミラペアの収益化 ―― 結婚式場・結婚相談所・マッチングアプリへの送客</h1>
+<p class="lead">月額課金に加えて、提携先へ送客して成果報酬を受け取る。カップルのアプリなので「誰に・いつ・何を」出すかの設計がすべて。</p>
+
+<div class="verdict">
+<b>結論（先に）</b>
+<ol>
+<li><b>一番の収益源は結婚式場（ブライダルフェアの来館予約）。</b>1件の成果報酬が数千〜1万円と高く、「結婚したらどうなる？」を見に来るミラペアのユーザーと目的が同じ。結婚費用シミュと、写真で見る未来の「結婚式のふたり」から自然につなげる。</li>
+<li><b>マッチングアプリ・結婚相談所の広告は、交際中のふたりには絶対に出さない。</b>「別れたら？」と言っているのと同じで、アプリの信頼が壊れる。出すのは<b>恋人がいない人向けの「ひとりモード」</b>と、別れてから30日以上たった人だけ。</li>
+<li><b>出すタイミングは「結婚準備ステージ」で決める。</b>付き合った期間、1日1問で「結婚は1〜2年以内」と答えた、価値観の「結婚は早めに」など、アプリの中の行動から判定。ふたりとも「結婚準備のおすすめを受け取る」をオンにしたときだけ出す。</li>
+<li><b>すべてに「PR」の表示をつける。</b>2023年10月からステマ規制（景品表示法）があり、広告と分からない表示は違法。おすすめの中身もアプリの判断ではなく提携先の広告であることを明記する。</li>
+<li><b>ふたりの答えは提携先に渡さない。</b>渡すのは「アプリから来た」という情報だけ。年収・価値観・身長を広告主に売るのは、ユーザーにも法律（第三者提供の同意）にも重すぎる。</li>
+</ol>
+</div>
+
+<h2>1. 送客の単価（公開情報で見つかった例）</h2>
+<p>ASP（アフィリエイトの仲介会社）の案件は時期と条件で変わる。下の金額は記事に載っていた例で、<b>契約前に A8.net などの案件ページで必ず確認する</b>。</p>
+<div class="tw"><table>
+<tr><th>ジャンル</th><th>成果の条件</th><th>報酬の例</th><th>ミラペアとの相性</th></tr>
+<tr><td><b>結婚式場</b></td><td>ブライダルフェアの新規来館</td><td>ハナユメ 10,000円、プリンセスブライダルフェア 6,000円、ブラフェス 4,000円。相場は8,000〜10,000円という見方も</td><td>◎ 交際中の社会人ペアにそのまま合う</td></tr>
+<tr><td><b>結婚相談所</b></td><td>無料相談・資料請求／入会</td><td>ウェルスマ：無料相談 4,000円・入会 20,000円。オーネット：資料請求 2,000〜4,000円（古い記事）</td><td>○ ひとりモードの25歳以上だけ</td></tr>
+<tr><td><b>マッチングアプリ</b></td><td>新規会員登録</td><td>ペアーズ：女性 1,703円・男性 3,021円。相場は2,000〜5,000円、低いと500円程度</td><td>○ ひとりモードの18歳以上（高校生を除く）だけ</td></tr>
+<tr><td>婚約指輪</td><td>来店予約</td><td>今回は単価を確認できず</td><td>◎ 「結婚の時期」に答えた人に</td></tr>
+<tr><td>お金の相談（FP）・保険</td><td>無料相談</td><td>今回は単価を確認できず</td><td>○ 家計シミュを使った人に</td></tr>
+<tr><td>新居・引っ越し</td><td>来店・問い合わせ</td><td>今回は単価を確認できず</td><td>○ 同棲・結婚前</td></tr>
+</table></div>
+<p class="small">参考：利用者側にも、ゼクシィ（来館・成約で最大75,000円分）やマイナビウエディング（来館で最大85,000円分＋成約5,000円分）の特典がある。ミラペアからの予約でも特典がもらえるなら、「お得に見学できる」と伝えられる。</p>
+
+<h2>2. 結婚にかかるお金（導線の材料）</h2>
+<ul>
+<li>結納・婚約から新婚旅行までの総額は平均 <b>454.3万円</b>。うち挙式・披露宴 343.9万円、新婚旅行 61.6万円（ゼクシィ結婚トレンド調査2024）。</li>
+<li>招待客は平均 52.0人。</li>
+<li>親・親族から援助を受けた人は 81.9%、平均 183.5万円。</li>
+<li>結婚を機にウエディングイベント（式・フォトなど）をした人は 73.5%（結婚マーケット調査2025）。→ 式をしない人にも「フォトウェディング」「家族だけの食事会」の提携先を用意する。</li>
+</ul>
+<p>「ふたりの家計」に<b>結婚費用シミュ</b>を足す。スタイル（披露宴・家族だけ・フォト・しない）と人数を選ぶと費用の目安と「月いくら貯めれば何か月」が出て、その下に<b>近くのブライダルフェア（PR）</b>が出る。数字を見たあとに見学へ、という流れ。</p>
+
+<h2>3. 誰に何を出すか（出し分け）</h2>
+<div class="tw"><table>
+<tr><th>ユーザーの状態</th><th>出すもの</th><th>出さないもの</th></tr>
+<tr><td>高校生・18歳未満</td><td>なし（デートスポットのクーポン程度まで）</td><td>結婚・出会い系の広告すべて</td></tr>
+<tr><td>交際中・大学生</td><td>デート・旅行・プレゼント</td><td>式場・相談所・マッチングアプリ</td></tr>
+<tr><td>交際中・社会人「まだ」</td><td>デート・旅行・同棲（新居）</td><td>式場の強い売り込み、相談所・マッチング</td></tr>
+<tr><td>交際中・社会人「考え始め」</td><td>婚約指輪、フォトウェディング、お金の相談</td><td>相談所・マッチング</td></tr>
+<tr><td>交際中・社会人「準備期」</td><td><b>ブライダルフェアの来館予約</b>、指輪、新居、お金の相談</td><td>相談所・マッチング</td></tr>
+<tr><td>ひとりモード 18〜24歳</td><td>マッチングアプリ（恋活向け）</td><td>結婚相談所</td></tr>
+<tr><td>ひとりモード 25歳以上</td><td>マッチングアプリ（婚活向け）、結婚相談所の無料相談</td><td>―</td></tr>
+<tr><td>別れた直後（30日以内）</td><td>なし。思い出カードと自分の運勢だけ</td><td>出会い系の広告すべて</td></tr>
+</table></div>
+
+<h3>結婚準備ステージの判定（案）</h3>
+<div class="tw"><table>
+<tr><th>サイン</th><th>点</th></tr>
+<tr><td>付き合って1年以上</td><td>＋1</td></tr>
+<tr><td>1日1問「結婚するなら、いつごろ？」で「1〜2年以内」</td><td>＋2</td></tr>
+<tr><td>価値観「結婚は急がない／早めにしたい」でふたりとも早め寄り</td><td>＋1</td></tr>
+<tr><td>どちらかが26歳以上の社会人</td><td>＋1</td></tr>
+<tr><td>鑑定「結婚の時期」を買った</td><td>＋1</td></tr>
+</table></div>
+<p>0点「まだ」、1〜2点「考え始め」、3点以上「準備期」。判定はアプリの中だけで使い、提携先には渡さない。</p>
+
+<h2>4. 導線（アプリのどこから送るか）</h2>
+<ol class="time">
+<li><b>家計</b><span><b>結婚費用シミュ</b>の結果の下に「近くのブライダルフェア（PR）」。数字を見て不安になった人には「見学でもらえる特典」と「親の援助は8割が受けている」も一緒に出す。</span></li>
+<li><b>写真</b><span><b>写真で見る未来</b>に「結婚式のふたり」の場面を追加。画像の下に「この雰囲気の式場を探す（PR）」。人に見せたくなる機能と送客がつながる。</span></li>
+<li><b>記念日</b><span>1周年・2周年の前日に「ふたりの1年」カード。準備期のふたりだけ「結婚式の費用、のぞいてみる？」。</span></li>
+<li><b>1日1問</b><span>「結婚式はする？」などの質問の答えが開いた画面に、答えに合わせた提携先（盛大に→式場、写真だけ→フォトウェディング）。</span></li>
+<li><b>鑑定</b><span>「結婚の時期」の鑑定の最後に、指輪の来店予約（PR）。</span></li>
+<li><b>ひとり</b><span>ひとりモードのホームに「出会いを探す（PR）」。自分の価値観診断の結果から「この価値観の人が多いアプリ」として紹介。</span></li>
+</ol>
+<p class="small">ふたりプラスの「広告なし」は画面のバナー広告を消すこと。提携のおすすめは「結婚準備のおすすめを受け取る」をオンにした人だけに出す別枠にして、プラスでもオンなら出る（その旨をプラスの説明に書く）。</p>
+
+<h2>5. 売上の試算（仮定つき）</h2>
+<p>単価は1章の例、それ以外の割合は<b>すべて仮定</b>。実際の数字が取れたら差し替える。</p>
+<div class="tw"><table>
+<tr><th>収益源</th><th>計算</th><th>月の売上</th></tr>
+<tr><td>ふたりプラス</td><td>月に使う人10万人 × 有料 4% × 平均550円</td><td>約220万円</td></tr>
+<tr><td>ブライダルフェア</td><td>交際中の社会人ペア 3万組 × 準備期 10% × 来館 3% × 8,000円</td><td>約72万円</td></tr>
+<tr><td>婚約指輪・フォト・FP</td><td>考え始め＋準備期 6,000組 × 2% × 5,000円（仮）</td><td>約60万円</td></tr>
+<tr><td>マッチングアプリ</td><td>ひとりモード18歳以上 2万人 × 登録 2% × 2,500円</td><td>約100万円</td></tr>
+<tr><td>結婚相談所</td><td>ひとりモード25歳以上 5,000人 × 無料相談 1% × 4,000円（＋入会の一部）</td><td>約20〜40万円</td></tr>
+</table></div>
+<p>ひとりモードは恋人がいない人（大学生の約7割）を入れられるので、送客の母数が大きい。ただしマッチングアプリの単価は下がりやすく、承認されない成果もあるので、試算は低めに見る。</p>
+
+<h2>6. 法律とルール</h2>
+<div class="tw"><table>
+<tr><th>ルール</th><th>ミラペアでやること</th></tr>
+<tr><td>景品表示法のステマ規制（2023年10月〜）</td><td>提携の表示すべてに「PR」。「ミラペアのおすすめ」のように中立に見せない。比較記事を作るなら広告であることを冒頭に書く</td></tr>
+<tr><td>景品表示法（誇大な表示）</td><td>成婚率・会員数は提携先の発表であることと期間を書く。「必ず結婚できる」などは載せない</td></tr>
+<tr><td>出会い系サイト規制法</td><td>マッチングアプリは18歳未満は使えず、年齢確認が義務。ミラペア側でも18歳未満・高校生には出さない（Omiai は「18歳以上・高校生を除く」）</td></tr>
+<tr><td>特定商取引法（結婚相談所）</td><td>2か月超・5万円超の契約は特定継続的役務で、クーリングオフ・中途解約のルールがある。提携先はJLCAの認証を受けている所を優先</td></tr>
+<tr><td>個人情報保護法</td><td>答え・年収を広告に使うなら利用目的に書く。提携先に個人のデータを渡さない（渡すなら本人の同意が必要）</td></tr>
+<tr><td>ストアの年齢区分</td><td>アプリは16歳以上向けにする予定。出会い系の広告を出す画面は18歳以上にしか見えない作りにする</td></tr>
+</table></div>
+
+<h2>7. やらないこと</h2>
+<ul>
+<li>交際中のふたりにマッチングアプリ・結婚相談所を出す。</li>
+<li>相性や価値観の結果が低かったときに出会い系を出す（「別れたら？」に見える）。</li>
+<li>別れた直後に出会い系の通知を送る。</li>
+<li>年収・会社の大きさで出し分けて「年収の高い人向けの相談所」などを出す。</li>
+<li>ふたりの答えや身長・年収を提携先に渡す。</li>
+</ul>
+
+<h2>8. 作る順番</h2>
+<ol class="time">
+<li><b>いま</b><span>試作品に「結婚準備のおすすめ」設定、結婚準備ステージ、結婚費用シミュ、PR付きの提携カード（デモ）、写真の「結婚式のふたり」を入れる。</span></li>
+<li><b>つぎ</b><span>ひとりモード（自分の運勢・価値観・出会いを探す）と、別れたあと30日の待ち期間。</span></li>
+<li><b>本番</b><span>ASPに登録して案件を審査に出す（アプリ内の掲載を認めているか確認）。式場はエリアごとに直接契約も検討。</span></li>
+</ol>
+
+<h2>出典</h2>
+<ul class="src-list">
+<li><a href="https://support.a8.net/as/HintOfProgram/ranking/highprice.php">A8.net 成果報酬1万円以上のランキング</a>／<a href="https://www.a8.net/ec/casestudy/26/">A8.net スマリッジ事例</a>／<a href="https://affi-search.com/asp-o-net/">オーネットと提携できるASP</a></li>
+<li><a href="https://matchingapp.myshopify.com/blogs/news/affiliate-2">ペアーズのアフィリエイト</a>／<a href="https://kookenn.co.jp/aff/meet.html">マッチングアプリのアフィリエイト単価</a>／<a href="https://afi.marrish.com/">マリッシュ アフィリエイト</a></li>
+<li><a href="https://affitize.com/bridle-fair-recommend-asp/">ブライダルフェアのASP（アフィタイズ）</a>／<a href="https://analogy.co.jp/blog/bridal-affiliate">ブライダル業界のアフィリエイト事情</a>／<a href="https://prtimes.jp/main/html/rd/p/000000052.000018871.html">VMGアンバサダープログラム</a></li>
+<li><a href="https://exidea.co.jp/blog/wedding/marriage/zexy-reservations/">ゼクシィの来館特典</a>／<a href="https://exidea.co.jp/blog/wedding/marriage/mynavi-reservations/">マイナビウエディングの来館特典</a>／<a href="https://hana-yume.net/howto/bridalfair-gift-certificate/">ハナユメ：フェア特典の比較</a></li>
+<li><a href="https://www.jili.or.jp/lifeplan/lifeevent/810.html">生命保険文化センター：結婚費用（ゼクシィ結婚トレンド調査2024）</a>／<a href="https://souken.zexy.net/data/trend2024/XY_MT24_report.pdf">ゼクシィ結婚トレンド調査2024</a>／<a href="https://souken.zexy.net/data/market2025/market2025_summary.pdf">結婚マーケット調査2025</a></li>
+<li><a href="https://life.oricon.co.jp/rank_marriage/special/knowledge/fees/">結婚相談所の料金相場（オリコン）</a>／<a href="https://www.kokusen.go.jp/t_box/data/t_box-faq_qa2008_13.html">国民生活センター：結婚相手紹介サービス</a>／<a href="https://www.pref.osaka.lg.jp/faq/faq_002098.html">大阪府：中途解約</a>／<a href="https://prtimes.jp/main/html/rd/p/000000220.000008966.html">結婚相談所比較ネット</a></li>
+<li><a href="https://webtan.impress.co.jp/e/2023/10/31/45738">ステマ規制の解説（Web担当者Forum）</a>／<a href="https://biz.moneyforward.com/contract/basic/8855/">ステマ規制（マネーフォワード）</a></li>
+<li><a href="https://www.npa.go.jp/laws/notification/R8_deaikeikaishaku.pdf">警察庁：出会い系サイト規制法の解釈基準</a>／<a href="https://www.pref.kagawa.lg.jp/police/ksseikan/kurashianzen/kodomojosei/deai2.html">香川県警：出会い系サイト規制法</a>／<a href="https://apps.apple.com/JP/app/id582566462">Omiai（App Store）</a>／<a href="https://apps.apple.com/jp/app/pairs-%E3%83%9A%E3%82%A2%E3%83%BC%E3%82%BA-%E6%81%8B%E6%B4%BB-%E5%A9%9A%E6%B4%BB%E3%81%AE%E3%81%9F%E3%82%81%E3%81%AE%E3%83%9E%E3%83%83%E3%83%81%E3%83%B3%E3%82%B0%E3%82%A2%E3%83%97%E3%83%AA/id583376064">Pairs（App Store）</a></li>
+</ul>
+</div>
+</body>
+</html>

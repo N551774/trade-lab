@@ -69,6 +69,7 @@ input,select{width:100%; font:500 1rem var(--f-body); padding:11px 12px; border-
 .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--hero1),var(--hero2)); border-radius:99px}
 .item{display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--line)}
 .item:first-child,h3+.item{border-top:0}
+.item>.btn{align-self:center; white-space:nowrap}
 .ic{flex:none; width:36px; height:36px; border-radius:12px; display:grid; place-items:center; font-weight:900; font-family:var(--f-head)}
 .ic.fun{background:var(--ok-soft); color:var(--ok)} .ic.hard{background:var(--warn-soft); color:var(--sun)}
 .note{background:var(--warn-soft); border-radius:12px; padding:10px 12px; font-size:.82rem; margin:10px 0}
@@ -137,6 +138,7 @@ const KEY='mirapair.v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 let S=load();
+if(S&&S.done){S.prep=S.prep||false;S.wed=S.wed||{style:'party',guests:50,save:5}}
 let UI={tab:'home',view:null,modal:null,step:0,draft:{},who:'me',vq:null,dq:null,toast:null,photos:{me:null,pt:null},photoDone:false,shopOpen:null,pay:'m',consent:false};
 
 /* ========== 小道具 ========== */
@@ -296,6 +298,17 @@ const SHOP=[
  {id:'xmas',name:'クリスマスのふたり',price:250,desc:'今年のクリスマスの過ごし方とラッキープラン。季節限定。'},
  {id:'wed',name:'結婚の時期',price:600,desc:'星と数のめぐりから見た、ふたりの「決めどき」。',adult:1}];
 
+/* 提携先（デモ）。stage: 0=まだ 1=考え始め 2=準備期 */
+const PARTNERS=[
+ {id:'fair',kind:'式場',title:'近くのブライダルフェアを予約',sub:'見学・試食で特典がもらえることも',stage:2,styles:['party','family']},
+ {id:'ring',kind:'指輪',title:'婚約指輪・結婚指輪を見に行く',sub:'来店予約',stage:1},
+ {id:'photo',kind:'フォト',title:'フォトウェディングを探す',sub:'式をしないふたりにも',stage:1,styles:['photo','none','family']},
+ {id:'fp',kind:'お金',title:'ふたりのお金の無料相談',sub:'ファイナンシャルプランナー',stage:1},
+ {id:'home',kind:'新居',title:'ふたりの新居を探す',sub:'同棲・結婚の部屋さがし',stage:0}];
+const WED_STYLES=[['party','挙式・披露宴'],['family','家族だけ'],['photo','フォトだけ'],['none','しない']];
+/* 結婚式の費用の目安（万円）。ゼクシィ結婚トレンド調査2024（挙式・披露宴 平均343.9万円・招待客52.0人）に合わせた概算 */
+function wedCost(style,g){return style==='party'?100+4.7*g:style==='family'?40+3*g:style==='photo'?25:0}
+
 /* ========== 計算 ========== */
 function income(p,yearsAhead){
  const a=age(p.birth)+yearsAhead;const s=seg(p);
@@ -303,6 +316,19 @@ function income(p,yearsAhead){
  if(p.status==='uni'){if(a<22)return 0;const f=(INDUSTRIES.find(i=>i[0]===p.aspire)||[0,0,1])[2];return baseIncome(a)*f}
  const f=(INDUSTRIES.find(i=>i[0]===p.industry)||[0,0,1])[2];const z=(SIZES.find(i=>i[0]===p.size)||[0,0,1])[2];
  return baseIncome(a)*f*(p.industry==='gov'||p.industry==='part'?1:z)}
+function prepStage(){
+ if(!adultPair())return{stage:-1,pts:0};let pts=0;const ms=milestones();if(ms&&ms.day>=365)pts++;
+ const qi=DAILY.findIndex(q=>q[0].startsWith('結婚するなら'));Object.values(S.daily).forEach(D=>{if(D.q===qi&&((D.me&&D.me.a===0)||(D.pt&&D.pt.a===0)))pts+=2});
+ const vi=VALUES.findIndex(v=>v[1]==='結婚は急がない');if(S.values.me[vi]>=4&&S.values.pt[vi]>=4)pts++;
+ if(['work','thirty'].includes(seg(S.me))||['work','thirty'].includes(seg(S.pt)))pts++;
+ if(S.owned.wed)pts++;pts=Math.min(pts,5);
+ return{stage:pts>=3?2:pts>=1?1:0,pts}}
+const STAGE_NAME=['まだ','考え始め','準備期'];
+function prCards(filter){
+ if(!S.prep||!adultPair())return '';const st=prepStage().stage;
+ const list=PARTNERS.filter(p=>p.stage<=st&&(!filter||filter(p)));if(!list.length)return '';
+ return `<div class="card"><div class="row between"><h3>ふたりへのおすすめ</h3><span class="pill sky">PR</span></div><p class="small muted">提携先の広告です。ミラペアからふたりの答えや年収は送りません。</p>
+ ${list.map(p=>`<div class="item"><div class="ic fun" style="font-size:.7rem">${p.kind}</div><div style="flex:1"><b>${p.title}</b><p class="small muted">${p.sub}</p></div><button class="btn sm sub" data-a="pr" data-v="${p.id}">見る</button></div>`).join('')}</div>`}
 function milestones(){
  const since=S.since;if(!since)return null;const t=today();const list=[];
  [100,200,300,500,700,1000,1500,2000,3000].forEach(n=>list.push([addDays(since,n-1),`${n}日目`]));
@@ -422,7 +448,8 @@ function viewHome(){
  if(D.me&&D.pt){const same=D.me.a===D.pt.a;
   qBody=`<div class="reveal"><div><b>${N1}</b>${esc(q[1][D.me.a])}</div><div><b>${N2}</b>${esc(q[1][D.pt.a])}</div></div>
   <p class="small" style="margin-top:8px">${same?'<span class="pill ok">おそろい！</span>':'<span class="pill sky">ちがった！話してみよう</span>'}
-  ${D.me.g===D.pt.a?` <span class="pill">${N1}の予想が的中</span>`:''}${D.pt.g===D.me.a?` <span class="pill">${N2}の予想が的中</span>`:''}</p>`}
+  ${D.me.g===D.pt.a?` <span class="pill">${N1}の予想が的中</span>`:''}${D.pt.g===D.me.a?` <span class="pill">${N2}の予想が的中</span>`:''}</p>
+  ${q[0]==='結婚式はする？'&&S.prep&&adultPair()&&prepStage().stage>=1?`<button class="btn sm sub" style="margin-top:8px" data-a="go" data-v="wedding">ふたりの結婚式の費用を見てみる ›</button>`:''}`}
  else{const done=D.me?'me':D.pt?'pt':null;
   qBody=`<p class="small muted">ふたりとも答えると、相手の答えが見られます。</p>
   <div class="grid2" style="margin-top:8px">
@@ -445,6 +472,7 @@ function viewHome(){
   <div class="stat"><span>ふたりの連続日数</span><b>${sv.count}</b> 日<span>${stText}</span></div>
   <div class="stat"><span>おやすみ券（今週）</span><b>${freezeLeft}</b> 枚<span>1日答え忘れても続きます</span></div></div>
  ${ms&&ms.next?`<div class="card"><div class="row between"><div><p class="small muted" style="margin:0">つぎの記念日</p><h3>${ms.next[1]}（${parse(ms.next[0]).getMonth()+1}/${parse(ms.next[0]).getDate()}）</h3></div><div class="center"><b style="font:900 1.6rem var(--f-head);color:var(--pink)">${dayDiff(today(),ms.next[0])}</b><div class="small muted">日後</div></div></div></div>`:''}
+ ${S.prep&&adultPair()&&prepStage().stage===2?`<div class="card tap" data-a="go" data-v="wedding"><span class="pill sky">PR を含みます</span><h3 style="margin-top:6px">${ms&&ms.next&&/周年/.test(ms.next[1])&&dayDiff(today(),ms.next[0])<=14?`もうすぐ${ms.next[1]}。`:''}ふたりの結婚式、いくらかかる？</h3><p class="small muted">費用の目安と、見学予約のおすすめ ›</p></div>`:''}
  <div class="card tap" data-a="tab" data-v="diag"><h3>ふたりの相性 ${c.score}%</h3><p class="small muted">${SIGNS[c.a]} × ${SIGNS[c.b]}。くわしく見る ›</p></div>`}
 
 function viewDaily(){
@@ -503,6 +531,7 @@ function viewFuture(){
  return `<div class="top"><h1>未来</h1></div><p class="small muted" style="margin-top:-6px">統計をもとにした目安です。実際とは大きくちがうこともあります。</p>
  <div class="card tap" data-a="go" data-v="height"><span class="pill ok">統計の目安</span><h3 style="margin-top:6px">子どもの身長</h3><p class="small muted">ふたりの身長から、男の子・女の子の大人になったときの身長の幅。</p></div>
  <div class="card tap" data-a="go" data-v="money"><span class="pill ok">統計の目安</span><h3 style="margin-top:6px">ふたりの家計</h3><p class="small muted">いま・5年後・10年後の世帯年収と、子どもの教育費。</p></div>
+ <div class="card tap" data-a="go" data-v="wedding"><span class="pill ok">統計の目安</span><h3 style="margin-top:6px">結婚式とお金</h3><p class="small muted">式のスタイルと人数から費用の目安と、貯めるのにかかる月数。</p></div>
  <div class="card tap" data-a="go" data-v="life"><span class="pill sky">ふたりの組み合わせ</span><h3 style="margin-top:6px">暮らしの予報</h3><p class="small muted">結婚したら、楽しみなこと・苦労しそうなことと、そのコツ。</p></div>
  <div class="card tap" data-a="go" data-v="photo"><span class="pill">写真・あそび</span><h3 style="margin-top:6px">写真で見る未来</h3><p class="small muted">子どもの顔、歳をとったふたり。</p></div>`}
 function rangeBar(h){
@@ -544,6 +573,19 @@ function viewMoney(){
   <p class="small muted">22年でならすと、1人あたり月 約${Math.round(monthly/10000*10)/10}万円。</p>
   ${S.plus?`<p class="small">${yrs[yrs.length-1]}年後の手取り（年収の約78%で計算）のうち、教育費は <b>約${ratio}%</b>。${ratio>=25?'大学の時期に重なると重めです。児童手当は使わずに貯めておく、学資の積み立てを早めに始めるのがコツ。':'無理なく続けられそうな割合です。浮いた分は旅行やふたりの楽しみにも。'}</p>`:''}</div>`:''}
  <div class="note">年収は、厚生労働省「賃金構造基本統計調査」の年齢・業界・会社の大きさの傾向をもとにした概算（賞与込み）。教育費は文部科学省「子供の学習費調査」などをもとにした概算です。人によって大きくちがいます。</div>`}
+function viewWedding(){
+ const w=S.wed;const c=wedCost(w.style,+w.guests);const save=+w.save;const months=save>0?Math.ceil(c/save):0;
+ const ps=prepStage();
+ return `${topBar('結婚式とお金')}
+ <div class="card"><label class="f" style="margin-top:0">式のスタイル</label>${seg2('style',WED_STYLES,w.style)}
+ ${w.style==='party'||w.style==='family'?`<label class="f">招待する人数</label><input type="number" inputmode="numeric" data-wed="guests" min="2" max="200" value="${esc(w.guests)}">`:''}
+ <label class="f">ふたりで毎月貯められる額（万円）</label><input type="number" inputmode="numeric" data-wed="save" min="0" max="100" value="${esc(w.save)}"></div>
+ <div class="card"><p class="small muted">費用の目安</p><div style="font:900 2rem var(--f-head)">${c?`約${man(c)}`:'0円'}</div>
+ ${c?`<p class="small muted">${man(c*.8)}〜${man(c*1.2)}くらいの幅があります。</p>${months?`<p>月${save}万円ずつ貯めると <b>約${months}か月</b>（${(months/12).toFixed(1)}年）。</p>`:''}`:'<p class="small">式をしないふたりも、記念の写真や食事会だけするケースが多いです。</p>'}
+ <hr><div class="list-tight small"><p>・結納から新婚旅行までの総額は平均 454.3万円、挙式・披露宴は 343.9万円（招待客 平均52人）</p><p>・親や親族から援助を受けた人は 81.9%、平均 183.5万円</p><p>・新婚旅行は平均 61.6万円</p><p>・ご祝儀で戻ってくる分もあります</p></div></div>
+ ${prCards(p=>!p.styles||p.styles.includes(w.style))}
+ ${!S.prep?'<p class="small muted">設定で「結婚準備のおすすめ」をオンにすると、式場の見学予約などの提携先が出ます。</p>':''}
+ <div class="note">費用はゼクシィ結婚トレンド調査2024の平均に合わせた概算です。地域・会場で大きく変わります。<br>（試作品表示）結婚準備ステージ：${STAGE_NAME[ps.stage]||'対象外'}・${ps.pts}点</div>`}
 function viewLife(){
  const items=lifeForecast();const fun=items.filter(i=>i[0]==='fun'),hard=items.filter(i=>i[0]==='hard');
  const show=arr=>S.plus?arr:arr.slice(0,2);const hidden=items.length-show(fun).length-show(hard).length;
@@ -556,7 +598,7 @@ function viewLife(){
 function viewPhoto(){
  const left=S.plus?Math.max(0,3-(S.photoMonth===ym()?S.photoUses:0)):(S.photoFree?0:1);
  const P=UI.photos;const ready=P.me&&P.pt;
- const scenes=[['赤ちゃん','子ども'],['3歳','子ども'],['10歳','子ども'],['30歳のふたり','ふたり'],['50歳のふたり','ふたり'],['70歳・金婚式','ふたり']];
+ const scenes=[['結婚式のふたり','ふたり'],['赤ちゃん','子ども'],['3歳','子ども'],['10歳','子ども'],['30歳のふたり','ふたり'],['50歳のふたり','ふたり'],['70歳・金婚式','ふたり']];
  return `${topBar('写真で見る未来')}
  <p class="small muted">ふたりがそれぞれ、その場で自撮りします。他の人の写真は使えません。</p>
  <div class="photo">
@@ -565,7 +607,7 @@ function viewPhoto(){
  <p class="small muted" style="margin-top:8px">残り <b>${left}</b> 回（${S.plus?'ふたりプラス：月3回':'無料：1回'}）</p>
  <button class="btn" data-a="photoGo" ${ready?'':'disabled'}>未来の写真をつくる</button>
  ${UI.photoDone?`<div class="scenes">${scenes.map(s=>`<div class="scene"><b class="small">${s[0]}</b><div class="ph">ここに AI がつくった画像が入ります<br>（試作品では未対応）</div><div class="faces"><img src="${P.me}" alt=""><img src="${P.pt}" alt=""></div></div>`).join('')}</div>
- <button class="btn sub" style="margin-top:10px" disabled>SNS用のカードで保存（本番で対応）</button>`:''}
+ <button class="btn sub" style="margin-top:10px" disabled>SNS用のカードで保存（本番で対応）</button>${prCards(p=>p.id==='fair'||p.id==='photo')}`:''}
  <div class="note">遺伝ではなく、見た目の合成です。実際とはちがいます。写真はこの画面の中だけで使い、保存しません（本番ではつくった後24時間で消し、AIの学習には使いません）。</div>`}
 
 /* ========== 設定 ========== */
@@ -589,6 +631,7 @@ function viewSet(){
   ${tg('report','未来レポートの更新','月初めの土曜 12:00')}
   <div class="grid2" style="margin-top:10px"><button class="btn sub sm" style="width:100%" data-a="askNotif">通知を許可する</button><button class="btn sub sm" style="width:100%" data-a="testNotif">テスト通知</button></div>
   <p class="small muted" style="margin-top:6px">試作品では、アプリを開いているときのテスト通知だけ。決まった時刻に届く通知は、サーバーをつくる第2段階から。</p></div>
+${adultPair()?`<div class="card"><div class="toggle" style="border-top:0;padding-top:0"><div><b>結婚準備のおすすめを受け取る</b><div class="small muted">式場の見学・指輪・新居・お金の相談など提携先の広告（PR）を、ふたりに合うタイミングで出します。答えや年収は提携先に送りません。</div></div><button class="sw ${S.prep?'on':''}" data-a="prepT" aria-label="結婚準備のおすすめ"></button></div><p class="small muted">本番では、ふたりともオンにしたときだけ出します。出会い系の広告は、交際中のふたりには出しません。</p></div>`:''}
  <div class="card"><h3>別れたとき・やめるとき</h3><p class="small muted">ふたりのデータをすぐに消せます。</p>
   <button class="btn sub" data-a="memory">思い出カードだけ残して消す</button><div style="height:8px"></div><button class="btn sub" style="color:var(--pink)" data-a="wipe">全部消す</button>
   ${S.memories&&S.memories.length?`<hr><p class="small"><b>思い出カード</b></p>${S.memories.map(m=>`<p class="small muted">${esc(m.name)}さん ・ ${m.since||''}から ${m.days}日 ・ いちばん長い連続 ${m.best}日</p>`).join('')}`:''}</div>
@@ -605,7 +648,7 @@ function viewShop(){const s=SHOP.find(x=>x.id===UI.shopOpen);const r=rng(hash(s.
 function payModal(){
  const pr=priceOf();const hs=seg(S.me)==='hs';const spent=S.spend.ym===ym()?S.spend.amt:0;
  const amt=UI.pay==='m'?pr.m:pr.y;const over=hs&&spent+amt>HS_CAP;
- const rows=[['今日のふたり予報・1日1問','○','○'],['星と数の相性','○','○'],['価値観：話し合いポイント','2こ','全部'],['暮らしの予報','一部','全部'],['家計の予想','5年後まで','10年後・教育費'],['今月のふたり（月の運勢）','―','○'],['写真で見る未来','1回','月3回'],['広告','あり','なし']].filter(r=>!hs||!['暮らしの予報','家計の予想','写真で見る未来'].includes(r[0]));
+ const rows=[['今日のふたり予報・1日1問','○','○'],['星と数の相性','○','○'],['価値観：話し合いポイント','2こ','全部'],['暮らしの予報','一部','全部'],['家計の予想','5年後まで','10年後・教育費'],['今月のふたり（月の運勢）','―','○'],['写真で見る未来','1回','月3回'],['バナー広告','あり','なし']].filter(r=>!hs||!['暮らしの予報','家計の予想','写真で見る未来'].includes(r[0]));
  return `<div class="modal" data-a="closeModal"><div class="sheet" data-stop="1">
  <h2>ふたりプラス</h2><p class="small muted">1人が入れば、ふたりとも使えます。</p>
  <div class="cmp" style="margin-top:12px"><div class="h">できること</div><div class="h c">無料</div><div class="h c">プラス</div>
@@ -627,7 +670,7 @@ function shopModal(){const s=SHOP.find(x=>x.id===UI.modalItem);const hs=seg(S.me
  <button class="btn" data-a="buyItem" ${over||(hs&&!UI.consent)?'disabled':''}>${s.price}円で買う（デモ・請求なし）</button><button class="btn ghost" style="width:100%" data-a="closeModal">やめる</button></div></div>`}
 
 /* ========== 描画 ========== */
-const VIEWS={compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
+const VIEWS={wedding:viewWedding,compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
 const TABS={home:viewHome,diag:viewDiag,future:viewFuture,set:viewSet};
 function render(){
  const app=$('#app');let h;
@@ -640,7 +683,7 @@ function render(){
  app.innerHTML=h}
 
 /* ========== 操作 ========== */
-function newState(d){return{v:1,done:true,me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'short',who:'me'},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
+function newState(d){return{v:1,done:true,me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'short',who:'me'},prep:false,wed:{style:'party',guests:50,save:5},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
 function addSpend(n){if(S.spend.ym!==ym())S.spend={ym:ym(),amt:0};S.spend.amt+=n}
 const ACT={
  onbNext(){const st=UI.step;
@@ -653,7 +696,8 @@ const ACT={
  segpick(v,el){const name=el.parentElement.dataset.name;
   if(!S||!S.done||UI.view==='edit'){const who=!S||!S.done?(UI.step===1?'me':'pt'):UI.who;readForm(UI.draft[who]);UI.draft[who][name]=v;return render()}
   if(name==='heightFather'){S.heightFather=v;save();return render()}
-  if(UI.view==='money'){S.sim[name]=name==='kids'?+v:v;save();return render()}},
+  if(UI.view==='money'){S.sim[name]=name==='kids'?+v:v;save();return render()}
+  if(UI.view==='wedding'){S.wed[name]=v;save();return render()}},
  dq(v){UI.dq={who:v,stage:'hand',a:null,g:null};UI.view='daily';render()},
  dqStart(){UI.dq.stage='ans';render()},
  dqA(v){UI.dq.a=+v;render()}, dqG(v){UI.dq.g=+v;render()},
@@ -680,6 +724,8 @@ const ACT={
  shop(v){if(S.owned[v]){UI.shopOpen=v;UI.view='shop';return render()}UI.modalItem=v;UI.consent=false;UI.modal='shop';render()},
  buyItem(){const s=SHOP.find(x=>x.id===UI.modalItem);addSpend(s.price);S.owned[s.id]=true;save();UI.modal=null;UI.shopOpen=s.id;UI.view='shop';render()},
  notif(v){S.notif[v]=!S.notif[v];save();render()},
+ prepT(){S.prep=!S.prep;save();render()},
+ pr(v){const p=PARTNERS.find(x=>x.id===v);toast(`本番では提携先「${p.title}」のページへ（来館・来店予約などで成果報酬）。ふたりの答えは送りません`)},
  askNotif(){UI.modal=null;try{if('Notification'in window)Notification.requestPermission().then(()=>render()).catch(()=>{});}catch(e){}toast(`毎朝${notifTimes().daily}にお知らせします（試作品では時刻の通知は届きません）`)},
  testNotif(){let ok=false;try{ok='Notification'in window&&Notification.permission==='granted'}catch(e){}
   if(ok){notify('今日のふたり予報','今日は息ぴったりの日。思いついたことは、すぐ伝えて吉。');toast('テスト通知を送りました')}else toast('通知が許可されていません。「通知を許可する」を押してください')},
@@ -696,6 +742,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
  if(el.tagName==='INPUT'&&el.type==='checkbox'){ACT[el.dataset.a](el.dataset.v,el,e);return}
  e.preventDefault();ACT[el.dataset.a]&&ACT[el.dataset.a](el.dataset.v,el,e)});
 document.addEventListener('change',e=>{const el=e.target;
+ if(el.dataset.wed){S.wed[el.dataset.wed]=Math.max(0,+el.value||0);save();render();return}
  if(el.dataset.photo){const f=el.files&&el.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{UI.photos[el.dataset.photo]=rd.result;UI.photoDone=false;render()};rd.readAsDataURL(f);return}
  if(el.tagName==='SELECT'||el.type==='date'){const onb=!S||!S.done;if(onb&&(UI.step===1||UI.step===2)){const who=UI.step===1?'me':'pt';readForm(UI.draft[who]);render()}else if(UI.view==='edit'){readForm(UI.draft[UI.who]);render()}}});
 render();
