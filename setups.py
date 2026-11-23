@@ -479,6 +479,62 @@ def position(plan: Plan, ticker: str, capital_jpy: float, risk_pct: float, fx: f
 
 
 # ---------------------------------------------------------------------------
+# 休場日（東証・米国）※年1回、翌年分を追加する
+# ---------------------------------------------------------------------------
+JP_HOLIDAYS = {
+    "2026-01-01": "元日", "2026-01-02": "年始休業", "2026-01-12": "成人の日", "2026-02-11": "建国記念の日",
+    "2026-02-23": "天皇誕生日", "2026-03-20": "春分の日", "2026-04-29": "昭和の日", "2026-05-04": "みどりの日",
+    "2026-05-05": "こどもの日", "2026-05-06": "振替休日", "2026-07-20": "海の日", "2026-08-11": "山の日",
+    "2026-09-21": "敬老の日", "2026-09-22": "国民の休日", "2026-09-23": "秋分の日", "2026-10-12": "スポーツの日",
+    "2026-11-03": "文化の日", "2026-11-23": "勤労感謝の日", "2026-12-31": "年末休業",
+    "2027-01-01": "元日", "2027-01-11": "成人の日", "2027-02-11": "建国記念の日", "2027-02-23": "天皇誕生日",
+    "2027-03-22": "振替休日", "2027-04-29": "昭和の日", "2027-05-03": "憲法記念日", "2027-05-04": "みどりの日",
+    "2027-05-05": "こどもの日", "2027-07-19": "海の日", "2027-08-11": "山の日", "2027-09-20": "敬老の日",
+    "2027-09-23": "秋分の日", "2027-10-11": "スポーツの日", "2027-11-03": "文化の日", "2027-11-23": "勤労感謝の日",
+    "2027-12-31": "年末休業",
+}
+US_HOLIDAYS = {
+    "2026-01-01": "元日", "2026-01-19": "キング牧師記念日", "2026-02-16": "大統領の日", "2026-04-03": "聖金曜日",
+    "2026-05-25": "戦没者追悼記念日", "2026-06-19": "奴隷解放記念日", "2026-07-03": "独立記念日（振替）",
+    "2026-09-07": "労働者の日", "2026-11-26": "感謝祭", "2026-12-25": "クリスマス",
+    "2027-01-01": "元日", "2027-01-18": "キング牧師記念日", "2027-02-15": "大統領の日", "2027-03-26": "聖金曜日",
+    "2027-05-31": "戦没者追悼記念日", "2027-06-18": "奴隷解放記念日（振替）", "2027-07-05": "独立記念日（振替）",
+    "2027-09-06": "労働者の日", "2027-11-25": "感謝祭", "2027-12-24": "クリスマス（振替）",
+}
+US_EARLY = {"2026-11-27": "感謝祭の翌日", "2026-12-24": "クリスマス・イブ", "2027-11-26": "感謝祭の翌日"}  # 現地13:00に終了
+
+
+def holiday_jp(d) -> str | None:
+    return JP_HOLIDAYS.get(f"{d:%Y-%m-%d}")
+
+
+def holiday_us(d) -> str | None:
+    return US_HOLIDAYS.get(f"{d:%Y-%m-%d}")
+
+
+def upcoming_holidays(days: int = 10, now: datetime | None = None) -> list:
+    """これから days 日以内の休場・短縮取引（日本時間で見た日付ではなく、各市場の現地の日付）"""
+    from datetime import timedelta
+    now = now or datetime.now(ZoneInfo("Asia/Tokyo"))
+    jp_d, ny_d = now.astimezone(ZoneInfo("Asia/Tokyo")).date(), now.astimezone(ZoneInfo("America/New_York")).date()
+    out = []
+    for i in range(days + 1):
+        d = jp_d + timedelta(days=i)
+        if d.weekday() < 5 and holiday_jp(d):
+            out.append(("東証", d, f"休場（{holiday_jp(d)}）"))
+        u = ny_d + timedelta(days=i)
+        if u.weekday() < 5 and holiday_us(u):
+            out.append(("米国", u, f"休場（{holiday_us(u)}）"))
+        elif US_EARLY.get(f"{u:%Y-%m-%d}"):
+            out.append(("米国", u, f"短縮取引（{US_EARLY[f'{u:%Y-%m-%d}']}・日本時間 翌{'2' if ZoneInfo('America/New_York').utcoffset(datetime(u.year, u.month, u.day, 12)).total_seconds() == -14400 else '3'}:00まで）"))
+    seen, res = set(), []
+    for m, d, t in sorted(out, key=lambda x: x[1]):
+        if (m, d) not in seen:
+            seen.add((m, d)); res.append((m, d, t))
+    return res
+
+
+# ---------------------------------------------------------------------------
 # 市場の状態
 # ---------------------------------------------------------------------------
 def market_status(now: datetime | None = None) -> dict:
@@ -486,17 +542,21 @@ def market_status(now: datetime | None = None) -> dict:
     jp = now.astimezone(ZoneInfo("Asia/Tokyo"))
     ny = now.astimezone(ZoneInfo("America/New_York"))
     hm = jp.hour * 60 + jp.minute
-    jp_open = jp.weekday() < 5 and (540 <= hm < 690 or 750 <= hm < 930)
-    jp_lunch = jp.weekday() < 5 and 690 <= hm < 750
+    jp_hol, us_hol = holiday_jp(jp.date()), holiday_us(ny.date())
+    jp_day = jp.weekday() < 5 and not jp_hol
+    jp_open = jp_day and (540 <= hm < 690 or 750 <= hm < 930)
+    jp_lunch = jp_day and 690 <= hm < 750
     nhm = ny.hour * 60 + ny.minute
-    us_open = ny.weekday() < 5 and 570 <= nhm < 960
+    us_close_m = 780 if US_EARLY.get(f"{ny:%Y-%m-%d}") else 960
+    us_open = ny.weekday() < 5 and not us_hol and 570 <= nhm < us_close_m
     to_jst = lambda h, m: ny.replace(hour=h, minute=m, second=0, microsecond=0).astimezone(ZoneInfo("Asia/Tokyo")).strftime("%H:%M")
     dst = bool(ny.dst())
     us_open_t, us_close_t = to_jst(9, 30), to_jst(16, 0)
     fut_start, fut_end = to_jst(18, 0), to_jst(17, 0)
     return {
-        "東証": "取引中" if jp_open else ("昼休み" if jp_lunch else "取引時間外"),
-        "米国": "取引中" if us_open else "取引時間外",
+        "東証": "取引中" if jp_open else ("昼休み" if jp_lunch else
+                                         (f"休場（{jp_hol}）" if jp_hol and jp.weekday() < 5 else "取引時間外")),
+        "米国": "取引中" if us_open else (f"休場（{us_hol}）" if us_hol and ny.weekday() < 5 else "取引時間外"),
         "米国_開始": "日本時間 " + us_open_t,
         "東証_時間": "前場 9:00〜11:30 ／ 昼休み 11:30〜12:30 ／ 後場 12:30〜15:30",
         "米国_時間": f"{us_open_t}〜翌{us_close_t}（昼休みなし）※いまは{'夏' if dst else '冬'}時間",
