@@ -538,7 +538,7 @@ function viewDaily(){
 function viewDiag(){
  const c=compat();const vm=valuesDone('me'),vp=valuesDone('pt');
  return `<div class="top"><h1>診断</h1></div>
- <div class="card tap" data-a="go" data-v="ptype"><span class="pill sky">16タイプ</span><h3 style="margin-top:6px">ふたりのタイプ ${typeReady()?`<b style="color:var(--pink)">${pairType().code}</b>`:''}</h3><p class="small muted">${typeReady()?`${TYPES[pairType().code][0]}。シェア用の画像もつくれます ›`:'価値観にふたりとも答えると、ふたりの4文字タイプがわかります ›'}</p></div>
+ <div class="card tap" data-a="go" data-v="ptype"><span class="pill sky">16タイプ</span><h3 style="margin-top:6px">ふたりのタイプ</h3><p class="small muted">${typeReady()?`${pairType().me} × ${pairType().pt}：<b style="color:var(--pink)">${pairName(pairType().me,pairType().pt).name}</b>。シェア用の画像もつくれます ›`:'価値観にふたりとも答えると、ふたりの4文字タイプがわかります ›'}</p></div>
  <div class="card tap" data-a="go" data-v="compat"><span class="pill">占い・あそび</span><h3 style="margin-top:6px">星と数の相性</h3><p class="small muted">${SIGNS[c.a]} × ${SIGNS[c.b]} ・ ${c.score}%</p></div>
  <div class="card tap" data-a="go" data-v="values"><span class="pill sky">性格・価値観</span><h3 style="margin-top:6px">価値観の一致</h3>
   <p class="small muted">お金・家事・連絡・休日など${valueQs().length}問に、ふたりが別々に答えます。結婚生活にいちばん関わる診断です。</p>
@@ -719,6 +719,28 @@ const COMBO=[
  {hi:['気持ちが伝わる','好きもごめんも、言葉にし合えるふたりです。','言葉がきつくなると、けんかが長引きやすい。言いすぎたと思ったら早めにひとこと。'],
   lo:['行動の信頼','言葉より行動で支え合う、落ち着いたふたりです。','「言わなくてもわかるはず」ですれ違いやすい。大事なことだけは言葉で。'],
   mix:['ふたつの愛情表現','言葉と行動、両方で愛情を受け取れるふたりです。','「言ってくれない」「わかってくれない」とすれ違いやすい。おたがいの「うれしい伝え方」を教え合って。']}];
+/* ふたりの名前：本体（休日×距離感）＋持ち味（予定×伝え方）＝81通り。キーは軸ごとの hi/lo/mix */
+const PAIR_BASE={
+ 'hi-hi':['冒険バディ','休日はいつもふたりで外へ。行った場所がそのまま思い出のアルバムになるふたり。'],
+ 'hi-lo':['現地集合コンビ','それぞれ好きに動いて、楽しい場所で合流する。自由と刺激が両方あるふたり。'],
+ 'hi-mix':['寄り道ペア','出かけるのはふたりとも好き。一緒の日もひとりの日もあって、話のネタがつきないふたり。'],
+ 'lo-hi':['こたつ同盟','家がいちばん。同じ毛布にくるまって、何もしない休日を最高にできるふたり。'],
+ 'lo-lo':['ひだまりルームメイト','同じ部屋でそれぞれ好きなことをしているのが心地いい、静かなふたり。'],
+ 'lo-mix':['おうちカフェペア','家で過ごすのが好き。くっつく時間とひとりの時間を、家の中で上手に分けられるふたり。'],
+ 'mix-hi':['シーソーペア','出かけたい側とおうち派。一緒にいたい気持ちは同じなので、交互に合わせてバランスをとるふたり。'],
+ 'mix-lo':['灯台と船','外へ出ていく側と、家で迎える側。おたがい自由で、帰る場所がちゃんとあるふたり。'],
+ 'mix-mix':['月と太陽','休日の過ごし方も、一緒にいたい量もちがう。ちがうからこそ、ひとりでは見えない景色を見せ合えるふたり。']};
+const PAIR_PRE={
+ 'hi-hi':['作戦会議が好きな','計画を立てるのも、それを話し合うのも楽しいふたり。'],
+ 'hi-lo':['段取り上手な','黙っていても準備が進む。行動で支え合うしっかり者のふたり。'],
+ 'hi-mix':['しおりを作る','予定はきっちり。気持ちは言葉で伝える人と行動で見せる人。'],
+ 'lo-hi':['おしゃべりが止まらない','予定は気分しだい、話はいつまでも。'],
+ 'lo-lo':['目で通じ合う','予定も言葉も少なめ。それでも分かり合える、ゆるやかなふたり。'],
+ 'lo-mix':['ノリで動く','思いついたらすぐ行動。気持ちの伝え方はふたりでちがうので、そこだけ確かめ合って。'],
+ 'mix-hi':['なんでも話せる','計画派と気まま派。ちがいも全部、言葉にして笑い合えるふたり。'],
+ 'mix-lo':['背中で語る','計画派と気まま派。多くは語らず、行動で信頼を積み上げるふたり。'],
+ 'mix-mix':['でこぼこで息の合う','予定も伝え方もちがう。だからこそ、役割分担がはまると強いふたり。']};
+function pairName(me,pt){const c=comboOf(me,pt);const b=PAIR_BASE[c[0]+'-'+c[1]],p=PAIR_PRE[c[2]+'-'+c[3]];return{name:p[0]+b[0],base:b,pre:p,key:c}}
 const PATTERN={4:['鏡のふたり','4つの軸がぜんぶ同じ。説明しなくても分かり合える組み合わせです。似ているぶん、苦手なことも同じなので、ときどき外の刺激を。'],3:['ほぼ双子','4つのうち3つが同じ。ほとんどのことは自然に合わせられます。ちがう1つの軸が、ふたりの話し合いのポイントです。'],2:['バランス型','同じ軸とちがう軸が半分ずつ。安心感と新鮮さの両方があるふたりです。'],1:['凸凹コンビ','ちがう軸が3つ。おたがいの足りないところを補える組み合わせです。ちがいを「相手の得意」と思えると強いふたり。'],0:['正反対の補い合い','4つの軸がぜんぶちがう。ひとりではしないことを、相手が全部持っている組み合わせです。最初は驚くことが多くても、役割分担がはまると最強。']};
 function comboOf(me,pt){return AXES.map((ax,k)=>me[k]!==pt[k]?'mix':me[k]===ax.hi?'hi':'lo')}
 /* 場面ごとの向き不向き（◎・○・工夫がいる）。タイプの組み合わせから決める */
@@ -745,9 +767,9 @@ function viewType(){
   <div class="card hero center"><p class="small muted">あなたは</p><div class="big" style="letter-spacing:.08em">${c}</div><h2 style="margin-top:6px">${t[0]}タイプ</h2><p>${axesLine(c)}</p></div>
   <div class="card"><p>${t[1].replace('ふたり','あなた')}</p><p class="small muted">恋人ができたら、相手のタイプと合わせて「ふたりのタイプ」がわかります。</p></div>
   ${shareBlock(c,t,'あなたのタイプ')}${typeBasis()}`}
- const r=pairType();const t=TYPES[r.code];const N1=esc(S.me.name),N2=esc(S.pt.name);
+ const r=pairType();const t=TYPES[r.code];const N1=esc(S.me.name),N2=esc(S.pt.name);const pn=pairName(r.me,r.pt);
  return `${topBar('ふたりのタイプ')}
- <div class="card hero center"><p class="small muted">${N1} ＆ ${N2} は</p><div class="big" style="letter-spacing:.08em">${r.code}</div><h2 style="margin-top:6px">${t[0]}</h2><p>${t[1]}</p></div>
+ <div class="card hero center"><p class="small muted">${N1}（${r.me}）× ${N2}（${r.pt}）は</p><h1 style="margin-top:8px;font-size:1.7rem">${pn.name}</h1><p style="margin-top:8px">${pn.base[1]}</p><p class="small" style="opacity:.9">${pn.pre[1]}</p></div>
  <div class="grid2"><div class="stat"><span>${N1}さん</span><b>${r.me}</b><span>${TYPES[r.me][0]}</span></div><div class="stat"><span>${N2}さん</span><b>${r.pt}</b><span>${TYPES[r.pt][0]}</span></div></div>
  <div class="card"><h3>ふたりの4つの軸</h3>${AXES.map((ax,k)=>{const a=axisScore('me',ax),b=axisScore('pt',ax);const X=v=>((5-v)/4*100).toFixed(0)+'%';
   return `<div style="margin-top:12px"><div class="poles"><span><b>${ax.hi}</b> ${ax.hiN}</span><span>${ax.loN} <b>${ax.lo}</b></span></div>
@@ -756,15 +778,16 @@ function viewType(){
   <span title="${N2}" style="position:absolute;top:2px;left:calc(${X(b)} - 9px);width:18px;height:18px;border-radius:50%;background:var(--sky);border:2px solid var(--card)"></span></div></div>`}).join('')}
   <p class="small muted" style="margin-top:8px"><span style="color:var(--pink)">●</span> ${N1}さん　<span style="color:var(--sky)">●</span> ${N2}さん</p></div>
  ${(()=>{const c=comboOf(r.me,r.pt);const same=c.filter(x=>x!=='mix').length;const pat=PATTERN[same];
- return `<div class="card"><span class="pill">組み合わせの診断</span><h3 style="margin-top:6px">${r.me} × ${r.pt}：${pat[0]}</h3><p>${pat[1]}</p></div>
+ return `<div class="card"><span class="pill">組み合わせの診断</span><h3 style="margin-top:6px">${r.me} × ${r.pt}：同じ軸 ${same}つ</h3><p>${pat[1]}</p></div>
  <div class="card"><h3>軸ごとの相性</h3>${AXES.map((ax,k)=>{const x=COMBO[k][c[k]];const st=c[k]==='mix'?`${N1}さん${r.me[k]}・${N2}さん${r.pt[k]}`:`ふたりとも${r.me[k]}（${r.me[k]===ax.hi?ax.hiN:ax.loN}）`;
   return `<div class="item"><div class="ic ${c[k]==='mix'?'hard':'fun'}" style="font-size:.8rem">${ax.hi}/${ax.lo}</div><div><b>${x[0]}</b> <span class="small muted">${st}</span><p class="small">強み：${x[1]}</p><p class="small">気をつけたいこと：${x[2]}</p></div></div>`}).join('')}</div>
  <div class="card"><h3>場面ごとの向き不向き</h3><table class="t">${scenes(r.me,r.pt).map(x=>`<tr><td style="white-space:nowrap"><b>${x[0]}</b></td><td style="text-align:center;font-weight:900;color:${x[1]==='工夫'?'var(--sun)':'var(--pink)'};white-space:nowrap">${x[1]==='工夫'?'工夫がいる':x[1]}</td></tr><tr><td colspan="2" style="text-align:left" class="small">${x[2]}</td></tr>`).join('')}</table>
  <p class="small muted" style="margin-top:6px">「工夫がいる」は向いていないという意味ではなく、ルールを決めておくとうまくいく、という意味です。</p></div>`})()}
- ${shareBlock(r.code,t,'ふたりのタイプ')}${typeBasis()}`}
+ ${shareBlock(pn.name,t,'ふたりのタイプ')}${typeBasis()}`}
 function typeBasis(){return `<div class="card small"><p><b>どうやって決めているか</b></p>
  <p>価値観の質問のうち、各軸2問ずつ（5段階）の平均で決めます。ふたりのタイプは、ふたりの平均で決めます。平均がちょうど真ん中のときは、どちらか一方（生年月日で決まる）の英字にします。</p>
  ${AXES.map(ax=>`<p><b>${ax.hi}（${ax.hiN}）／${ax.lo}（${ax.loN}）</b><br>${ax.qs.map(t=>{const v=VALUES.find(x=>x[1]===t);return `「${v[1]} ⇔ ${v[2]}」`}).join('<br>')}<br><span class="muted">右寄りなら${ax.hi}、左寄りなら${ax.lo}</span></p>`).join('')}
+ <p><b>ふたりの名前</b>：「持ち味」（予定×伝え方）＋「ふたりの形」（休日×距離感）の組み合わせです。それぞれの軸が「ふたりとも左」「ふたりとも右」「ちがう」の3通りなので、9×9＝81通りの名前があります。</p>
  <p><b>組み合わせの診断</b>：ふたりそれぞれのタイプを軸ごとにくらべ、「ふたりとも左」「ふたりとも右」「ちがう」の3通り×4軸（81通り）で文章を出しています。全体の呼び名は、同じ軸の数（0〜4）で決めています。場面ごとの向き不向きは、旅行＝休日と予定の軸、同棲＝休日・距離感・予定の軸、仲直り＝伝え方と距離感の軸、お金＝予定の軸、から決めています。</p>
  <p class="muted">性格を正確に測る検査ではなく、話のきっかけにするための分け方です。</p></div>`}
 function shareBlock(code,t,label){const pair=S.mode==='pair';const ok=!pair||(UI.shareOK&&UI.shareOK.me&&UI.shareOK.pt);
@@ -775,7 +798,7 @@ function shareBlock(code,t,label){const pair=S.mode==='pair';const ok=!pair||(UI
  ${UI.cardImg?`<img src="${UI.cardImg}" alt="${label}の画像" style="display:block;width:100%;max-width:300px;margin:12px auto 0;border-radius:16px;border:1px solid var(--line)"><p class="small muted center">画像を長押しすると保存できます</p>
  <button class="btn sub" style="margin-top:6px" data-a="saveCard">画像を保存</button>`:''}</div>`}
 function drawCard(){
- const pair=S.mode==='pair';const code=pair?pairType().code:personType('me');const t=TYPES[code];
+ const pair=S.mode==='pair';const pr=pair?pairType():null;const pn=pair?pairName(pr.me,pr.pt):null;const code=pair?pr.code:personType('me');const t=TYPES[code];
  const c=document.createElement('canvas');c.width=1080;c.height=1920;const g=c.getContext('2d');
  const gr=g.createLinearGradient(0,0,1080,1920);gr.addColorStop(0,'#FF8FA3');gr.addColorStop(1,'#8C7BFF');g.fillStyle=gr;g.fillRect(0,0,1080,1920);
  const rg=g.createRadialGradient(540,900,40,540,900,620);rg.addColorStop(0,'rgba(255,255,255,.28)');rg.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=rg;g.fillRect(0,0,1080,1920);
@@ -783,10 +806,12 @@ function drawCard(){
  const F='"Zen Maru Gothic","Noto Sans JP",sans-serif';g.fillStyle='#fff';g.textAlign='center';
  g.font=`700 52px ${F}`;g.fillText(pair?`${S.me.name} ＆ ${S.pt.name}`:`${S.me.name}`,540,640);
  g.font=`700 44px ${F}`;g.fillText(pair?'ふたりのタイプは':'わたしのタイプは',540,730);
- g.font=`900 230px ${F}`;g.fillText(code,540,990);
- g.font=`900 96px ${F}`;g.fillText(t[0],540,1150);
- g.font=`500 42px ${F}`;const line=pair?t[1]:t[1].replace('ふたり','わたし');const w=[];let cur='';for(const ch of line){if(g.measureText(cur+ch).width>860){w.push(cur);cur=ch}else cur+=ch}w.push(cur);w.forEach((l,i)=>g.fillText(l,540,1260+i*60));
- g.font=`500 36px ${F}`;g.fillText(axesLine(code),540,1480);
+ if(pair){g.font=`900 120px ${F}`;g.fillText(`${pr.me} × ${pr.pt}`,540,900);
+  const nm=pn.name;let fs=110;g.font=`900 ${fs}px ${F}`;while(g.measureText(nm).width>960&&fs>56){fs-=4;g.font=`900 ${fs}px ${F}`}
+  if(g.measureText(nm).width>960){g.fillText(pn.pre[0],540,1070);g.fillText(pn.base[0],540,1070+fs*1.15)}else g.fillText(nm,540,1100)}
+ else{g.font=`900 230px ${F}`;g.fillText(code,540,990);g.font=`900 96px ${F}`;g.fillText(t[0],540,1150)}
+ g.font=`500 42px ${F}`;const line=pair?pn.base[1]:t[1].replace('ふたり','わたし');const w=[];let cur='';for(const ch of line){if(g.measureText(cur+ch).width>860&&!'。、」）'.includes(ch)){w.push(cur);cur=ch}else cur+=ch}w.push(cur);w.forEach((l,i)=>g.fillText(l,540,1260+i*60));
+ if(!pair){g.font=`500 36px ${F}`;g.fillText(axesLine(code),540,1480)}
  g.fillStyle='rgba(255,255,255,.9)';g.font=`900 64px ${F}`;g.fillText('ミラペア',540,1760);g.font=`500 32px ${F}`;g.fillText('ふたりの相性と未来を、毎日。',540,1815);
  return c}
 let DOWNLOADS=null;try{if(window.claude&&claude.use)claude.use('downloads').then(f=>{DOWNLOADS=f}).catch(()=>{})}catch(e){}
