@@ -20,6 +20,7 @@ import pandas as pd
 # クラウドの一時フォルダでも書き込めるよう、環境変数で場所を変えられる
 DATA_DIR = Path(os.environ.get("TRADELAB_DATA", Path(__file__).parent))
 KV_TABLE = "settings"
+VERSION = 2  # 書き込みのやり直し・追記に対応
 
 
 class LocalBackend:
@@ -48,6 +49,19 @@ class LocalBackend:
             df.to_csv(p, mode="a", header=not p.exists(), index=False, encoding="utf-8")
 
 
+def _retry(fn, tries: int = 5):
+    """Google の一時的なエラー（使いすぎ制限 429・サーバーエラー 5xx）は少し待ってやり直す"""
+    import gspread
+    for k in range(tries):
+        try:
+            return fn()
+        except gspread.exceptions.APIError as e:
+            code = getattr(getattr(e, "response", None), "status_code", 0) or 0
+            if k == tries - 1 or not (code == 429 or code >= 500):
+                raise
+            time.sleep(min(30, 2 ** k * 2))
+
+
 class SheetsBackend:
     name = "Googleスプレッドシート"
     persistent = True
@@ -62,16 +76,22 @@ class SheetsBackend:
 
     def _ws(self, table):
         import gspread
+        if table in getattr(self, "_ws_cache", {}):
+            return self._ws_cache[table]
+        self._ws_cache = getattr(self, "_ws_cache", {})
         try:
-            return self.book.worksheet(table)
+            ws = _retry(lambda: self.book.worksheet(table))
         except gspread.WorksheetNotFound:
-            return self.book.add_worksheet(title=table, rows=200, cols=30)
+            ws = _retry(lambda: self.book.add_worksheet(title=table, rows=200, cols=30))
+        self._ws_cache[table] = ws
+        return ws
 
     def read(self, table: str) -> pd.DataFrame:
         hit = self._cache.get(table)
         if hit and time.time() - hit[0] < 60:
             return hit[1].copy()
-        vals = self._ws(table).get_all_values()
+        ws = self._ws(table)
+        vals = _retry(lambda: ws.get_all_values())
         df = pd.DataFrame(vals[1:], columns=vals[0]) if len(vals) >= 1 and vals[0] else pd.DataFrame()
         # 数値に戻せる列は数値に
         for c in df.columns:
@@ -88,13 +108,25 @@ class SheetsBackend:
             if pd.api.types.is_datetime64_any_dtype(out[c]):
                 out[c] = out[c].dt.strftime("%Y-%m-%d %H:%M:%S")
         out = out.astype(object).where(out.notna(), "")
-        ws.clear()
-        ws.update([list(map(str, out.columns))] + out.values.tolist(), value_input_option="RAW")
+        _retry(lambda: ws.clear())
+        _retry(lambda: ws.update([list(map(str, out.columns))] + out.values.tolist(), value_input_option="RAW"))
         self._cache[table] = (time.time(), df.copy())
 
     def append(self, table: str, df: pd.DataFrame):
-        if len(df):
-            cur = self.read(table)
+        if not len(df):
+            return
+        cur = self.read(table)
+        if len(cur) and list(cur.columns) == list(map(str, df.columns)):
+            # 列が同じなら、表を消さずに下へ書き足すだけ（書き込み回数が少なく、失敗しにくい）
+            out = df.copy()
+            for c in out.columns:
+                if pd.api.types.is_datetime64_any_dtype(out[c]):
+                    out[c] = out[c].dt.strftime("%Y-%m-%d %H:%M:%S")
+            out = out.astype(object).where(out.notna(), "")
+            ws = self._ws(table)
+            _retry(lambda: ws.append_rows(out.values.tolist(), value_input_option="RAW"))
+            self._cache.pop(table, None)
+        else:
             self.write(table, pd.concat([cur, df], ignore_index=True) if len(cur) else df)
 
 
