@@ -34,6 +34,8 @@ _il.reload(scalp)  # サーバーが古いまま残らないよう、毎回読�
 _il.reload(pt)
 if getattr(storage, "VERSION", 1) < 2:  # 古い保存処理がサーバーに残っていたら読み直す
     _il.reload(storage)
+if not hasattr(su, "upcoming_holidays"):  # 休場日カレンダー追加前の古い読み込みが残っていたら読み直す
+    _il.reload(su)
 
 UP, DOWN = charts.UP, charts.DOWN
 # Streamlitのバージョン差を吸収（古い版は plotly_chart に width 指定ができない）
@@ -692,6 +694,10 @@ if page == P_PICK:
         f"<div class='hours'><span><b>東証</b>{ms['東証_時間']}</span><span><b>米国株</b>{ms['米国_時間']}"
         f"（次の開始 {ms['米国_開始']}）</span><span><b>原油・金</b>{ms['先物_時間']}</span></div>",
         unsafe_allow_html=True)
+    _hol = su.upcoming_holidays(10)
+    st.caption("📅 これからの休場：" + ("、".join(f"{m} {d:%m/%d}（{'月火水木金土日'[d.weekday()]}）{t}" for m, d, t in _hol)
+                                     if _hol else "10日以内はなし（東証・米国とも平日は通常どおり）")
+               + "　※日本の祝日でも米国は開いています（逆も同じ）")
 
     style_label = st.segmented_control("スタイル", ["スイング（数日〜2週間）", "デイトレ（当日中）"],
                                        default="スイング（数日〜2週間）", key="style_sel",
