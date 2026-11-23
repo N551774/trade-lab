@@ -57,6 +57,18 @@ input,select{width:100%; font:500 1rem var(--f-body); padding:11px 12px; border-
 .seg{display:flex; flex-wrap:wrap; gap:6px}
 .seg button{appearance:none; flex:1 1 auto; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:12px; padding:9px 10px; font:500 .88rem var(--f-body); cursor:pointer}
 .seg button.on{background:var(--pink); border-color:var(--pink); color:#fff; font-weight:700}
+.seg.sizes{flex-direction:column}
+.seg.sizes button{text-align:left; padding:10px 12px}
+.seg.sizes button small{display:block; font-weight:400; font-size:.75rem; opacity:.8}
+.dsel{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:6px}
+.chat{display:flex; flex-direction:column; gap:8px; margin:10px 0}
+.bub{max-width:88%; padding:10px 12px; border-radius:16px; white-space:pre-wrap; overflow-wrap:anywhere; font-size:.92rem}
+.bub.me{align-self:flex-end; background:var(--pink); color:#fff; border-bottom-right-radius:4px}
+.bub.ai{align-self:flex-start; background:var(--card); border:1px solid var(--line); border-bottom-left-radius:4px}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chips button{appearance:none; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:99px; padding:7px 12px; font:500 .85rem var(--f-body); cursor:pointer}
+textarea{width:100%; font:500 1rem var(--f-body); padding:11px 12px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); resize:vertical; min-height:72px}
+.demo{appearance:none; background:none; border:0; color:var(--muted); text-decoration:underline; font:500 .8rem var(--f-body); cursor:pointer; padding:6px 0}
 .opts{display:grid; gap:8px; margin-top:10px}
 .opt{appearance:none; text-align:left; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:14px; padding:12px 14px; font:500 .95rem var(--f-body); cursor:pointer}
 .opt.on{border-color:var(--pink); background:var(--pink-soft); font-weight:700}
@@ -170,7 +182,7 @@ function notifTimes(){const st=isStudentSeg(seg(S.me));return st?{daily:'7:30',s
 
 /* ========== データ ========== */
 const INDUSTRIES=[['it','IT・通信・マスコミ'],['fin','金融・保険'],['maker','メーカー（製造業）'],['trade','商社・卸売・小売'],['build','建設'],['realestate','不動産'],['infra','電気・ガス・水道'],['logi','運輸・物流'],['pro','専門職・研究（コンサル・士業など）'],['med','医療・福祉'],['edu','教育'],['food','飲食・宿泊'],['life','美容・娯楽など'],['service','その他のサービス'],['gov','公務員'],['part','契約・派遣・フルタイムのアルバイト']];
-const SIZES=[['big','大きい会社（1000人以上）',1],['mid','中くらい（100〜999人）',2],['small','小さい会社（99人以下）',3],['unk','わからない',0]];
+const SIZES=[['big','1000人以上',1,'大手・上場企業、全国に支店がある会社など'],['mid','100〜999人',2,'地域で名前の知られた会社、中堅メーカー、大きめの病院など'],['small','99人以下',3,'中小企業、ベンチャー、町の会社やお店、クリニックなど'],['unk','わからない',0,'']];
 const HOLIDAY=[['weekend','土日が休み'],['shift','平日・シフト'],['mixed','ばらばら']];
 const TRANSFER=[['yes','あり'],['no','なし'],['unk','わからない']];
 const OVERTIME=[['low','少ない'],['mid','ふつう'],['high','多い']];
@@ -303,9 +315,9 @@ const VALUES=[
  ['work','忙しくても仕事を優先する','家族の時間を優先する']];
 
 const SHOP=[
- {id:'y2027',name:'2027年のふたり',price:480,desc:'来年の月ごとの運勢と、ふたりの大事な時期。'},
- {id:'xmas',name:'クリスマスのふたり',price:250,desc:'今年のクリスマスの過ごし方とラッキープラン。季節限定。'},
- {id:'wed',name:'結婚の時期',price:600,desc:'星と数のめぐりから見た、ふたりの「決めどき」。',adult:1}];
+ {id:'y2027',name:'2027年のふたり',price:400,desc:'ふたりそれぞれの「2027年の数」と12か月の流れ、ふたりで大事にしたい月。',toc:['あなたと相手の2027年のテーマ（計算式つき）','12か月の流れ（月ごとの数と、ふたりへのひとこと）','ふたりで大事にしたい月ベスト3','計算のしかた']},
+ {id:'xmas',name:'クリスマスのふたり',price:200,desc:'12月24日・25日の「その日の数」と、ふたりの星座から見た過ごし方とプレゼント。',toc:['24日・25日のふたりの数と、向いている過ごし方','星座のエレメントから見たデートの組み立て','相手へのプレゼント案（予算別）','計算のしかた']},
+ {id:'wed',name:'結婚の時期',price:500,desc:'これから5年の「年の数」から見た、ふたりの決めどきの年と月。',adult:1,toc:['5年間のふたりの年の数と意味','決めどきの年と、その中の候補の月','ふたりの答え（1日1問・価値観）とのすり合わせ','計算のしかた']}];
 
 /* 提携先（デモ）。stage: 0=まだ 1=考え始め 2=準備期 */
 const PARTNERS=[
@@ -423,7 +435,7 @@ function personForm(p,who){
  const isMe=who==='me';const a=age(p.birth);const tooYoung=p.birth&&a<16;
  return `
  <label class="f">ニックネーム</label><input data-name="name" maxlength="12" value="${esc(p.name)}" placeholder="${isMe?'あなたの呼び名':'相手の呼び名'}">
- <label class="f">生年月日</label><input type="date" data-name="birth" value="${esc(p.birth)}" max="${today()}">
+ <label class="f">生年月日</label>${dateSel('birth',p.birth,new Date().getFullYear()-60,new Date().getFullYear()-16,p._birth)}
  ${tooYoung?'<div class="note">ミラペアは16歳から使えます。</div>':''}
  <label class="f">性別</label>${seg2('gender',GENDER,p.gender)}
  <label class="f">いまの立場</label>${seg2('status',STATUS,p.status)}
@@ -433,14 +445,24 @@ function personForm(p,who){
  ${p.status==='work'||p.status==='other'?`
  <label class="f">働いている都道府県</label>${sel('pref',PREF_NAMES,p.pref,'えらばない（全国平均）')}
  <label class="f">業界</label>${sel('industry',INDUSTRIES,p.industry)}
- <label class="f">会社の大きさ</label>${seg2('size',SIZES.map(s=>[s[0],s[1].replace(/（.*）/,'')]),p.size)}
+ <label class="f">会社で働いている人の数</label><p class="small muted" style="margin:0 0 6px">会社全体の人数（グループ会社はふくめない）。求人票や会社のサイトに「従業員数」としてのっています。</p>
+ <div class="seg sizes" data-name="size">${SIZES.map(z=>`<button type="button" data-a="segpick" data-v="${z[0]}" class="${p.size===z[0]?'on':''}">${z[1]}${z[3]?`<small>${z[3]}</small>`:''}</button>`).join('')}</div>
  <label class="f">休み</label>${seg2('holiday',HOLIDAY,p.holiday)}
  <label class="f">転勤</label>${seg2('transfer',TRANSFER,p.transfer)}
  <label class="f">残業</label>${seg2('overtime',OVERTIME,p.overtime)}
  <label class="f">いまの年収（わかれば・万円）</label><input type="number" inputmode="numeric" data-name="nenshu" min="0" max="5000" value="${esc(p.nenshu||'')}" placeholder="例：380">
  <p class="small muted">入れないと統計の平均を使います。平均はフルタイムで働く人のもので、実感より高めに出ます。</p>`:''}
  ${p.status==='hs'?'<p class="small muted">高校生のあいだは、占い・性格・毎日の予報が使えます。年収や子どもの予測は18歳から。</p>':''}`}
-function readForm(target){document.querySelectorAll('[data-name]').forEach(el=>{const k=el.dataset.name;if(el.classList.contains('seg'))return;target[k]=el.value})}
+function readForm(target){document.querySelectorAll('[data-name]').forEach(el=>{const k=el.dataset.name;if(el.classList.contains('seg'))return;target[k]=el.value});
+ const parts={};document.querySelectorAll('[data-dpart]').forEach(el=>{const [k,w]=el.dataset.dpart.split(':');(parts[k]=parts[k]||{})[w]=el.value});
+ Object.entries(parts).forEach(([k,v])=>{target['_'+k]=v;if(v.y&&v.m&&v.d){const last=new Date(+v.y,+v.m,0).getDate();target[k]=`${v.y}-${pad(v.m)}-${pad(Math.min(+v.d,last))}`}else target[k]=''})}
+/* 年・月・日を別々に選ぶ（スマホの日付ピッカーは年をさかのぼりにくいため） */
+function dateSel(name,val,yFrom,yTo,part){let [y,m,d]=(val||'').split('-').map(Number);if(part){y=+part.y||0;m=+part.m||0;d=+part.d||0}const days=y&&m?new Date(y,m,0).getDate():31;
+ const o=(arr,cur,unit)=>arr.map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n}${unit}</option>`).join('');
+ const ys=[];for(let i=yTo;i>=yFrom;i--)ys.push(i);
+ return `<div class="dsel"><select data-dpart="${name}:y" aria-label="年"><option value="">年</option>${o(ys,y,'年')}</select>
+ <select data-dpart="${name}:m" aria-label="月"><option value="">月</option>${o([...Array(12)].map((_,i)=>i+1),m,'月')}</select>
+ <select data-dpart="${name}:d" aria-label="日"><option value="">日</option>${o([...Array(days)].map((_,i)=>i+1),d,'日')}</select></div>`}
 function personOk(p){return p.name&&p.birth&&age(p.birth)>=16&&p.gender&&p.status&&+p.height>=130&&+p.height<=210}
 function onboarding(){
  const st=UI.step,d=UI.draft;
@@ -455,9 +477,9 @@ function onboarding(){
  if(st===2)return `${topBar('いまの恋愛')}<p class="small muted">2 / 3</p>
   <div class="opts"><button class="opt" data-a="rel" data-v="pair"><b>恋人がいる</b><br><span class="small muted">ふたりで相性と未来を見る</span></button>
   <button class="opt" data-a="rel" data-v="solo"><b>いまはいない</b><br><span class="small muted">ひとりモード：自分の運勢と価値観。恋人ができたら、ふたりモードに切り替えられます</span></button></div>`;
- if(st===3)return `${topBar('相手のこと')}<p class="small muted">${UI.adding?'1 / 2':'2 / 3'} ・ 相手にスマホを渡して、本人に入力してもらってください（本番では招待リンクで相手のスマホから入力）。</p>${personForm(d.pt,'pt')}<div style="height:16px"></div><button class="btn" data-a="onbNext">つぎへ</button>`;
+ if(st===3)return `${topBar('相手のこと')}<p class="small muted">${UI.adding?'1 / 2':'2 / 3'} ・ 本番では招待リンクを送り、相手が自分のスマホで入力します。試作品なので、ここで相手の分も入れてください。</p>${personForm(d.pt,'pt')}<div style="height:16px"></div><button class="btn" data-a="onbNext">つぎへ</button>`;
  if(st===4)return `${topBar('ふたりのこと')}<p class="small muted">${UI.adding?'2 / 2':'3 / 3'}</p>
-  <label class="f">付き合いはじめた日</label><input type="date" data-name="since" value="${esc(d.since||'')}" max="${today()}">
+  <label class="f">付き合いはじめた日</label>${dateSel('since',d.since,new Date().getFullYear()-20,new Date().getFullYear(),d._since)}
   <p class="small muted">記念日のお知らせに使います。</p><div style="height:16px"></div><button class="btn" data-a="onbNext">ミラペアをはじめる</button>`;
 }
 
@@ -477,11 +499,11 @@ function viewHome(){
   ${D.me.g===D.pt.a?` <span class="pill">${N1}の予想が的中</span>`:''}${D.pt.g===D.me.a?` <span class="pill">${N2}の予想が的中</span>`:''}</p>
   ${q[0]==='結婚式はする？'&&S.prep&&adultPair()&&prepStage().stage>=1?`<button class="btn sm sub" style="margin-top:8px" data-a="go" data-v="wedding">ふたりの結婚式の費用を見てみる ›</button>`:''}`}
  else{const done=D.me?'me':D.pt?'pt':null;
-  qBody=`<p class="small muted">ふたりとも答えると、相手の答えが見られます。</p>
-  <div class="grid2" style="margin-top:8px">
-   <button class="btn ${D.me?'sub':''}" data-a="dq" data-v="me" ${D.me?'disabled':''}>${D.me?`${N1} 回答ずみ`:`${N1}が答える`}</button>
-   <button class="btn ${D.pt?'sub':''}" data-a="dq" data-v="pt" ${D.pt?'disabled':''}>${D.pt?`${N2} 回答ずみ`:`${N2}が答える`}</button></div>
-  ${done?`<p class="small muted" style="margin-top:6px">${done==='me'?N2:N1}さんの番です。</p>`:''}`}
+  qBody=D.me?`<p class="small">答えました。<b>${N2}さん</b>が答えると、ふたりの答えが見られます。</p>
+   <button class="demo" data-a="dq" data-v="pt">（試作品）${N2}さんの分をここで答える</button>`
+  :`<p class="small muted">${D.pt?`${N2}さんはもう答えました。あなたが答えると、ふたりの答えが見られます。`:'ふたりとも答えると、相手の答えが見られます。'}</p>
+   <button class="btn" style="margin-top:8px" data-a="dq" data-v="me">答える</button>
+   ${D.pt?'':`<button class="demo" data-a="dq" data-v="pt">（試作品）${N2}さんの分をここで答える</button>`}`}
  const stText={none:'今日の1問に、ふたりで答えるとスタート',done:'今日もふたりで答えました',open:'今日答えると続きます',freeze:'昨日はおやすみ券で続いています。今日答えてね',broken:'また今日から始めよう'}[sv.state];
  const freezeLeft=S.streak.freezeWeek===weekKey(today())?0:1;
  return `<div class="top"><div class="logo">ミラ<b>ペア</b></div><div class="sp"></div>${S.plus?'<span class="pill">ふたりプラス</span>':''}</div>
@@ -499,13 +521,14 @@ function viewHome(){
   <div class="stat"><span>おやすみ券（今週）</span><b>${freezeLeft}</b> 枚<span>1日答え忘れても続きます</span></div></div>
  ${ms&&ms.next?`<div class="card"><div class="row between"><div><p class="small muted" style="margin:0">つぎの記念日</p><h3>${ms.next[1]}（${parse(ms.next[0]).getMonth()+1}/${parse(ms.next[0]).getDate()}）</h3></div><div class="center"><b style="font:900 1.6rem var(--f-head);color:var(--pink)">${dayDiff(today(),ms.next[0])}</b><div class="small muted">日後</div></div></div></div>`:''}
  ${S.prep&&adultPair()&&prepStage().stage===2?`<div class="card tap" data-a="go" data-v="wedding"><span class="pill sky">PR を含みます</span><h3 style="margin-top:6px">${ms&&ms.next&&/周年/.test(ms.next[1])&&dayDiff(today(),ms.next[0])<=14?`もうすぐ${ms.next[1]}。`:''}ふたりの結婚式、いくらかかる？</h3><p class="small muted">費用の目安と、見学予約のおすすめ ›</p></div>`:''}
+ <div class="card tap" data-a="go" data-v="ai"><span class="pill sky">AI</span><h3 style="margin-top:6px">AIに相談</h3><p class="small muted">けんかの仲直り、プレゼント選び、デートの計画。ふたりの答えをふまえて一緒に考えます ›</p></div>
  <div class="card tap" data-a="tab" data-v="diag"><h3>ふたりの相性 ${c.score}%</h3><p class="small muted">${SIGNS[c.a]} × ${SIGNS[c.b]}。くわしく見る ›</p></div>`}
 
 function viewDaily(){
  const dq=UI.dq;const who=dq.who;const name=esc(S[who].name),other=esc(S[who==='me'?'pt':'me'].name);
  const q=DAILY[dailyIdx()];
  if(dq.stage==='hand')return `<div class="handoff"><div class="circle">${name.slice(0,1)}</div><h2>${name}さんの番</h2><p class="muted">${other}さんの答えが見えないよう、${name}さんにスマホを渡してください。</p><div style="height:16px"></div><button class="btn" data-a="dqStart">${name}です、はじめる</button><button class="btn ghost" data-a="back">やめる</button></div>`;
- return `${topBar('今日の1問')}<p class="small muted">${name}さんの答え</p><h2 style="margin-top:6px">${esc(q[0])}</h2>
+ return `${topBar('今日の1問')}<p class="small muted">${who==='me'?'あなたの答え':`（試作品）${name}さんの答え`}</p><h2 style="margin-top:6px">${esc(q[0])}</h2>
  <div class="opts">${q[1].map((o,i)=>`<button class="opt ${dq.a===i?'on':''}" data-a="dqA" data-v="${i}">${esc(o)}</button>`).join('')}</div>
  <h3 style="margin-top:20px">${other}さんは、どれを選ぶと思う？</h3>
  <div class="opts">${q[1].map((o,i)=>`<button class="opt ${dq.g===i?'on':''}" data-a="dqG" data-v="${i}">${esc(o)}</button>`).join('')}</div>
@@ -533,7 +556,7 @@ function viewValues(){
  if(vq){const qs=valueQs();
   if(vq.stage==='hand'){const n=esc(S[vq.who].name);return `<div class="handoff"><div class="circle">${n.slice(0,1)}</div><h2>${n}さんの番</h2><p class="muted">相手に見えないように、${n}さんが答えてください。${qs.length}問・2分くらい。</p><div style="height:16px"></div><button class="btn" data-a="vqStart">はじめる</button><button class="btn ghost" data-a="vqQuit">やめる</button></div>`}
   const [q,i]=qs[vq.i];const v=S.values[vq.who][i];
-  return `${topBar(`${esc(S[vq.who].name)}さんの価値観`)}<p class="small muted">${vq.i+1} / ${qs.length} ・ ${CATS[q[0]]}</p>
+  return `${topBar(vq.who==='me'?'あなたの価値観':`（試作品）${esc(S.pt.name)}さんの価値観`)}<p class="small muted">${vq.i+1} / ${qs.length} ・ ${CATS[q[0]]}</p>
   <div class="bar"><i style="width:${(vq.i+1)/qs.length*100}%"></i></div>
   <div class="card" style="margin-top:20px"><p class="small muted center">どちらに近い？</p>
   <div class="poles" style="font-size:.95rem;color:var(--ink);font-weight:700"><span>${q[1]}</span><span>${q[2]}</span></div>
@@ -543,7 +566,8 @@ function viewValues(){
  if(S.mode==='solo')return viewSoloValues();
  const vm=valuesDone('me'),vp=valuesDone('pt');
  if(!(vm&&vp))return `${topBar('価値観の一致')}<p class="muted">ふたりが別々に答えます。相手の答えは、ふたりとも終わるまで見えません。</p>
-  <div class="grid2" style="margin-top:12px"><button class="btn ${vm?'sub':''}" data-a="vqGo" data-v="me">${esc(S.me.name)}${vm?'（やり直す）':'が答える'}</button><button class="btn ${vp?'sub':''}" data-a="vqGo" data-v="pt">${esc(S.pt.name)}${vp?'（やり直す）':'が答える'}</button></div>`;
+  ${vm?`<p style="margin-top:12px">答えました。<b>${esc(S.pt.name)}さん</b>が答えると結果が見られます。</p><button class="btn sub" data-a="vqGo" data-v="me">答え直す</button>`:`<button class="btn" style="margin-top:12px" data-a="vqGo" data-v="me">答える（${valueQs().length}問・2分くらい）</button>`}
+  ${vp?'':`<button class="demo" data-a="vqGo" data-v="pt">（試作品）${esc(S.pt.name)}さんの分をここで答える</button>`}`;
  const r=valuesResult();const free=S.plus?r.gaps:r.gaps.slice(0,2);
  return `${topBar('価値観の一致')}
  <div class="card hero center"><p class="muted small">ふたりの価値観の一致</p><div class="big">${r.all}%</div><p class="small">点数は「似ているかどうか」だけ。ちがう所があるのは、ふつうのことです。</p></div>
@@ -563,23 +587,30 @@ function viewFuture(){
  <div class="card tap" data-a="go" data-v="photo"><span class="pill">写真・あそび</span><h3 style="margin-top:6px">写真で見る未来</h3><p class="small muted">子どもの顔、歳をとったふたり。</p></div>`}
 function rangeBar(h){
  const lo=135,hi=200,X=v=>((v-lo)/(hi-lo)*100).toFixed(1)+'%';
- const sp=(c,r,col,lab)=>`<div class="span" style="left:${X(c-r)};width:calc(${X(c+r)} - ${X(c-r)});background:${col}"></div><div class="mid" style="left:${X(c)}"></div><div class="lab" style="left:${X(c)};color:${col}">${lab} ${c.toFixed(0)}</div>`;
+ const sp=(c,r,col,lab)=>`<div class="span" style="left:${X(c-r)};width:calc(${X(c+r)} - ${X(c-r)});background:${col};opacity:.3"></div><div class="span" style="left:${X(c-r/2)};width:calc(${X(c+r/2)} - ${X(c-r/2)});background:${col}"></div><div class="mid" style="left:${X(c)}"></div><div class="lab" style="left:${X(c)};color:${col}">${lab} ${c.toFixed(0)}</div>`;
  return `<div class="range"><div class="axis"></div>${sp(h.girl,8,'var(--pink)','女の子')}</div>
- <div class="range"><div class="axis"></div>${sp(h.boy,9,'var(--sky)','男の子')}${[140,150,160,170,180,190].map(t=>`<div class="tick" style="left:${X(t)}">${t}</div>`).join('')}</div>`}
+ <div class="range"><div class="axis"></div>${sp(h.boy,9,'var(--sky)','男の子')}${[140,150,160,170,180,190].map(t=>`<div class="tick" style="left:${X(t)}">${t}</div>`).join('')}</div>
+ <p class="small muted" style="margin-top:14px">濃い色：3人に2人くらいが入る幅 ／ うすい色：ほとんど（約95%）の子が入る幅</p>`}
 function viewHeight(){
  const h=heights();
  const pickF=!(h&&h.auto);
  return `${topBar('子どもの身長')}
  ${pickF?`<div class="card"><p class="small">身長の予測は、生まれる子の両親（父と母）の身長で計算します。どちらを「父」として計算しますか？</p>${seg2('heightFather',[['me',esc(S.me.name)],['pt',esc(S.pt.name)]],S.heightFather||'me')}</div>`:''}
  ${h?`<div class="card"><p class="small muted">父 ${h.f}cm ・ 母 ${h.m}cm</p>
- <div class="grid2" style="margin-top:8px"><div class="stat"><span>男の子</span><b>${(h.boy-9).toFixed(0)}〜${(h.boy+9).toFixed(0)}</b> cm<span>まんなか ${h.boy.toFixed(1)}cm</span></div>
- <div class="stat"><span>女の子</span><b>${(h.girl-8).toFixed(0)}〜${(h.girl+8).toFixed(0)}</b> cm<span>まんなか ${h.girl.toFixed(1)}cm</span></div></div>
+ <div class="grid2" style="margin-top:8px"><div class="stat"><span>男の子</span><b>${(h.boy-4.5).toFixed(0)}〜${(h.boy+4.5).toFixed(0)}</b> cm<span>3人に2人が入る幅。まんなか ${h.boy.toFixed(1)}cm</span><span>ほとんどの子：${(h.boy-9).toFixed(0)}〜${(h.boy+9).toFixed(0)}cm</span></div>
+ <div class="stat"><span>女の子</span><b>${(h.girl-4).toFixed(0)}〜${(h.girl+4).toFixed(0)}</b> cm<span>3人に2人が入る幅。まんなか ${h.girl.toFixed(1)}cm</span><span>ほとんどの子：${(h.girl-8).toFixed(0)}〜${(h.girl+8).toFixed(0)}cm</span></div></div>
  ${rangeBar(h)}</div>
- <div class="card small"><p><b>計算のしかた</b>：男の子は（父＋母＋13）÷2、女の子は（父＋母−13）÷2。日本人の子どものデータで確かめられた式です。</p><p class="muted">身長は食事・睡眠・運動などでも変わります。幅（男の子±9cm、女の子±8cmほど）の中に入ることが多い、という目安です。</p></div>`:'<p>身長を入力すると見られます（設定 › プロフィール）。</p>'}`}
+ <div class="card small"><p><b>何から計算しているか</b></p>
+ <p>小児科で子どもの成長を見るときに使う「目標身長」の式です。日本人の子どものデータで見直された式（Ogata・Tanaka・Kagami, 2007, Clinical Pediatric Endocrinology）を使っています。</p>
+ <p>・まんなか：男の子は（父＋母＋13）÷2、女の子は（父＋母−13）÷2。13cmは日本人の大人の男女の平均身長の差です。</p>
+ <p>・ほとんどの子が入る幅：男の子±9cm、女の子±8cm（同じ式の「目標範囲」）。</p>
+ <p>・3人に2人が入る幅：上の幅を約95%の範囲とみなして、半分（±4.5cm・±4cm）にしたものです。この部分は私たちの計算です。</p>
+ <p class="muted"><b>幅が広い理由</b>：親の身長で説明できるのは一部だけで、同じ両親のきょうだいでも数cm〜10cm近くちがうことがふつうです。食事・睡眠・運動・病気なども影響します。</p></div>`:'<p>身長を入力すると見られます（設定 › プロフィール）。</p>'}`}
 function viewMoney(){
- const m=S.sim;const kids=+m.kids;const yrs=S.plus?[0,5,10]:[0,5];
+ const m=S.sim;const kids=+m.kids;const yrs=S.plus?[0,1,5,10]:[0,1];const at=+(m.childAt||3);
  const reduce=m.style==='short'?0.7:m.style==='home'?0:1;
- const rows=yrs.map(y=>{let a=income(S.me,y),b=income(S.pt,y);if(kids>0&&y>=3&&reduce<1){if(m.who==='me')a*=reduce;else b*=reduce}return{y,a,b,t:a+b}});
+ const rows=yrs.map(y=>{let a=income(S.me,y),b=income(S.pt,y),ra=false,rb=false;if(kids>0&&y>=at&&reduce<1){if(m.who==='me'){a*=reduce;ra=true}else{b*=reduce;rb=true}}return{y,a,b,ra,rb,t:a+b}});
+ const anyRed=rows.some(r=>r.ra||r.rb);
  const per=(COURSES.find(c=>c[0]===m.course)||COURSES[0])[2];const edu=per*kids;const monthly=per/22/12*10000;
  const last=rows[rows.length-1];const take=last.t*0.78;const ratio=take?Math.round(per/22*kids/take*100):0;
  const cell=v=>v===0?'<span class="muted">学生</span>':man(v);
@@ -587,14 +618,17 @@ function viewMoney(){
  <div class="card"><h3>条件</h3>
   <label class="f">子どもの人数</label>${seg2('kids',[['0','0人'],['1','1人'],['2','2人'],['3','3人']],String(m.kids))}
   ${kids>0?`<label class="f">進路</label>${seg2('course',COURSES.map(c=>[c[0],c[1]]),m.course)}
-  <label class="f">子どもが生まれたら（3年後と仮定）</label>${seg2('style',[['full','ふたりともフル'],['short','どちらかが時短'],['home','どちらかが家庭中心']],m.style)}
+  <label class="f">子どもが生まれるのは</label>${seg2('childAt',[['1','1年後'],['3','3年後'],['5','5年後']],String(at))}
+  <label class="f">子どもが生まれたら</label>${seg2('style',[['full','ふたりともフル'],['short','どちらかが時短'],['home','どちらかが家庭中心']],m.style)}
   ${m.style!=='full'?`<label class="f">働き方を変えるのは</label>${seg2('who',[['me',esc(S.me.name)],['pt',esc(S.pt.name)]],m.who)}`:''}`:''}</div>
  <div class="card"><h3>世帯年収の目安</h3>
   <table class="t"><tr><th></th>${rows.map(r=>`<th>${r.y?r.y+'年後':'いま'}</th>`).join('')}</tr>
-  <tr><td>${esc(S.me.name)}</td>${rows.map(r=>`<td>${cell(r.a)}</td>`).join('')}</tr>
-  <tr><td>${esc(S.pt.name)}</td>${rows.map(r=>`<td>${cell(r.b)}</td>`).join('')}</tr>
+  <tr><td>${esc(S.me.name)}</td>${rows.map(r=>`<td>${cell(r.a)}${r.ra?'<div class="small muted">時短</div>':''}</td>`).join('')}</tr>
+  <tr><td>${esc(S.pt.name)}</td>${rows.map(r=>`<td>${cell(r.b)}${r.rb?'<div class="small muted">時短</div>':''}</td>`).join('')}</tr>
   <tr><td><b>ふたり</b></td>${rows.map(r=>`<td><b>${man(r.t)}</b><div class="small muted">${man(r.t*.85)}〜${man(r.t*1.15)}</div></td>`).join('')}</tr></table>
-  ${S.plus?'':plusLock('10年後の予想と、教育費の割合')}
+  ${anyRed?`<p class="small" style="margin-top:8px">「時短」の年は、子どもが生まれたあと${esc(S[m.who].name)}さんの年収を${m.style==='short'?'7割':'0'}にしています（上の条件の設定）。</p>`:''}
+  <p class="small muted" style="margin-top:6px">年齢による伸び方は、統計の年齢別の平均をつないだものです。平均は50代後半がいちばん高く、60歳から下がります。</p>
+  ${S.plus?'':plusLock('5年後・10年後の予想と、教育費の割合')}
  </div>
  ${kids>0?`<div class="card"><h3>子どもの教育費</h3><p>1人あたり <b>約${man(per)}</b>（幼稚園〜大学）。${kids}人で <b>約${man(edu)}</b>。</p>
   <p class="small muted">22年でならすと、1人あたり月 約${Math.round(monthly/10000*10)/10}万円。</p>
@@ -641,6 +675,61 @@ function viewPhoto(){
  <button class="btn sub" style="margin-top:10px" disabled>SNS用のカードで保存（本番で対応）</button>${prCards(p=>p.id==='fair'||p.id==='photo')}`:''}
  <div class="note">遺伝ではなく、見た目の合成です。実際とはちがいます。写真はこの画面の中だけで使い、保存しません（本番ではつくった後24時間で消し、AIの学習には使いません）。</div>`}
 
+/* ========== AIに相談 ========== */
+let SAMPLE=null;try{if(window.claude&&claude.use)claude.use('sample').then(f=>{SAMPLE=f;if(UI.view==='ai')render()}).catch(()=>{})}catch(e){}
+const AI_TOPICS_PAIR=[['けんかした','けんかしてしまいました。仲直りのしかたを一緒に考えてほしいです。'],['プレゼント','もうすぐ相手の誕生日（または記念日）です。プレゼントを一緒に考えてほしいです。'],['デートの計画','次のデートの計画を一緒に立てたいです。'],['気持ちの伝え方','相手に言いにくいことがあります。どう伝えたらいいか相談したいです。'],['お金のこと','ふたりのお金のことで相談したいです。']];
+const AI_TOPICS_SOLO=[['気になる人がいる','気になる人がいます。距離の縮め方を相談したいです。'],['失恋した','最近お別れしました。気持ちの整理を手伝ってほしいです。'],['プレゼント','気になる人・友だちへのプレゼントを考えたいです。'],['自分の恋愛のくせ','自分の恋愛のくせについて考えたいです。']];
+function aiContext(){
+ const me=S.me,ln=[];const t=today();
+ ln.push(`相談者：${me.name}（${age(me.birth)}歳・${SEGNAME[seg(me)]}・${SIGNS[sign(me.birth)]}）`);
+ if(S.mode==='pair'){const pt=S.pt;const ms=milestones();
+  ln.push(`恋人：${pt.name}（${age(pt.birth)}歳・${SEGNAME[seg(pt)]}・${SIGNS[sign(pt.birth)]}）`);
+  if(ms)ln.push(`付き合って${ms.day}日目。${ms.next?`つぎの記念日は${ms.next[1]}（${ms.next[0]}）`:''}`);
+  const ans=[];Object.values(S.daily).slice(-30).forEach(D=>{const q=DAILY[D.q];if(!q)return;if(D.pt)ans.push(`「${q[0]}」${pt.name}：${q[1][D.pt.a]}${D.me?`／${me.name}：${q[1][D.me.a]}`:''}`)});
+  if(ans.length)ln.push('これまでの1日1問の答え：\n'+ans.slice(-15).join('\n'));
+  if(valuesDone('me')&&valuesDone('pt')){const r=valuesResult();ln.push('価値観で考えがちがう所：'+(r.gaps.slice(0,5).map(g=>`${g.q[1]}／${g.q[2]}（${me.name}${S.values.me[g.i]}・${pt.name}${S.values.pt[g.i]}、1〜5）`).join('、')||'大きなちがいなし'))}
+ }else{const a=[];Object.entries(S.soloDaily).slice(-15).forEach(([d,v])=>{const q=DAILY[hash('q'+d+(S.since||''))%DAILY.length]});ln.push('恋人：いまはいない（ひとりモード）')}
+ return ln.join('\n')}
+function aiRules(){return `あなたは恋愛・カップル向けアプリ「ミラペア」の相談役です。日本語で、友だちに話すようにやさしく、短く答えてください（1回の返事は5〜8文くらい。箇条書きは3つまで）。
+守ること：
+- 相談者の気持ちをまず受け止める。そのうえで、相手の立場からも見られるように手伝う。どちらか一方を悪者にしない。
+- 具体的にする。仲直りなら最初のひとこと、プレゼントなら予算ごとに2〜3案、デートならプラン案など、すぐ使える形で。
+- 相手をコントロールする方法、うそ、ためし行動、監視（スマホを見る・位置を追う）はすすめない。
+- 暴力、おどし、お金や行動の強い制限、性的な強要、つきまといの話が出たら、相談者の安全を最優先にして、DV相談ナビ（#8008）やDV相談＋（0120-279-889）など専門の窓口を案内する。死にたい気持ちの話が出たら、よりそいホットライン（0120-279-338）などを案内する。
+- 占いの結果は遊びとして扱い、関係を決める根拠にしない。別れをすすめたり、相性の数字で判断したりしない。
+- 下の情報は参考。決めつけずに、足りなければ質問する。
+${S.mode==='pair'||age(S.me.birth)>=18?'':'- 相談者は18歳未満。年齢に合った内容にする。\n'}
+アプリの情報：
+${aiContext()}`}
+function viewAI(){
+ const A=UI.ai=UI.ai||{turns:[],draft:'',busy:false};const topics=S.mode==='pair'?AI_TOPICS_PAIR:AI_TOPICS_SOLO;
+ const avail=!!SAMPLE&&!A.off;
+ return `${topBar('AIに相談')}
+ <p class="small muted">${S.mode==='pair'?`${esc(S.pt.name)}さんには見えません。`:''}ふたりの1日1問や価値観の答えをふまえて答えます。</p>
+ ${!avail?`<div class="card"><p class="small"><b>${A.off?'このページではAIを使えなくなりました':'この画面ではAIを使えません'}</b></p><p class="small muted">${A.off||'claude.ai で開いたときと、本番のアプリで使えます。ダウンロードしたHTMLでは動きません。'}</p></div>`:''}
+ ${A.turns.length?'':`<div class="chips">${topics.map((t,i)=>`<button data-a="aiTopic" data-v="${i}">${t[0]}</button>`).join('')}</div>`}
+ <div class="chat">${A.turns.map((t,i)=>`<div class="bub ${t.role==='user'?'me':'ai'}" ${i===A.turns.length-1&&t.role==='assistant'?'id="aiLast"':''}>${esc(t.content)}</div>`).join('')}
+ ${A.busy&&!(A.turns.length&&A.turns[A.turns.length-1].role==='assistant')?'<div class="bub ai" id="aiLast">考えています…</div>':''}</div>
+ <textarea id="aiBox" data-ai="1" placeholder="例：きのう、連絡が少ないって言われてけんかになった" ${avail?'':'disabled'}>${esc(A.draft)}</textarea>
+ <div class="grid2" style="margin-top:8px">${A.busy?'<button class="btn sub" data-a="aiStop">止める</button>':'<button class="btn sub" data-a="aiClear">最初から</button>'}<button class="btn" data-a="aiSend" ${avail&&!A.busy?'':'disabled'}>送る</button></div>
+ <p class="small muted">AIの答えは参考です。暴力やおどしなど、こわいと感じることがあるときは、DV相談ナビ（#8008）に相談してください。</p>`}
+async function aiAsk(){
+ const A=UI.ai;const msg=(A.draft||'').trim();if(!msg||A.busy||!SAMPLE)return;
+ A.turns.push({role:'user',content:msg});A.draft='';A.busy=true;render();
+ const ctl=A.ctl=new AbortController();
+ const input=[{role:'user',content:aiRules()},...A.turns.slice(-12)];
+ try{
+  const {text}=await SAMPLE(input,{cache:false,signal:ctl.signal,onText:({text})=>{const last=A.turns[A.turns.length-1];if(last.role!=='assistant')A.turns.push({role:'assistant',content:text});else last.content=text;const el=document.getElementById('aiLast');if(el&&el.classList.contains('ai')&&UI.view==='ai'&&el.textContent!=='考えています…')el.textContent=text;else if(UI.view==='ai')render()}});
+  const last=A.turns[A.turns.length-1];if(last.role!=='assistant')A.turns.push({role:'assistant',content:text});else last.content=text;
+ }catch(e){
+  const last=A.turns[A.turns.length-1];
+  if(e&&e.text){if(last.role!=='assistant')A.turns.push({role:'assistant',content:e.text});else last.content=e.text}
+  else if(last.role==='assistant'&&e&&e.code==='refused')A.turns.pop();
+  const code=e&&e.code;
+  if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code))A.off='AIの利用が許可されていないか、このアカウントでは使えません。';
+  else if(code!=='cancelled')toast({rate_limited:'いまは使える回数をこえています。少し時間をおいてください。',session_expired:'もう一度ログインしてください。',refused:'その内容には答えられませんでした。言い方を変えてみてください。'}[code]||'うまく答えられませんでした。もう一度送ってください。');
+ }finally{A.busy=false;A.ctl=null;render()}}
+
 /* ========== ひとりモード ========== */
 const SOLO_PR=[{id:'match',kind:'出会い',title:'恋活・婚活のマッチングアプリ',sub:'18歳以上・本人確認のあるアプリ',min:18},{id:'soudan',kind:'婚活',title:'結婚相談所の無料相談',sub:'25歳以上の方に',min:25}];
 const CAREER_PR=[{id:'agent',kind:'転職',title:'転職エージェントに無料で相談',sub:'年収・働き方・地域の相談。面談はオンラインも'},{id:'site',kind:'求人',title:'転職サイトで求人を見る',sub:'業界・地域・年収で探す'}];
@@ -663,6 +752,7 @@ function viewSoloHome(){
    ${SOLO_PR.filter(p=>age(S.me.birth)>=p.min).map(p=>`<div class="item"><div class="ic fun" style="font-size:.7rem">${p.kind}</div><div style="flex:1"><b>${p.title}</b><p class="small muted">${p.sub}</p></div><button class="btn sm sub" data-a="pr2" data-v="${p.id}">見る</button></div>`).join('')}</div>`
    :`<div class="card"><h3>恋人を探したい？</h3><p class="small muted">オンにすると、マッチングアプリなどの提携先（PR）を出します。いつでもオフにできます。</p><button class="btn sm sub" data-a="flag" data-v="dating">出会いのおすすめを見る</button></div>`)
   :ds==='cool'?`<div class="card"><h3>いまは、ゆっくりで大丈夫</h3><p class="small muted">お別れから30日たつまでは、出会いのおすすめは出しません。自分の予報と1日1問で、のんびりいきましょう。</p></div>`:''}
+ <div class="card tap" data-a="go" data-v="ai"><span class="pill sky">AI</span><h3 style="margin-top:6px">AIに相談</h3><p class="small muted">気になる人のこと、失恋、プレゼント選び ›</p></div>
  ${prCareer()}
  <div class="card"><h3>恋人ができたら</h3><p class="small muted">相手を招待して、ふたりモードに切り替え。あなたの価値観の答えと連続日数はそのまま引き継ぎます。</p><button class="btn" data-a="addPartner">ふたりモードにする</button></div>`}
 function viewSoloDiag(){const z=sign(S.me.birth),lp=lifePath(S.me.birth);
@@ -716,18 +806,80 @@ ${adultPair()?`<div class="card"><div class="toggle" style="border-top:0;padding
   ${S.memories&&S.memories.length?`<hr><p class="small"><b>思い出カード</b></p>${S.memories.map(m=>`<p class="small muted">${esc(m.name)}さん ・ ${m.since||''}から ${m.days}日 ・ いちばん長い連続 ${m.best}日</p>`).join('')}`:''}</div>
  <p class="small muted center">ミラペア 試作品 ・ 占いは遊びとして楽しんでください</p>`}
 function viewEdit(){const p=UI.draft[UI.who];return `${topBar('プロフィールを直す')}${personForm(p,UI.who)}<div style="height:16px"></div><button class="btn" data-a="editSave">保存</button>`}
-function viewShop(){const s=SHOP.find(x=>x.id===UI.shopOpen);const r=rng(hash(s.id+S.me.birth+S.pt.birth));
- const months=['1〜2月','3〜4月','5〜6月','7〜8月','9〜10月','11〜12月'];
- const body={y2027:months.map(m=>`<p><b>${m}</b>：${pick(r,['新しいことを一緒に始めると吉。','ゆっくり話す時間をとって。','旅行の運気が高まります。','おたがいの家族と縁がある時期。','小さな記念日を大事に。','お金の計画を立てるのに向いています。'])}</p>`).join(''),
-  xmas:`<p>おすすめの過ごし方：${pick(r,['イルミネーションを見てから家でケーキ','少し遠くの街へ日帰り','手づくりのごはんと映画'])}</p><p>ラッキープレゼント：${pick(r,['手紙を添えた小さなもの','ふたりで使えるもの','体験のチケット'])}</p>`,
-  wed:`<p>ふたりの「決めどき」は <b>${pick(r,['春','夏のおわり','秋','冬のはじめ'])}</b>。</p><p>${pick(r,['お金と住まいの話がまとまったタイミングが合図。','おたがいの家族に会ったあと、自然に流れができそう。','忙しい時期が一段落したら、落ち着いて話せそう。'])}</p>`}[s.id];
- return `${topBar(s.name)}<div class="card">${body}</div><p class="small muted">占いは遊びとして楽しんでください。</p>`}
+/* 数秘術（ピタゴラス式）：数字を1けたになるまで足す */
+const red=n=>{n=Math.abs(n);while(n>9)n=String(n).split('').reduce((a,c)=>a+ +c,0);return n};
+const NUM={1:['始まり','新しいことを始める・自分で決める'],2:['協力','ふたりの関係を育てる・話をよく聞く'],3:['楽しみ','遊ぶ・出かける・気持ちを言葉にする'],4:['土台','コツコツ積み上げる・お金や生活を整える'],5:['変化','引っ越し・転職・旅行など動きが出る'],6:['家庭と愛情','家族・結婚・おたがいへの責任'],7:['ひとりの時間','学ぶ・考える・自分を見つめる'],8:['成果','仕事やお金の結果が出る・大きな決断'],9:['しめくくり','手放す・整理する・次への準備']};
+function pYear(b,Y){const d=parse(b);return red(red(d.getMonth()+1)+red(d.getDate())+red(Y))}
+function pMonth(b,Y,M){return red(pYear(b,Y)+M)}
+function pDay(b,Y,M,D){return red(pMonth(b,Y,M)+D)}
+function calcText(b,Y){const d=parse(b);return `${d.getMonth()+1}月${d.getDate()}日生まれ：月 ${d.getMonth()+1}→${red(d.getMonth()+1)}、日 ${d.getDate()}→${red(d.getDate())}、年 ${Y}→${red(Y)}。合計 ${red(d.getMonth()+1)+red(d.getDate())+red(Y)}→<b>${pYear(b,Y)}</b>`}
+const ELEM_DATE={0:'体を動かすアクティブなデート（スケート、遊園地、ライブ）',1:'おいしいものとゆっくりした時間（予約したレストラン、手づくりのごはん）',2:'街やイベントを楽しむデート（マーケット、イルミネーション、展示）',3:'ふたりきりで落ち着ける時間（夜景、家で映画、温泉）'};
+const ELEM_GIFT={0:['体験のチケット（ライブ・アクティビティ）','スポーツやアウトドアで使えるもの'],1:['毎日使える質のいいもの（マグ、ハンドクリーム、財布）','おいしいもの（少しいいお菓子やお酒）'],2:['話のネタになるもの（本、雑貨、ガジェット）','一緒に行く場所のチケット'],3:['気持ちが伝わるもの（手紙、写真をまとめたもの）','くつろげるもの（ルームウェア、入浴剤）']};
+function basisCard(Y){return `<div class="card small"><p><b>何に基づいているか</b></p>
+ <p>西洋の「数秘術（ピタゴラス式）」で、生年月日の数字を1けたになるまで足して出した数を使っています。9年で一周する流れ（1＝始まり 〜 9＝しめくくり）の、いまどこにいるかを見る占い方です。</p>
+ <p>・年の数＝誕生月＋誕生日＋その年 を、それぞれ1けたにして足し、もう一度1けたにする。<br>・月の数＝年の数＋その月。・日の数＝月の数＋その日。</p>
+ ${Y?`<p>${esc(S.me.name)}さん：${calcText(S.me.birth,Y)}<br>${esc(S.pt.name)}さん：${calcText(S.pt.birth,Y)}</p>`:''}
+ <p>星座のエレメントは、誕生日から決まる太陽星座を火・地・風・水の4つに分けたものです。</p>
+ <p class="muted">占いは伝統的な計算のルールにしたがったもので、科学的な根拠はありません。同じ生年月日なら、誰でも同じ結果になります。楽しみ方のひとつとして使ってください。</p></div>`}
+function viewShop(){const s=SHOP.find(x=>x.id===UI.shopOpen);const me=S.me,pt=S.pt,N1=esc(me.name),N2=esc(pt.name);
+ let body='';
+ if(s.id==='y2027'){const Y=2027,a=pYear(me.birth,Y),b=pYear(pt.birth,Y),pair=red(a+b);
+  const rows=[];for(let M=1;M<=12;M++){const x=pMonth(me.birth,Y,M),y=pMonth(pt.birth,Y,M);let note;
+   if([2,6].includes(x)&&[2,6].includes(y))note='ふたりの月。記念日や大事な話に向いています。';
+   else if(x===5||y===5)note=`${x===5?N1:N2}さんに変化の流れ。予定は早めに共有を。旅行にも向いています。`;
+   else if(x===7||y===7)note=`${x===7?N1:N2}さんはひとりの時間がほしい月。会う回数より、会ったときの中身を大事に。`;
+   else if(x===8||y===8)note='お金や仕事の決めごとに向く月。貯金の目標を立てるなら今月。';
+   else if(x===1||y===1)note='新しいことを始めるのに向く月。ふたりの新しい習慣をひとつ。';
+   else if(x===3||y===3)note='楽しむ月。行ったことのない場所へ出かけてみて。';
+   else note='生活を整える月。部屋や予定、お金まわりの見直しに。';
+   rows.push({M,x,y,note,score:([2,6].includes(x)?2:0)+([2,6].includes(y)?2:0)+(x===y?1:0)})}
+  const best=[...rows].sort((p,q)=>q.score-p.score||p.M-q.M).slice(0,3);
+  body=`<div class="card"><h3>2027年のテーマ</h3>
+   <p><b>${N1}さん：${a}「${NUM[a][0]}」</b>の年。${NUM[a][1]}ことに向いています。</p>
+   <p><b>${N2}さん：${b}「${NUM[b][0]}」</b>の年。${NUM[b][1]}ことに向いています。</p>
+   <p><b>ふたり：${pair}「${NUM[pair][0]}」</b>（ふたりの数を足したもの）。${a===b?'同じ数の年なので、同じ方向を向きやすい1年です。':`${NUM[a][0]}と${NUM[b][0]}。ちがうテーマの年なので、おたがいの「いまやりたいこと」を先に話しておくとすれちがいにくくなります。`}</p></div>
+  <div class="card"><h3>12か月の流れ</h3><table class="t"><tr><th>月</th><th>${N1}</th><th>${N2}</th><th style="text-align:left">ひとこと</th></tr>
+   ${rows.map(r=>`<tr><td style="white-space:nowrap">${r.M}月</td><td style="text-align:center"><b>${r.x}</b><div class="small muted" style="white-space:nowrap">${NUM[r.x][0]}</div></td><td style="text-align:center"><b>${r.y}</b><div class="small muted" style="white-space:nowrap">${NUM[r.y][0]}</div></td><td style="text-align:left">${r.note}</td></tr>`).join('')}</table></div>
+  <div class="card"><h3>ふたりで大事にしたい月</h3>${best.map(r=>`<p><b>${r.M}月</b>：${N1}さんは${r.x}「${NUM[r.x][0]}」、${N2}さんは${r.y}「${NUM[r.y][0]}」の月。${[2,6].includes(r.x)&&[2,6].includes(r.y)?'ふたりとも関係を育てる流れなので、記念日や大事な話にいちばん向いています。':[2,6].includes(r.x)?`${N1}さんが関係を大事にしたい気持ちが強まる月。${N1}さんから誘うとうまくいきます。`:`${N2}さんが関係を大事にしたい気持ちが強まる月。${N2}さんの誘いに乗ってみて。`}</p>`).join('')}<p class="small muted">選び方：ふたりの月の数に「2（協力）」「6（家庭と愛情）」が多い月、ふたりの数がそろう月を上にしています。</p></div>
+  ${basisCard(Y)}`}
+ if(s.id==='xmas'){const Y=new Date().getFullYear();const ea=sign(me.birth)%4,eb=sign(pt.birth)%4;
+  const day=D=>{const x=pDay(me.birth,Y,12,D),y=pDay(pt.birth,Y,12,D);return{x,y,sum:red(x+y)}};const d24=day(24),d25=day(25);
+  const plan=n=>({1:'ふたりで新しいことを。行ったことのない場所や、初めての料理に挑戦',2:'ゆっくり話す時間を中心に。予約しておいたお店でコース',3:'にぎやかに楽しむ日。イルミネーションやマーケット',4:'家で準備して迎える日。いっしょにケーキやごはんを作る',5:'少し遠出。日帰りの旅や、いつもと違う街へ',6:'家族のように過ごす日。家でごはんと、来年の話',7:'静かな場所で。夜景や、ふたりだけの散歩',8:'少しぜいたくに。行ってみたかったお店',9:'今年をふり返る日。写真を見返して、ありがとうを伝える'})[n];
+  const ans=Object.values(S.daily).map(D=>({q:DAILY[D.q],D})).filter(o=>o.q&&o.q[0]==='誕生日プレゼントは？'&&o.D.pt);
+  body=`<div class="card"><h3>24日と25日のふたり</h3>
+   <p><b>24日</b>：${N1}さん ${d24.x}・${N2}さん ${d24.y} → ふたりの数 <b>${d24.sum}「${NUM[d24.sum][0]}」</b>。${plan(d24.sum)}。</p>
+   <p><b>25日</b>：${N1}さん ${d25.x}・${N2}さん ${d25.y} → ふたりの数 <b>${d25.sum}「${NUM[d25.sum][0]}」</b>。${plan(d25.sum)}。</p>
+   <p class="small muted">メインの日を選ぶなら、ふたりの数が「2・3・6」の日がおすすめです。</p></div>
+  <div class="card"><h3>星座から見たデートの組み立て</h3><p>${N1}さんは${SIGNS[sign(me.birth)]}（${ELEM[ea]}）、${N2}さんは${SIGNS[sign(pt.birth)]}（${ELEM[eb]}）。</p>
+   <p>前半は${N2}さん向けの「${ELEM_DATE[eb]}」、後半は${N1}さん向けの「${ELEM_DATE[ea]}」にすると、どちらも楽しめます。</p></div>
+  <div class="card"><h3>${N2}さんへのプレゼント案</h3>
+   ${ans.length?`<p>${N2}さんは1日1問で、プレゼントは「<b>${esc(ans[ans.length-1].q[1][ans[ans.length-1].D.pt.a])}</b>」と答えていました。ここをいちばん大事にしてください。</p>`:`<p class="small muted">1日1問で「誕生日プレゼントは？」が出たら、${N2}さんの答えもここに反映されます。</p>`}
+   <p><b>〜3,000円</b>：${ELEM_GIFT[eb][1]}＋手紙</p><p><b>〜10,000円</b>：${ELEM_GIFT[eb][0]}</p><p><b>それ以上</b>：ふたりで行く体験（旅行、レストラン）</p>
+   <p class="small muted">プレゼント案は${N2}さんの星座のエレメント（${ELEM[eb]}）から選んでいます。</p></div>
+  ${basisCard(Y)}`}
+ if(s.id==='wed'){const Y0=new Date().getFullYear()+1;const W={6:3,2:2,1:2,8:1,4:1,3:1,5:0,7:0,9:0};
+  const yrs=[];for(let Y=Y0;Y<Y0+5;Y++){const a=pYear(me.birth,Y),b=pYear(pt.birth,Y);yrs.push({Y,a,b,sc:W[a]+W[b]})}
+  const best=[...yrs].sort((p,q)=>q.sc-p.sc||p.Y-q.Y)[0];
+  const mons=[];for(let M=1;M<=12;M++){const x=pMonth(me.birth,best.Y,M),y=pMonth(pt.birth,best.Y,M);if([2,6].includes(x)||[2,6].includes(y))mons.push(`${M}月（${x}・${y}）`)}
+  const qi=DAILY.findIndex(q=>q[0].startsWith('結婚するなら'));const wa=Object.values(S.daily).filter(D=>D.q===qi);
+  const vi=VALUES.findIndex(v=>v[1]==='結婚は急がない');const vme=S.values.me[vi],vpt=S.values.pt[vi];
+  body=`<div class="card"><h3>これから5年のふたり</h3><table class="t"><tr><th>年</th><th>${N1}</th><th>${N2}</th><th>結婚との相性</th></tr>
+   ${yrs.map(r=>`<tr><td style="white-space:nowrap">${r.Y}年</td><td>${r.a} ${NUM[r.a][0]}</td><td>${r.b} ${NUM[r.b][0]}</td><td>${'●'.repeat(Math.min(5,r.sc))}${'○'.repeat(Math.max(0,5-r.sc))}</td></tr>`).join('')}</table>
+   <p class="small muted">点のつけ方：6（家庭と愛情）3点、2（協力）と1（始まり）2点、8・4・3は1点、5・7・9は0点で、ふたりの合計。</p></div>
+  <div class="card"><h3>決めどきの年：${best.Y}年</h3><p>${N1}さんは${best.a}「${NUM[best.a][0]}」、${N2}さんは${best.b}「${NUM[best.b][0]}」の年。${NUM[best.a][1]}ことと、${NUM[best.b][1]}ことが重なる年です。</p>
+   ${mons.length?`<p>この年の候補の月：${mons.slice(0,4).join('、')}（どちらかの月の数が2か6の月）</p>`:''}</div>
+  <div class="card"><h3>ふたりの答えとのすり合わせ</h3>
+   ${wa.length?`<p>1日1問「結婚するなら、いつごろ？」では、${wa.map(D=>`${D.me?`${N1}さん「${DAILY[qi][1][D.me.a]}」`:''}${D.pt?` ${N2}さん「${DAILY[qi][1][D.pt.a]}」`:''}`).join('、')}と答えています。</p>`:'<p class="small muted">1日1問で「結婚するなら、いつごろ？」が出ると、ここにふたりの答えが出ます。</p>'}
+   ${vme&&vpt?`<p>価値観の「結婚は急がない／早めにしたい」は、${N1}さん${vme}・${N2}さん${vpt}（5段階）。${Math.abs(vme-vpt)>=2?'考えに差があるので、占いの年より先に「いつごろがいいか」をふたりで話すのがおすすめです。':'考えは近いので、占いの年をきっかけに具体的な話をしてみて。'}</p>`:''}
+   <p class="small muted">占いの年は、話し合うきっかけのひとつです。決めるのはふたりです。</p></div>
+  ${basisCard(best.Y)}`}
+ return `${topBar(s.name)}${body}`}
 
 /* ========== 課金シート ========== */
 function payModal(){
  const pr=priceOf();const hs=seg(S.me)==='hs';const spent=S.spend.ym===ym()?S.spend.amt:0;
  const amt=UI.pay==='m'?pr.m:pr.y;const over=hs&&spent+amt>HS_CAP;
- const rows=[['今日のふたり予報・1日1問','○','○'],['星と数の相性','○','○'],['価値観：話し合いポイント','2こ','全部'],['暮らしの予報','一部','全部'],['家計の予想','5年後まで','10年後・教育費'],['今月のふたり（月の運勢）','―','○'],['写真で見る未来','1回','月3回'],['バナー広告','あり','なし']].filter(r=>!hs||!['暮らしの予報','家計の予想','写真で見る未来'].includes(r[0]));
+ const rows=[['今日のふたり予報・1日1問','○','○'],['星と数の相性','○','○'],['価値観：話し合いポイント','2こ','全部'],['暮らしの予報','一部','全部'],['家計の予想','1年後まで','10年後まで・教育費'],['今月のふたり（月の運勢）','―','○'],['写真で見る未来','1回','月3回'],['バナー広告','あり','なし']].filter(r=>!hs||!['暮らしの予報','家計の予想','写真で見る未来'].includes(r[0]));
  return `<div class="modal" data-a="closeModal"><div class="sheet" data-stop="1">
  <h2>ふたりプラス</h2><p class="small muted">1人が入れば、ふたりとも使えます。</p>
  <div class="cmp" style="margin-top:12px"><div class="h">できること</div><div class="h c">無料</div><div class="h c">プラス</div>
@@ -744,12 +896,13 @@ function notifModal(){return `<div class="modal" data-a="closeModal"><div class=
  <button class="btn" data-a="askNotif">お知らせする</button><button class="btn ghost" style="width:100%" data-a="closeModal">あとで</button></div></div>`}
 function shopModal(){const s=SHOP.find(x=>x.id===UI.modalItem);const hs=seg(S.me)==='hs';const spent=S.spend.ym===ym()?S.spend.amt:0;const over=hs&&spent+s.price>HS_CAP;
  return `<div class="modal" data-a="closeModal"><div class="sheet" data-stop="1"><h2>${s.name}</h2><p class="muted">${s.desc}</p>
+ <div class="card small"><p><b>わかること</b></p>${(s.toc||[]).map(t=>`<p>・${t}</p>`).join('')}<p class="muted" style="margin-top:6px">ふたりの生年月日から、数秘術と星座で計算します。計算のしかたも全部のせています。</p></div>
  ${hs?`<label class="row small" style="margin:8px 0"><input type="checkbox" style="width:auto" data-a="consent" ${UI.consent?'checked':''}> 保護者の人に確認しました</label><p class="small muted">今月 ${spent}円 ／ 上限 ${HS_CAP}円</p>`:''}
  ${over?'<div class="note">今月の上限をこえるため、買えません。</div>':''}
  <button class="btn" data-a="buyItem" ${over||(hs&&!UI.consent)?'disabled':''}>${s.price}円で買う（デモ・請求なし）</button><button class="btn ghost" style="width:100%" data-a="closeModal">やめる</button></div></div>`}
 
 /* ========== 描画 ========== */
-const VIEWS={wedding:viewWedding,compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
+const VIEWS={ai:viewAI,wedding:viewWedding,compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
 const TABS={home:viewHome,diag:viewDiag,future:viewFuture,set:viewSet};
 function render(){
  const app=$('#app');let h;
@@ -765,13 +918,13 @@ function render(){
  app.innerHTML=h}
 
 /* ========== 操作 ========== */
-function newState(d){return{v:1,done:true,mode:d.pt?'pair':'solo',dating:false,career:false,breakupAt:null,soloDaily:{},me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'short',who:'me'},prep:false,wed:{style:'party',guests:50,save:5},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
+function newState(d){return{v:1,done:true,mode:d.pt?'pair':'solo',dating:false,career:false,breakupAt:null,soloDaily:{},me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'full',who:'me',childAt:3},prep:false,wed:{style:'party',guests:50,save:5},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
 function addSpend(n){if(S.spend.ym!==ym())S.spend={ym:ym(),amt:0};S.spend.amt+=n}
 const ACT={
  onbNext(){const st=UI.step;
   if(st===0){UI.draft={me:{},pt:{}};UI.step=1;return render()}
   if(st===1||st===3){const who=st===1?'me':'pt';readForm(UI.draft[who]);if(!personOk(UI.draft[who])){toast(age(UI.draft[who].birth)<16&&UI.draft[who].birth?'ミラペアは16歳から使えます':'ニックネーム・生年月日・性別・立場・身長を入れてください');return}UI.step++;window.scrollTo(0,0);return render()}
-  if(st===4){const el=document.querySelector('[data-name="since"]');UI.draft.since=el?el.value:'';
+  if(st===4){readForm(UI.draft);if(UI.draft.since>today())UI.draft.since='';
    if(UI.adding){const old=S;S=newState(UI.draft);S.values.me=old.values.me||{};S.streak=old.streak;S.memories=old.memories||[];S.notif=old.notif;S.career=old.career;UI.adding=false;toast('ふたりモードになりました！')}
    else S=newState(UI.draft);
    save();UI.tab='home';UI.view=null;render()}},
@@ -783,9 +936,9 @@ const ACT={
  segpick(v,el){const name=el.parentElement.dataset.name;
   if(!S||!S.done||UI.adding||UI.view==='edit'){const who=(!S||!S.done||UI.adding)?(UI.step===1?'me':'pt'):UI.who;readForm(UI.draft[who]);UI.draft[who][name]=v;return render()}
   if(name==='heightFather'){S.heightFather=v;save();return render()}
-  if(UI.view==='money'){S.sim[name]=name==='kids'?+v:v;save();return render()}
+  if(UI.view==='money'){S.sim[name]=name==='kids'||name==='childAt'?+v:v;save();return render()}
   if(UI.view==='wedding'){S.wed[name]=v;save();return render()}},
- dq(v){UI.dq={who:v,stage:'hand',a:null,g:null};UI.view='daily';render()},
+ dq(v){UI.dq={who:v,stage:'ans',a:null,g:null};UI.view='daily';window.scrollTo(0,0);render()},
  dqStart(){UI.dq.stage='ans';render()},
  dqA(v){UI.dq.a=+v;render()}, dqG(v){UI.dq.g=+v;render()},
  dqSend(){const t=today();const D=S.daily[t]=S.daily[t]||{q:dailyIdx()};const who=UI.dq.who;D[who]={a:UI.dq.a,g:UI.dq.g};
@@ -795,7 +948,7 @@ const ACT={
   if(!D[other]&&S.notif.partner)notify('ミラペア',`${S[who].name}さんが今日の質問に答えたよ`);
   save();UI.view=null;UI.dq=null;UI.tab='home';toast(msg);
   if(!S.notifAsked&&D[other]){S.notifAsked=true;save();setTimeout(()=>{UI.modal='notif';render()},1200)}},
- vqGo(v){UI.vq={who:v,i:0,stage:S.mode==='solo'?'ans':'hand'};render()},
+ vqGo(v){UI.vq={who:v,i:0,stage:'ans'};window.scrollTo(0,0);render()},
  vqStart(){UI.vq.stage='ans';render()},
  vqQuit(){UI.vq=null;render()},
  vqA(v){const qs=valueQs();S.values[UI.vq.who][qs[UI.vq.i][1]]=+v;save();
@@ -813,6 +966,10 @@ const ACT={
  notif(v){S.notif[v]=!S.notif[v];save();render()},
  prepT(){S.prep=!S.prep;save();render()},
  flag(v){S[v]=!S[v];save();render()},
+ aiTopic(v){const t=(S.mode==='pair'?AI_TOPICS_PAIR:AI_TOPICS_SOLO)[+v];UI.ai.draft=t[1];render();const b=document.getElementById('aiBox');if(b){b.focus();b.setSelectionRange(b.value.length,b.value.length)}},
+ aiSend(){const b=document.getElementById('aiBox');if(b)UI.ai.draft=b.value;aiAsk()},
+ aiStop(){UI.ai&&UI.ai.ctl&&UI.ai.ctl.abort()},
+ aiClear(){UI.ai={turns:[],draft:'',busy:false,off:UI.ai&&UI.ai.off};render()},
  soloQ(v){const t=today();if(S.soloDaily[t]!=null)return;S.soloDaily[t]=+v;bumpStreak();save();toast(`連続${S.streak.count}日。恋人ができたら、相手の答えとくらべられます`)},
  pr2(v){const p=[...SOLO_PR,...CAREER_PR].find(x=>x.id===v);toast(`本番では提携先「${p.title}」のページへ（登録・面談などで成果報酬）。あなたの答えや年収は送りません`)},
  pr(v){const p=PARTNERS.find(x=>x.id===v);toast(`本番では提携先「${p.title}」のページへ（来館・来店予約などで成果報酬）。ふたりの答えは送りません`)},
@@ -831,6 +988,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
  if(el.dataset.a==='closeModal'&&el.classList.contains('modal')&&e.target!==el)return;
  if(el.tagName==='INPUT'&&el.type==='checkbox'){ACT[el.dataset.a](el.dataset.v,el,e);return}
  e.preventDefault();ACT[el.dataset.a]&&ACT[el.dataset.a](el.dataset.v,el,e)});
+document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.ai&&UI.ai)UI.ai.draft=e.target.value});
 document.addEventListener('change',e=>{const el=e.target;
  if(el.dataset.wed){S.wed[el.dataset.wed]=Math.max(0,+el.value||0);save();render();return}
  if(el.dataset.photo){const f=el.files&&el.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{UI.photos[el.dataset.photo]=rd.result;UI.photoDone=false;render()};rd.readAsDataURL(f);return}
