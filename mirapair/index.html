@@ -138,7 +138,7 @@ const KEY='mirapair.v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 let S=load();
-if(S&&S.done){S.prep=S.prep||false;S.wed=S.wed||{style:'party',guests:50,save:5}}
+if(S&&S.done){S.mode=S.mode||(S.pt?'pair':'solo');S.soloDaily=S.soloDaily||{};S.prep=S.prep||false;S.wed=S.wed||{style:'party',guests:50,save:5}}
 let UI={tab:'home',view:null,modal:null,step:0,draft:{},who:'me',vq:null,dq:null,toast:null,photos:{me:null,pt:null},photoDone:false,shopOpen:null,pay:'m',consent:false};
 
 /* ========== 小道具 ========== */
@@ -321,13 +321,17 @@ function wedCost(style,g){return style==='party'?152+3.7*g:style==='family'?Math
 const GOSHUGI=3.3;
 
 /* ========== 計算 ========== */
-function income(p,yearsAhead){
- const a=age(p.birth)+yearsAhead;const s=seg(p);
- if(s==='hs')return null;
- if(p.status==='uni'){if(a<22)return 0;return interp((INC[p.aspire]||INC.all)[0],a)*prefFac(p,0)}
+function statInc(p,a){
+ if(p.status==='uni')return interp((INC[p.aspire]||INC.all)[0],a)*prefFac(p,0);
  if(p.industry==='part')return interp(PART,a)*prefFac(p,0);
  const sz=p.industry==='gov'?0:((SIZES.find(i=>i[0]===p.size)||[0,0,0])[2]);
  return interp((INC[p.industry]||INC.all)[sz],a)*prefFac(p,sz)}
+/* 年収を入力した人は、その額から統計の年齢カーブの伸び方で将来を出す */
+function income(p,yearsAhead){
+ const a0=age(p.birth),a=a0+yearsAhead;if(seg(p)==='hs')return null;
+ if(p.status==='uni'&&a<22)return 0;
+ const own=+p.nenshu;if(own>0&&p.status!=='uni')return own*statInc(p,a)/statInc(p,a0);
+ return statInc(p,a)}
 function prepStage(){
  if(!adultPair())return{stage:-1,pts:0};let pts=0;const ms=milestones();if(ms&&ms.day>=365)pts++;
  const qi=DAILY.findIndex(q=>q[0].startsWith('結婚するなら'));Object.values(S.daily).forEach(D=>{if(D.q===qi&&((D.me&&D.me.a===0)||(D.pt&&D.pt.a===0)))pts+=2});
@@ -349,14 +353,15 @@ function milestones(){
  for(let y=1;y<=10;y++){const x=new Date(d);x.setFullYear(x.getFullYear()+y);list.push([fmt(x),`${y}周年`])}
  const fut=list.filter(([dt])=>dt>=t).sort((a,b)=>a[0]<b[0]?-1:1);
  return{day:dayDiff(since,t)+1,next:fut[0]}}
-function dailyIdx(){const pool=DAILY.map((q,i)=>[q,i]).filter(([q])=>adultPair()||!q[2]);return pool[hash('q'+today()+(S.since||''))%pool.length][1]}
+function adultOK(){return S.mode==='solo'?seg(S.me)!=='hs':adultPair()}
+function dailyIdx(){const pool=DAILY.map((q,i)=>[q,i]).filter(([q])=>adultOK()||!q[2]);return pool[hash('q'+today()+(S.since||''))%pool.length][1]}
 function streakView(){const st=S.streak;if(!st.last)return{count:0,state:'none'};const g=dayDiff(st.last,today());
  if(g===0)return{count:st.count,state:'done'};if(g===1)return{count:st.count,state:'open'};
  if(g===2&&st.freezeWeek!==weekKey(today()))return{count:st.count,state:'freeze'};return{count:0,state:'broken'}}
 function bumpStreak(){const st=S.streak,t=today();if(st.last===t)return false;const g=st.last?dayDiff(st.last,t):99;let used=false;
  if(g===1)st.count++;else if(g===2&&st.freezeWeek!==weekKey(t)){st.count++;st.freezeWeek=weekKey(t);used=true}else st.count=1;
  st.last=t;st.best=Math.max(st.best||0,st.count);return used}
-function valueQs(){return VALUES.map((q,i)=>[q,i]).filter(([q])=>adultPair()||!q[3])}
+function valueQs(){return VALUES.map((q,i)=>[q,i]).filter(([q])=>adultOK()||!q[3])}
 function valuesDone(who){return valueQs().every(([,i])=>S.values[who][i])}
 function valuesResult(){
  const per={};valueQs().forEach(([q,i])=>{const d=Math.abs(S.values.me[i]-S.values.pt[i]);(per[q[0]]=per[q[0]]||[]).push(d)});
@@ -429,7 +434,9 @@ function personForm(p,who){
  <label class="f">会社の大きさ</label>${seg2('size',SIZES.map(s=>[s[0],s[1].replace(/（.*）/,'')]),p.size)}
  <label class="f">休み</label>${seg2('holiday',HOLIDAY,p.holiday)}
  <label class="f">転勤</label>${seg2('transfer',TRANSFER,p.transfer)}
- <label class="f">残業</label>${seg2('overtime',OVERTIME,p.overtime)}`:''}
+ <label class="f">残業</label>${seg2('overtime',OVERTIME,p.overtime)}
+ <label class="f">いまの年収（わかれば・万円）</label><input type="number" inputmode="numeric" data-name="nenshu" min="0" max="5000" value="${esc(p.nenshu||'')}" placeholder="例：380">
+ <p class="small muted">入れないと統計の平均を使います。平均はフルタイムで働く人のもので、実感より高めに出ます。</p>`:''}
  ${p.status==='hs'?'<p class="small muted">高校生のあいだは、占い・性格・毎日の予報が使えます。年収や子どもの予測は18歳から。</p>':''}`}
 function readForm(target){document.querySelectorAll('[data-name]').forEach(el=>{const k=el.dataset.name;if(el.classList.contains('seg'))return;target[k]=el.value})}
 function personOk(p){return p.name&&p.birth&&age(p.birth)>=16&&p.gender&&p.status&&+p.height>=130&&+p.height<=210}
@@ -443,8 +450,11 @@ function onboarding(){
   <button class="btn" data-a="onbNext">はじめる</button>
   <p class="small muted center" style="margin-top:10px">16歳から使えます</p></div>`;
  if(st===1)return `${topBar('あなたのこと')}<p class="small muted">1 / 3</p>${personForm(d.me,'me')}<div style="height:16px"></div><button class="btn" data-a="onbNext">つぎへ</button>`;
- if(st===2)return `${topBar('相手のこと')}<p class="small muted">2 / 3 ・ 相手にスマホを渡して、本人に入力してもらってください（本番では招待リンクで相手のスマホから入力）。</p>${personForm(d.pt,'pt')}<div style="height:16px"></div><button class="btn" data-a="onbNext">つぎへ</button>`;
- if(st===3)return `${topBar('ふたりのこと')}<p class="small muted">3 / 3</p>
+ if(st===2)return `${topBar('いまの恋愛')}<p class="small muted">2 / 3</p>
+  <div class="opts"><button class="opt" data-a="rel" data-v="pair"><b>恋人がいる</b><br><span class="small muted">ふたりで相性と未来を見る</span></button>
+  <button class="opt" data-a="rel" data-v="solo"><b>いまはいない</b><br><span class="small muted">ひとりモード：自分の運勢と価値観。恋人ができたら、ふたりモードに切り替えられます</span></button></div>`;
+ if(st===3)return `${topBar('相手のこと')}<p class="small muted">${UI.adding?'1 / 2':'2 / 3'} ・ 相手にスマホを渡して、本人に入力してもらってください（本番では招待リンクで相手のスマホから入力）。</p>${personForm(d.pt,'pt')}<div style="height:16px"></div><button class="btn" data-a="onbNext">つぎへ</button>`;
+ if(st===4)return `${topBar('ふたりのこと')}<p class="small muted">${UI.adding?'2 / 2':'3 / 3'}</p>
   <label class="f">付き合いはじめた日</label><input type="date" data-name="since" value="${esc(d.since||'')}" max="${today()}">
   <p class="small muted">記念日のお知らせに使います。</p><div style="height:16px"></div><button class="btn" data-a="onbNext">ミラペアをはじめる</button>`;
 }
@@ -528,6 +538,7 @@ function viewValues(){
   <div class="scale">${[1,2,3,4,5].map(n=>`<button aria-label="${n}" class="${v===n?'on':''}" data-a="vqA" data-v="${n}"></button>`).join('')}</div>
   <div class="poles"><span>こっち</span><span>こっち</span></div></div>
   ${vq.i>0?'<button class="btn ghost" data-a="vqPrev">ひとつ前へ</button>':''}`}
+ if(S.mode==='solo')return viewSoloValues();
  const vm=valuesDone('me'),vp=valuesDone('pt');
  if(!(vm&&vp))return `${topBar('価値観の一致')}<p class="muted">ふたりが別々に答えます。相手の答えは、ふたりとも終わるまで見えません。</p>
   <div class="grid2" style="margin-top:12px"><button class="btn ${vm?'sub':''}" data-a="vqGo" data-v="me">${esc(S.me.name)}${vm?'（やり直す）':'が答える'}</button><button class="btn ${vp?'sub':''}" data-a="vqGo" data-v="pt">${esc(S.pt.name)}${vp?'（やり直す）':'が答える'}</button></div>`;
@@ -586,7 +597,8 @@ function viewMoney(){
  ${kids>0?`<div class="card"><h3>子どもの教育費</h3><p>1人あたり <b>約${man(per)}</b>（幼稚園〜大学）。${kids}人で <b>約${man(edu)}</b>。</p>
   <p class="small muted">22年でならすと、1人あたり月 約${Math.round(monthly/10000*10)/10}万円。</p>
   ${S.plus?`<p class="small">${yrs[yrs.length-1]}年後の手取り（年収の約78%で計算）のうち、教育費は <b>約${ratio}%</b>。${ratio>=25?'大学の時期に重なると重めです。児童手当は使わずに貯めておく、学資の積み立てを早めに始めるのがコツ。':'無理なく続けられそうな割合です。浮いた分は旅行やふたりの楽しみにも。'}</p>`:''}</div>`:''}
- <div class="note">年収は厚生労働省「令和7年賃金構造基本統計調査」の、年齢・業界・会社の大きさごとの平均（フルタイム・月給×12＋ボーナス）。公務員は統計の対象外なので全業界の平均で出しています。地域は、同じ統計の都道府県別の表から、全国とくらべた差（会社の大きさごと）をかけています。学生は働き始める22歳からで計算。教育費は文部科学省「令和5年度子供の学習費調査」（訂正後）と日本政策金融公庫「教育費負担の実態調査」（令和3年度）。平均なので、人によって大きくちがいます。</div>`}
+ ${prCareer()}
+ <div class="note">年収は、入力した人はその額から。入力しない人は厚生労働省「令和7年賃金構造基本統計調査」の、年齢・業界・会社の大きさごとの平均（フルタイム・10人以上の会社・月給×12＋ボーナス）で、真ん中の人より高めに出ます。公務員は統計の対象外なので全業界の平均で出しています。地域は、同じ統計の都道府県別の表から、全国とくらべた差（会社の大きさごと）をかけています。学生は働き始める22歳からで計算。教育費は文部科学省「令和5年度子供の学習費調査」（訂正後）と日本政策金融公庫「教育費負担の実態調査」（令和3年度）。平均なので、人によって大きくちがいます。</div>`}
 function viewWedding(){
  const w=S.wed;const c=wedCost(w.style,+w.guests);const save=+w.save;const months=save>0?Math.ceil(c/save):0;
  const ps=prepStage();
@@ -627,6 +639,53 @@ function viewPhoto(){
  <button class="btn sub" style="margin-top:10px" disabled>SNS用のカードで保存（本番で対応）</button>${prCards(p=>p.id==='fair'||p.id==='photo')}`:''}
  <div class="note">遺伝ではなく、見た目の合成です。実際とはちがいます。写真はこの画面の中だけで使い、保存しません（本番ではつくった後24時間で消し、AIの学習には使いません）。</div>`}
 
+/* ========== ひとりモード ========== */
+const SOLO_PR=[{id:'match',kind:'出会い',title:'恋活・婚活のマッチングアプリ',sub:'18歳以上・本人確認のあるアプリ',min:18},{id:'soudan',kind:'婚活',title:'結婚相談所の無料相談',sub:'25歳以上の方に',min:25}];
+const CAREER_PR=[{id:'agent',kind:'転職',title:'転職エージェントに無料で相談',sub:'年収・働き方・地域の相談。面談はオンラインも'},{id:'site',kind:'求人',title:'転職サイトで求人を見る',sub:'業界・地域・年収で探す'}];
+function canCareer(){const p=S.me;return S.career&&age(p.birth)>=18&&(p.status==='work'||p.status==='other')}
+function prCareer(){if(!canCareer())return '';
+ return `<div class="card"><div class="row between"><h3>${esc(S.me.name)}さんのキャリア</h3><span class="pill sky">PR</span></div><p class="small muted">提携先の広告です。年収や答えは送りません。${S.mode==='pair'?'この欄は相手には見えません（本番）。':''}</p>
+ ${CAREER_PR.map(p=>`<div class="item"><div class="ic fun" style="font-size:.7rem">${p.kind}</div><div style="flex:1"><b>${p.title}</b><p class="small muted">${p.sub}</p></div><button class="btn sm sub" data-a="pr2" data-v="${p.id}">見る</button></div>`).join('')}</div>`}
+function datingState(){const a=age(S.me.birth);if(seg(S.me)==='hs'||a<18)return 'minor';if(S.breakupAt&&dayDiff(S.breakupAt,today())<30)return 'cool';return 'ok'}
+function viewSoloHome(){
+ const r=rng(hash('solo'+today()+S.me.birth));const sc=clamp(Math.round(55+r()*45),40,100);const w=WEATHER.find(x=>sc>=x.min);
+ const msgs={sun:['自分の好きなことに夢中になれる日。','人に話しかけると、いい流れが来る日。'],part:['小さな「やってみたい」を1つ叶えて。','いつもと違う道を通ると吉。'],cloud:['今日は自分をいたわる日。早めに寝よう。','予定をつめこまず、ゆっくりで大丈夫。'],rain:['うまくいかないことがあっても、夜には気分が晴れる日。','好きな音楽を聴くと運気が戻ります。']};
+ const t=today();const qi=dailyIdx();const q=DAILY[qi];const mine=S.soloDaily[t];const sv=streakView();const ds=datingState();
+ const N=esc(S.me.name);
+ return `<div class="top"><div class="logo">ミラ<b>ペア</b></div><div class="sp"></div><span class="pill sky">ひとりモード</span></div>
+ <div class="card hero"><div class="row between"><div><p class="small muted" style="margin:0">今日の${N}さん予報</p><div class="big">${sc}<span style="font-size:1rem">%</span></div><p style="margin:4px 0 0;font-weight:700">${w.name}</p></div>${weatherSvg(w.type)}</div>
+ <p style="margin-top:10px">${pick(r,msgs[w.type])}</p><hr style="border-color:rgba(255,255,255,.3)"><div class="list-tight small"><p>ラッキーカラー：${pick(r,COLORS)}</p><p>今日のひとこと：${pick(r,['好きなものを1つ買おう','友だちに連絡してみよう','新しいお店に入ってみよう','部屋を5分だけ片づけよう'])}</p></div></div>
+ <div class="card"><div class="row between"><h3>今日の1問</h3><span class="pill">${sv.count}日連続</span></div><p style="font-weight:700;margin-top:8px">${esc(q[0])}</p>
+ ${mine!=null?`<p class="small">あなたの答え：<b>${esc(q[1][mine])}</b></p><p class="small muted">恋人ができたら、相手の答えとくらべられます。</p>`:`<div class="opts">${q[1].map((o,i)=>`<button class="opt" data-a="soloQ" data-v="${i}">${esc(o)}</button>`).join('')}</div>`}</div>
+ ${ds==='ok'?(S.dating?`<div class="card"><div class="row between"><h3>出会いを探す</h3><span class="pill sky">PR</span></div><p class="small muted">提携先の広告です。ミラペアから、あなたの答えや年収は送りません。</p>
+   ${SOLO_PR.filter(p=>age(S.me.birth)>=p.min).map(p=>`<div class="item"><div class="ic fun" style="font-size:.7rem">${p.kind}</div><div style="flex:1"><b>${p.title}</b><p class="small muted">${p.sub}</p></div><button class="btn sm sub" data-a="pr2" data-v="${p.id}">見る</button></div>`).join('')}</div>`
+   :`<div class="card"><h3>恋人を探したい？</h3><p class="small muted">オンにすると、マッチングアプリなどの提携先（PR）を出します。いつでもオフにできます。</p><button class="btn sm sub" data-a="flag" data-v="dating">出会いのおすすめを見る</button></div>`)
+  :ds==='cool'?`<div class="card"><h3>いまは、ゆっくりで大丈夫</h3><p class="small muted">お別れから30日たつまでは、出会いのおすすめは出しません。自分の予報と1日1問で、のんびりいきましょう。</p></div>`:''}
+ ${prCareer()}
+ <div class="card"><h3>恋人ができたら</h3><p class="small muted">相手を招待して、ふたりモードに切り替え。あなたの価値観の答えと連続日数はそのまま引き継ぎます。</p><button class="btn" data-a="addPartner">ふたりモードにする</button></div>`}
+function viewSoloDiag(){const z=sign(S.me.birth),lp=lifePath(S.me.birth);
+ return `<div class="top"><h1>診断</h1></div>
+ <div class="card"><span class="pill">占い・あそび</span><h3 style="margin-top:6px">${SIGNS[z]}（${ELEM[z%4]}）・数秘術 ${lp}</h3><p class="small muted">${['情熱的で、まっすぐ気持ちを伝えるタイプ。','おだやかで、時間をかけて信頼を育てるタイプ。','会話上手で、いっしょにいて楽しいタイプ。','やさしく、相手の気持ちに寄りそうタイプ。'][z%4]}</p></div>
+ <div class="card tap" data-a="go" data-v="values"><span class="pill sky">性格・価値観</span><h3 style="margin-top:6px">自分の価値観</h3><p class="small muted">${valueQs().length}問。恋人ができたら、そのまま相性診断に使えます。</p><p class="small">${valuesDone('me')?'回答ずみ':'まだ'}</p></div>`}
+function viewSoloValues(){
+ if(!valuesDone('me'))return `${topBar('自分の価値観')}<p class="muted">お金・家事・連絡・休日など、${valueQs().length}問に答えます。2分くらい。</p><button class="btn" data-a="vqGo" data-v="me">はじめる</button>`;
+ const per={};valueQs().forEach(([q,i])=>{(per[q[0]]=per[q[0]]||[]).push([q,S.values.me[i]])});
+ return `${topBar('自分の価値観')}<p class="small muted">どちら寄りかを分野ごとに。恋人ができたら、相手との一致がわかります。</p>
+ ${Object.entries(per).map(([k,arr])=>`<div class="card"><h3>${CATS[k]}</h3>${arr.map(([q,v])=>`<div style="margin-top:8px"><div class="poles"><span>${q[1]}</span><span>${q[2]}</span></div><div class="bar"><i style="width:${(v-1)/4*100}%;min-width:8px"></i></div></div>`).join('')}</div>`).join('')}
+ <button class="btn sub" data-a="vqGo" data-v="me">答え直す</button>`}
+function viewSoloSet(){const n=S.notif;const t=notifTimes();
+ const tg=(k,l,sub)=>`<div class="toggle"><div><b class="small">${l}</b><div class="small muted">${sub}</div></div><button class="sw ${n[k]?'on':''}" data-a="notif" data-v="${k}" aria-label="${l}"></button></div>`;
+ const ds=datingState();
+ return `<div class="top"><h1>設定</h1></div>
+ <div class="card"><div class="item"><div style="flex:1"><b>${esc(S.me.name)}</b><p class="small muted">${SEGNAME[seg(S.me)]} ・ ${age(S.me.birth)}歳 ・ ひとりモード</p></div><button class="btn sm sub" data-a="edit" data-v="me">直す</button></div></div>
+ <div class="card"><h3>お知らせ</h3>${tg('daily','今日のあなた予報',`毎朝 ${t.daily}`)}${tg('streak','連続日数が切れそう',`まだ答えていない日の ${t.streak}`)}</div>
+ <div class="card"><h3>おすすめ（PR）</h3>
+ ${ds==='minor'?'<p class="small muted">18歳未満の方には、出会いのおすすめは出しません。</p>':`<div class="toggle" style="border-top:0"><div><b>出会いのおすすめ</b><div class="small muted">マッチングアプリ${age(S.me.birth)>=25?'・結婚相談所':''}の広告${ds==='cool'?'（お別れから30日たつまでは出しません）':''}</div></div><button class="sw ${S.dating?'on':''}" data-a="flag" data-v="dating" aria-label="出会いのおすすめ"></button></div>`}
+ ${age(S.me.birth)>=18&&(S.me.status==='work'||S.me.status==='other')?`<div class="toggle"><div><b>キャリアのおすすめ</b><div class="small muted">転職エージェント・転職サイトの広告</div></div><button class="sw ${S.career?'on':''}" data-a="flag" data-v="career" aria-label="キャリアのおすすめ"></button></div>`:''}</div>
+ ${S.memories&&S.memories.length?`<div class="card"><h3>思い出カード</h3>${S.memories.map(m=>`<p class="small muted">${esc(m.name)}さん ・ ${m.since||''}から ${m.days}日 ・ いちばん長い連続 ${m.best}日</p>`).join('')}</div>`:''}
+ <div class="card"><button class="btn sub" style="color:var(--pink)" data-a="wipe">全部消す</button></div>`}
+const SOLO_TABS={home:viewSoloHome,diag:viewSoloDiag,set:viewSoloSet};
+
 /* ========== 設定 ========== */
 function viewSet(){
  const t=notifTimes();const pr=priceOf();const n=S.notif;
@@ -648,9 +707,10 @@ function viewSet(){
   ${tg('report','未来レポートの更新','月初めの土曜 12:00')}
   <div class="grid2" style="margin-top:10px"><button class="btn sub sm" style="width:100%" data-a="askNotif">通知を許可する</button><button class="btn sub sm" style="width:100%" data-a="testNotif">テスト通知</button></div>
   <p class="small muted" style="margin-top:6px">試作品では、アプリを開いているときのテスト通知だけ。決まった時刻に届く通知は、サーバーをつくる第2段階から。</p></div>
-${adultPair()?`<div class="card"><div class="toggle" style="border-top:0;padding-top:0"><div><b>結婚準備のおすすめを受け取る</b><div class="small muted">式場の見学・指輪・新居・お金の相談など提携先の広告（PR）を、ふたりに合うタイミングで出します。答えや年収は提携先に送りません。</div></div><button class="sw ${S.prep?'on':''}" data-a="prepT" aria-label="結婚準備のおすすめ"></button></div><p class="small muted">本番では、ふたりともオンにしたときだけ出します。出会い系の広告は、交際中のふたりには出しません。</p></div>`:''}
+${adultPair()?`<div class="card"><div class="toggle" style="border-top:0;padding-top:0"><div><b>結婚準備のおすすめを受け取る</b><div class="small muted">式場の見学・指輪・新居・お金の相談など提携先の広告（PR）を、ふたりに合うタイミングで出します。答えや年収は提携先に送りません。</div></div><button class="sw ${S.prep?'on':''}" data-a="prepT" aria-label="結婚準備のおすすめ"></button></div><p class="small muted">本番では、ふたりともオンにしたときだけ出します。出会い系の広告は、交際中のふたりには出しません。</p>
+ <div class="toggle"><div><b>キャリアのおすすめを受け取る</b><div class="small muted">転職エージェント・転職サイトの広告（PR）を、あなた自身の画面にだけ出します。相手の画面や相手の年収には出しません。</div></div><button class="sw ${S.career?'on':''}" data-a="flag" data-v="career" aria-label="キャリアのおすすめ"></button></div></div>`:''}
  <div class="card"><h3>別れたとき・やめるとき</h3><p class="small muted">ふたりのデータをすぐに消せます。</p>
-  <button class="btn sub" data-a="memory">思い出カードだけ残して消す</button><div style="height:8px"></div><button class="btn sub" style="color:var(--pink)" data-a="wipe">全部消す</button>
+  <button class="btn sub" data-a="memory">ふたりのデータを消して、ひとりモードにする（思い出カードは残る）</button><div style="height:8px"></div><button class="btn sub" style="color:var(--pink)" data-a="wipe">全部消す</button>
   ${S.memories&&S.memories.length?`<hr><p class="small"><b>思い出カード</b></p>${S.memories.map(m=>`<p class="small muted">${esc(m.name)}さん ・ ${m.since||''}から ${m.days}日 ・ いちばん長い連続 ${m.best}日</p>`).join('')}`:''}</div>
  <p class="small muted center">ミラペア 試作品 ・ 占いは遊びとして楽しんでください</p>`}
 function viewEdit(){const p=UI.draft[UI.who];return `${topBar('プロフィールを直す')}${personForm(p,UI.who)}<div style="height:16px"></div><button class="btn" data-a="editSave">保存</button>`}
@@ -691,7 +751,10 @@ const VIEWS={wedding:viewWedding,compat:viewCompat,values:viewValues,height:view
 const TABS={home:viewHome,diag:viewDiag,future:viewFuture,set:viewSet};
 function render(){
  const app=$('#app');let h;
- if(!S||!S.done)h=onboarding();
+ if(!S||!S.done||UI.adding)h=onboarding();
+ else if(S.mode==='solo'){h=UI.view?VIEWS[UI.view]():(SOLO_TABS[UI.tab]||viewSoloHome)();
+  const fullscreen=UI.view==='daily'||(UI.view==='values'&&UI.vq);
+  if(!fullscreen)h+=`<nav class="nav"><div class="in" style="grid-template-columns:repeat(3,1fr)">${[['home','ホーム'],['diag','診断'],['set','設定']].map(([k,l])=>`<button class="${!UI.view&&UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${ICON[k]}${l}</button>`).join('')}</div></nav>`}
  else{h=(UI.view?VIEWS[UI.view]():TABS[UI.tab]());
   const fullscreen=UI.view==='daily'||(UI.view==='values'&&UI.vq);
   if(!fullscreen)h+=`<nav class="nav"><div class="in">${[['home','ホーム'],['diag','診断'],['future','未来'],['set','設定']].map(([k,l])=>`<button class="${!UI.view&&UI.tab===k?'on':''}" data-a="tab" data-v="${k}">${ICON[k]}${l}</button>`).join('')}</div></nav>`;
@@ -700,18 +763,23 @@ function render(){
  app.innerHTML=h}
 
 /* ========== 操作 ========== */
-function newState(d){return{v:1,done:true,me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'short',who:'me'},prep:false,wed:{style:'party',guests:50,save:5},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
+function newState(d){return{v:1,done:true,mode:d.pt?'pair':'solo',dating:false,career:false,breakupAt:null,soloDaily:{},me:d.me,pt:d.pt,since:d.since||'',created:today(),daily:{},values:{me:{},pt:{}},streak:{count:0,last:null,best:0,freezeWeek:null},plus:false,spend:{ym:ym(),amt:0},owned:{},notif:{daily:true,partner:true,streak:true,anniv:true,report:true},notifAsked:false,paywallSeen:false,sim:{kids:2,course:'pub',style:'short',who:'me'},prep:false,wed:{style:'party',guests:50,save:5},photoUses:0,photoMonth:null,photoFree:false,memories:(S&&S.memories)||[]}}
 function addSpend(n){if(S.spend.ym!==ym())S.spend={ym:ym(),amt:0};S.spend.amt+=n}
 const ACT={
  onbNext(){const st=UI.step;
   if(st===0){UI.draft={me:{},pt:{}};UI.step=1;return render()}
-  if(st===1||st===2){const who=st===1?'me':'pt';readForm(UI.draft[who]);if(!personOk(UI.draft[who])){toast(age(UI.draft[who].birth)<16&&UI.draft[who].birth?'ミラペアは16歳から使えます':'ニックネーム・生年月日・性別・立場・身長を入れてください');return}UI.step++;window.scrollTo(0,0);return render()}
-  if(st===3){const el=document.querySelector('[data-name="since"]');UI.draft.since=el?el.value:'';S=newState(UI.draft);save();UI.tab='home';render()}},
- back(){if(!S||!S.done){UI.step=Math.max(0,UI.step-1);return render()}UI.view=null;UI.dq=null;render()},
+  if(st===1||st===3){const who=st===1?'me':'pt';readForm(UI.draft[who]);if(!personOk(UI.draft[who])){toast(age(UI.draft[who].birth)<16&&UI.draft[who].birth?'ミラペアは16歳から使えます':'ニックネーム・生年月日・性別・立場・身長を入れてください');return}UI.step++;window.scrollTo(0,0);return render()}
+  if(st===4){const el=document.querySelector('[data-name="since"]');UI.draft.since=el?el.value:'';
+   if(UI.adding){const old=S;S=newState(UI.draft);S.values.me=old.values.me||{};S.streak=old.streak;S.memories=old.memories||[];S.notif=old.notif;S.career=old.career;UI.adding=false;toast('ふたりモードになりました！')}
+   else S=newState(UI.draft);
+   save();UI.tab='home';UI.view=null;render()}},
+ rel(v){if(v==='solo'){S=newState({me:UI.draft.me,pt:null});save();UI.tab='home';return render()}UI.step=3;render()},
+ addPartner(){UI.adding=true;UI.draft={me:S.me,pt:{},since:''};UI.step=3;window.scrollTo(0,0);render()},
+ back(){if(UI.adding){if(UI.step<=3){UI.adding=false;return render()}UI.step--;return render()}if(!S||!S.done){UI.step=Math.max(0,UI.step===3?2:UI.step-1);return render()}UI.view=null;UI.dq=null;render()},
  tab(v){UI.tab=v;UI.view=null;window.scrollTo(0,0);render()},
  go(v){UI.view=v;window.scrollTo(0,0);if(v==='compat'&&!S.paywallSeen){S.paywallSeen=true;save();render();setTimeout(()=>{if(!S.plus){UI.modal='pay';render()}},1600);return}render()},
  segpick(v,el){const name=el.parentElement.dataset.name;
-  if(!S||!S.done||UI.view==='edit'){const who=!S||!S.done?(UI.step===1?'me':'pt'):UI.who;readForm(UI.draft[who]);UI.draft[who][name]=v;return render()}
+  if(!S||!S.done||UI.adding||UI.view==='edit'){const who=(!S||!S.done||UI.adding)?(UI.step===1?'me':'pt'):UI.who;readForm(UI.draft[who]);UI.draft[who][name]=v;return render()}
   if(name==='heightFather'){S.heightFather=v;save();return render()}
   if(UI.view==='money'){S.sim[name]=name==='kids'?+v:v;save();return render()}
   if(UI.view==='wedding'){S.wed[name]=v;save();return render()}},
@@ -725,11 +793,11 @@ const ACT={
   if(!D[other]&&S.notif.partner)notify('ミラペア',`${S[who].name}さんが今日の質問に答えたよ`);
   save();UI.view=null;UI.dq=null;UI.tab='home';toast(msg);
   if(!S.notifAsked&&D[other]){S.notifAsked=true;save();setTimeout(()=>{UI.modal='notif';render()},1200)}},
- vqGo(v){UI.vq={who:v,i:0,stage:'hand'};render()},
+ vqGo(v){UI.vq={who:v,i:0,stage:S.mode==='solo'?'ans':'hand'};render()},
  vqStart(){UI.vq.stage='ans';render()},
  vqQuit(){UI.vq=null;render()},
  vqA(v){const qs=valueQs();S.values[UI.vq.who][qs[UI.vq.i][1]]=+v;save();
-  if(UI.vq.i<qs.length-1){UI.vq.i++;render()}else{const done=valuesDone('me')&&valuesDone('pt');UI.vq=null;window.scrollTo(0,0);render();toast(done?'ふたりとも答えました。結果を見てみよう':'おつかれさま！つぎは相手の番です')}},
+  if(UI.vq.i<qs.length-1){UI.vq.i++;render()}else{const done=valuesDone('me')&&valuesDone('pt');UI.vq=null;window.scrollTo(0,0);render();toast(S.mode==='solo'?'答えました。分野ごとの傾向を見てみよう':done?'ふたりとも答えました。結果を見てみよう':'おつかれさま！つぎは相手の番です')}},
  vqPrev(){UI.vq.i=Math.max(0,UI.vq.i-1);render()},
  vqReset(){if(!confirm('ふたりの答えを消して、答え直しますか？'))return;S.values={me:{},pt:{}};save();render()},
  paywall(){UI.modal='pay';UI.pay='m';UI.consent=false;render()},
@@ -742,6 +810,9 @@ const ACT={
  buyItem(){const s=SHOP.find(x=>x.id===UI.modalItem);addSpend(s.price);S.owned[s.id]=true;save();UI.modal=null;UI.shopOpen=s.id;UI.view='shop';render()},
  notif(v){S.notif[v]=!S.notif[v];save();render()},
  prepT(){S.prep=!S.prep;save();render()},
+ flag(v){S[v]=!S[v];save();render()},
+ soloQ(v){const t=today();if(S.soloDaily[t]!=null)return;S.soloDaily[t]=+v;bumpStreak();save();toast(`連続${S.streak.count}日。恋人ができたら、相手の答えとくらべられます`)},
+ pr2(v){const p=[...SOLO_PR,...CAREER_PR].find(x=>x.id===v);toast(`本番では提携先「${p.title}」のページへ（登録・面談などで成果報酬）。あなたの答えや年収は送りません`)},
  pr(v){const p=PARTNERS.find(x=>x.id===v);toast(`本番では提携先「${p.title}」のページへ（来館・来店予約などで成果報酬）。ふたりの答えは送りません`)},
  askNotif(){UI.modal=null;try{if('Notification'in window)Notification.requestPermission().then(()=>render()).catch(()=>{});}catch(e){}toast(`毎朝${notifTimes().daily}にお知らせします（試作品では時刻の通知は届きません）`)},
  testNotif(){let ok=false;try{ok='Notification'in window&&Notification.permission==='granted'}catch(e){}
@@ -752,7 +823,7 @@ const ACT={
   if(left<=0){UI.modal='pay';return render()}
   if(S.plus){if(S.photoMonth!==ym()){S.photoMonth=ym();S.photoUses=0}S.photoUses++}else S.photoFree=true;save();UI.photoDone=true;render()},
  memory(){if(!confirm('ふたりのデータを消して、思い出カードだけ残しますか？'))return;const ms=milestones();const mem=(S.memories||[]).concat([{name:S.pt.name,since:S.since,days:ms?ms.day:0,best:S.streak.best||0}]);
-  try{localStorage.setItem(KEY,JSON.stringify({memories:mem}))}catch(e){}S={memories:mem};UI={...UI,step:0,view:null,tab:'home',modal:null};render()},
+  const me=S.me,vals=S.values.me;S=newState({me,pt:null});S.values.me=vals;S.memories=mem;S.breakupAt=today();save();UI={...UI,step:0,view:null,tab:'home',modal:null};render();toast('ひとりモードになりました。思い出カードは設定に残っています')},
  wipe(){if(!confirm('すべてのデータを消します。元に戻せません。'))return;try{localStorage.removeItem(KEY)}catch(e){}S=null;UI={...UI,step:0,view:null,tab:'home',modal:null};render()}};
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!el)return;
  if(el.dataset.a==='closeModal'&&el.classList.contains('modal')&&e.target!==el)return;
@@ -761,7 +832,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
 document.addEventListener('change',e=>{const el=e.target;
  if(el.dataset.wed){S.wed[el.dataset.wed]=Math.max(0,+el.value||0);save();render();return}
  if(el.dataset.photo){const f=el.files&&el.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{UI.photos[el.dataset.photo]=rd.result;UI.photoDone=false;render()};rd.readAsDataURL(f);return}
- if(el.tagName==='SELECT'||el.type==='date'){const onb=!S||!S.done;if(onb&&(UI.step===1||UI.step===2)){const who=UI.step===1?'me':'pt';readForm(UI.draft[who]);render()}else if(UI.view==='edit'){readForm(UI.draft[UI.who]);render()}}});
+ if(el.tagName==='SELECT'||el.type==='date'){const onb=!S||!S.done||UI.adding;if(onb&&(UI.step===1||UI.step===3)){const who=UI.step===1?'me':'pt';readForm(UI.draft[who]);render()}else if(UI.view==='edit'){readForm(UI.draft[UI.who]);render()}}});
 render();
 </script>
 </body>
