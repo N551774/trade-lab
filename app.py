@@ -1072,6 +1072,7 @@ def forward_section():
                 except Exception as e_:  # 保存先の一時エラーで画面を止めない
                     msgs = []
                     st.warning(f"記録の保存に一時的に失敗しました（{type(e_).__name__}）。少し待って「🔄 記録を更新」を押してください。")
+                    st.caption(f"詳細：{str(e_)[:400]}")
             st.session_state["fw_checked"] = time.time()
             if msgs:
                 st.toast("、".join(msgs))
