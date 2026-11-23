@@ -306,8 +306,10 @@ const PARTNERS=[
  {id:'fp',kind:'お金',title:'ふたりのお金の無料相談',sub:'ファイナンシャルプランナー',stage:1},
  {id:'home',kind:'新居',title:'ふたりの新居を探す',sub:'同棲・結婚の部屋さがし',stage:0}];
 const WED_STYLES=[['party','挙式・披露宴'],['family','家族だけ'],['photo','フォトだけ'],['none','しない']];
-/* 結婚式の費用の目安（万円）。ゼクシィ結婚トレンド調査2024（挙式・披露宴 平均343.9万円・招待客52.0人）に合わせた概算 */
-function wedCost(style,g){return style==='party'?100+4.7*g:style==='family'?40+3*g:style==='photo'?25:0}
+/* 結婚式の費用の目安（万円）。挙式・披露宴はゼクシィ結婚トレンド調査2024の人数帯の平均（25人で約244万・52人で343.9万・65人で約399万）に合う直線。
+   家族だけは「40人未満は100万円台〜200万円台」、フォトは平均約20.2万円。ご祝儀は1人あたり約3.3万円（57人で187.1万円） */
+function wedCost(style,g){return style==='party'?152+3.7*g:style==='family'?Math.min(250,Math.max(100,152+3.7*g)):style==='photo'?20:0}
+const GOSHUGI=3.3;
 
 /* ========== 計算 ========== */
 function income(p,yearsAhead){
@@ -580,12 +582,15 @@ function viewWedding(){
  <div class="card"><label class="f" style="margin-top:0">式のスタイル</label>${seg2('style',WED_STYLES,w.style)}
  ${w.style==='party'||w.style==='family'?`<label class="f">招待する人数</label><input type="number" inputmode="numeric" data-wed="guests" min="2" max="200" value="${esc(w.guests)}">`:''}
  <label class="f">ふたりで毎月貯められる額（万円）</label><input type="number" inputmode="numeric" data-wed="save" min="0" max="100" value="${esc(w.save)}"></div>
- <div class="card"><p class="small muted">費用の目安</p><div style="font:900 2rem var(--f-head)">${c?`約${man(c)}`:'0円'}</div>
- ${c?`<p class="small muted">${man(c*.8)}〜${man(c*1.2)}くらいの幅があります。</p>${months?`<p>月${save}万円ずつ貯めると <b>約${months}か月</b>（${(months/12).toFixed(1)}年）。</p>`:''}`:'<p class="small">式をしないふたりも、記念の写真や食事会だけするケースが多いです。</p>'}
- <hr><div class="list-tight small"><p>・結納から新婚旅行までの総額は平均 454.3万円、挙式・披露宴は 343.9万円（招待客 平均52人）</p><p>・親や親族から援助を受けた人は 81.9%、平均 183.5万円</p><p>・新婚旅行は平均 61.6万円</p><p>・ご祝儀で戻ってくる分もあります</p></div></div>
+ ${(()=>{const g=(w.style==='party'||w.style==='family')?+w.guests:0;const gift=GOSHUGI*g;const own=Math.max(0,c-gift);const m2=save>0?Math.ceil(own/save):0;
+ return `<div class="card"><p class="small muted">費用の目安</p><div style="font:900 2rem var(--f-head)">${c?`約${man(c)}`:'0円'}</div>
+ ${c?`<p class="small muted">${man(c*.8)}〜${man(c*1.2)}くらいの幅があります。</p>
+ ${g?`<p>ご祝儀（1人約3.3万円）で <b>約${man(gift)}</b> 戻ると、ふたりの負担は <b>約${man(own)}</b>。</p>`:''}
+ ${m2?`<p>月${save}万円ずつ貯めると <b>約${m2}か月</b>（${(m2/12).toFixed(1)}年）。</p>`:''}`:'<p class="small">式をしないふたりも、記念の写真や食事会だけするケースが多いです。</p>'}
+ <hr><div class="list-tight small"><p>・挙式・披露宴の総額は平均 343.9万円・招待客52人（2024年）。2025年の調査では 298.6万円・57人</p><p>・40人未満の少人数なら、どの人数でも100万円台〜200万円台</p><p>・フォトウェディングは平均 約20万円</p><p>・親や親族から援助を受けた人は 81.9%、平均 183.5万円（2024年）</p><p>・新婚旅行は平均 61.6万円</p></div></div>`})()}
  ${prCards(p=>!p.styles||p.styles.includes(w.style))}
  ${!S.prep?'<p class="small muted">設定で「結婚準備のおすすめ」をオンにすると、式場の見学予約などの提携先が出ます。</p>':''}
- <div class="note">費用はゼクシィ結婚トレンド調査2024の平均に合わせた概算です。地域・会場で大きく変わります。<br>（試作品表示）結婚準備ステージ：${STAGE_NAME[ps.stage]||'対象外'}・${ps.pts}点</div>`}
+ <div class="note">費用はゼクシィの調査の人数ごとの平均に合わせた概算、ご祝儀は結婚マーケット調査2025の平均からの目安です。地域・会場で大きく変わります。<br>（試作品表示）結婚準備ステージ：${STAGE_NAME[ps.stage]||'対象外'}・${ps.pts}点</div>`}
 function viewLife(){
  const items=lifeForecast();const fun=items.filter(i=>i[0]==='fun'),hard=items.filter(i=>i[0]==='hard');
  const show=arr=>S.plus?arr:arr.slice(0,2);const hidden=items.length-show(fun).length-show(hard).length;
