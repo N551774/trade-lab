@@ -538,6 +538,7 @@ function viewDaily(){
 function viewDiag(){
  const c=compat();const vm=valuesDone('me'),vp=valuesDone('pt');
  return `<div class="top"><h1>診断</h1></div>
+ <div class="card tap" data-a="go" data-v="ptype"><span class="pill sky">16タイプ</span><h3 style="margin-top:6px">ふたりのタイプ ${typeReady()?`<b style="color:var(--pink)">${pairType().code}</b>`:''}</h3><p class="small muted">${typeReady()?`${TYPES[pairType().code][0]}。シェア用の画像もつくれます ›`:'価値観にふたりとも答えると、ふたりの4文字タイプがわかります ›'}</p></div>
  <div class="card tap" data-a="go" data-v="compat"><span class="pill">占い・あそび</span><h3 style="margin-top:6px">星と数の相性</h3><p class="small muted">${SIGNS[c.a]} × ${SIGNS[c.b]} ・ ${c.score}%</p></div>
  <div class="card tap" data-a="go" data-v="values"><span class="pill sky">性格・価値観</span><h3 style="margin-top:6px">価値観の一致</h3>
   <p class="small muted">お金・家事・連絡・休日など${valueQs().length}問に、ふたりが別々に答えます。結婚生活にいちばん関わる診断です。</p>
@@ -675,6 +676,90 @@ function viewPhoto(){
  <button class="btn sub" style="margin-top:10px" disabled>SNS用のカードで保存（本番で対応）</button>${prCards(p=>p.id==='fair'||p.id==='photo')}`:''}
  <div class="note">遺伝ではなく、見た目の合成です。実際とはちがいます。写真はこの画面の中だけで使い、保存しません（本番ではつくった後24時間で消し、AIの学習には使いません）。</div>`}
 
+/* ========== ふたりのタイプ（16タイプ） ========== */
+/* 4つの軸。価値観の質問（左=1〜右=5）の平均で決める。右寄り（3より大きい）なら左の英字 */
+const AXES=[
+ {hi:'A',lo:'C',hiN:'お出かけ',loN:'おうち',qs:['休日は家でゆっくり','旅行は年1回くらい']},
+ {hi:'T',lo:'S',hiN:'いつも一緒',loN:'ひとり時間も大事',qs:['ひとりの時間がたくさんほしい','連絡は必要なときだけ']},
+ {hi:'P',lo:'F',hiN:'計画派',loN:'気まま派',qs:['予定はその日に決める','いまを楽しみたい']},
+ {hi:'W',lo:'D',hiN:'言葉で伝える',loN:'態度で伝える',qs:['気持ちは態度で伝える','記念日はさらっと']}];
+const TYPES={
+ ATPW:['旅の司令塔','計画を立てて一緒に遠くへ。気持ちもまっすぐ言葉で。'],
+ ATPD:['冒険の相棒','予定は完璧、愛情は行動で見せる。'],
+ ATFW:['お祭りコンビ','思いつきで出かけて、ずっとしゃべってる。'],
+ ATFD:['気まぐれ探検家','行き先は決めずに、気づけば隣にいる。'],
+ ASPW:['高め合うチーム','それぞれ忙しく、会う日は濃く話す。'],
+ ASPD:['背中を預ける戦友','多くは語らないけど、いちばん信頼してる。'],
+ ASFW:['自由な旅人ふたり','別々に動いて、会えばお土産話がとまらない。'],
+ ASFD:['風まかせの渡り鳥','つかず離れず、気づけば同じ空にいる。'],
+ CTPW:['巣づくり建築家','ふたりの暮らしを計画的に育てる。'],
+ CTPD:['暮らしの職人','毎日のごはんと習慣で愛情を伝える。'],
+ CTFW:['おしゃべり同居人','家でだらだら、話題はつきない。'],
+ CTFD:['こたつの住人','何もしない休日がいちばん幸せ。'],
+ CSPW:['静かな参謀','同じ部屋で別々のことをして、大事なことはきちんと話す。'],
+ CSPD:['灯台守','遠くから見守り合う、落ち着いたふたり。'],
+ CSFW:['夜ふかし文通家','会わない日もメッセージで深く話す。'],
+ CSFD:['ほどよい隣人','ほどよい距離感が、いちばん長続きする。']};
+const AXIS_TIP=[
+ ['休日の過ごし方がちがうふたり。「出かける日」と「家の日」を交互にすると、どちらも楽しめます。'],
+ ['一緒にいたい量がちがうふたり。会えない日の連絡の回数を、先に決めておくと安心です。'],
+ ['予定の立て方がちがうふたり。大きな予定は計画派、当日の寄り道は気まま派にまかせるとうまく回ります。'],
+ ['気持ちの伝え方がちがうふたり。「言葉で言ってほしい」「行動で見てほしい」を、おたがいに伝えておきましょう。']];
+function axisScore(who,ax){const vs=ax.qs.map(t=>{const i=VALUES.findIndex(v=>v[1]===t);return S.values[who][i]}).filter(Boolean);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:3}
+function letter(ax,sc,tie){return sc>3?ax.hi:sc<3?ax.lo:(tie||ax.lo)}
+function personType(who){return AXES.map(ax=>letter(ax,axisScore(who,ax))).join('')}
+function pairType(){const me=personType('me'),pt=personType('pt');
+ const tieWho=hash(S.me.birth+S.pt.birth)%2?me:pt;const code=AXES.map((ax,k)=>letter(ax,(axisScore('me',ax)+axisScore('pt',ax))/2,tieWho[k])).join('');
+ const diff=AXES.map((ax,k)=>me[k]!==pt[k]?k:-1).filter(k=>k>=0);return{code,me,pt,diff}}
+function typeReady(){return S.mode==='solo'?valuesDone('me'):valuesDone('me')&&valuesDone('pt')}
+function axesLine(code){return AXES.map((ax,k)=>code[k]===ax.hi?ax.hiN:ax.loN).join('・')}
+function viewType(){
+ if(!typeReady())return `${topBar(S.mode==='solo'?'あなたのタイプ':'ふたりのタイプ')}<div class="card"><p>「価値観」の${valueQs().length}問に${S.mode==='solo'?'答える':'ふたりとも答える'}と、タイプがわかります。</p><button class="btn" style="margin-top:8px" data-a="go" data-v="values">価値観に答える</button></div>`;
+ if(S.mode==='solo'){const c=personType('me');const t=TYPES[c];
+  return `${topBar('あなたのタイプ')}
+  <div class="card hero center"><p class="small muted">あなたは</p><div class="big" style="letter-spacing:.08em">${c}</div><h2 style="margin-top:6px">${t[0]}タイプ</h2><p>${axesLine(c)}</p></div>
+  <div class="card"><p>${t[1].replace('ふたり','あなた')}</p><p class="small muted">恋人ができたら、相手のタイプと合わせて「ふたりのタイプ」がわかります。</p></div>
+  ${shareBlock(c,t,'あなたのタイプ')}${typeBasis()}`}
+ const r=pairType();const t=TYPES[r.code];const N1=esc(S.me.name),N2=esc(S.pt.name);
+ return `${topBar('ふたりのタイプ')}
+ <div class="card hero center"><p class="small muted">${N1} ＆ ${N2} は</p><div class="big" style="letter-spacing:.08em">${r.code}</div><h2 style="margin-top:6px">${t[0]}</h2><p>${t[1]}</p></div>
+ <div class="grid2"><div class="stat"><span>${N1}さん</span><b>${r.me}</b><span>${TYPES[r.me][0]}</span></div><div class="stat"><span>${N2}さん</span><b>${r.pt}</b><span>${TYPES[r.pt][0]}</span></div></div>
+ <div class="card"><h3>ふたりの4つの軸</h3>${AXES.map((ax,k)=>{const a=axisScore('me',ax),b=axisScore('pt',ax);const X=v=>((5-v)/4*100).toFixed(0)+'%';
+  return `<div style="margin-top:12px"><div class="poles"><span><b>${ax.hi}</b> ${ax.hiN}</span><span>${ax.loN} <b>${ax.lo}</b></span></div>
+  <div style="position:relative;height:22px"><div class="bar" style="position:absolute;left:0;right:0;top:6px"></div>
+  <span title="${N1}" style="position:absolute;top:2px;left:calc(${X(a)} - 9px);width:18px;height:18px;border-radius:50%;background:var(--pink);border:2px solid var(--card)"></span>
+  <span title="${N2}" style="position:absolute;top:2px;left:calc(${X(b)} - 9px);width:18px;height:18px;border-radius:50%;background:var(--sky);border:2px solid var(--card)"></span></div></div>`}).join('')}
+  <p class="small muted" style="margin-top:8px"><span style="color:var(--pink)">●</span> ${N1}さん　<span style="color:var(--sky)">●</span> ${N2}さん</p></div>
+ <div class="card"><h3>${r.diff.length?'補い合いポイント':'そっくりなふたり'}</h3>${r.diff.length?r.diff.map(k=>`<p>${AXIS_TIP[k][0]}</p>`).join(''):'<p>4つの軸がぜんぶ同じ。説明しなくても分かり合える組み合わせです。たまには相手の苦手そうなことにも、いっしょに挑戦してみて。</p>'}</div>
+ ${shareBlock(r.code,t,'ふたりのタイプ')}${typeBasis()}`}
+function typeBasis(){return `<div class="card small"><p><b>どうやって決めているか</b></p>
+ <p>価値観の質問のうち、各軸2問ずつ（5段階）の平均で決めます。ふたりのタイプは、ふたりの平均で決めます。平均がちょうど真ん中のときは、どちらか一方（生年月日で決まる）の英字にします。</p>
+ ${AXES.map(ax=>`<p><b>${ax.hi}（${ax.hiN}）／${ax.lo}（${ax.loN}）</b><br>${ax.qs.map(t=>{const v=VALUES.find(x=>x[1]===t);return `「${v[1]} ⇔ ${v[2]}」`}).join('<br>')}<br><span class="muted">右寄りなら${ax.hi}、左寄りなら${ax.lo}</span></p>`).join('')}
+ <p class="muted">性格を正確に測る検査ではなく、話のきっかけにするための分け方です。</p></div>`}
+function shareBlock(code,t,label){const pair=S.mode==='pair';const ok=!pair||(UI.shareOK&&UI.shareOK.me&&UI.shareOK.pt);
+ return `<div class="card"><h3>シェア用の画像</h3><p class="small muted">画像にのるのはタイプと${pair?'ニックネーム':'ニックネーム'}だけです。年収・身長・答えの中身はのりません。</p>
+ ${pair?`<label class="row small" style="margin-top:8px"><input type="checkbox" style="width:auto" data-a="shareOK" data-v="me" ${UI.shareOK&&UI.shareOK.me?'checked':''}> ${esc(S.me.name)}さん：投稿してOK</label>
+ <label class="row small"><input type="checkbox" style="width:auto" data-a="shareOK" data-v="pt" ${UI.shareOK&&UI.shareOK.pt?'checked':''}> ${esc(S.pt.name)}さん：投稿してOK（本番では相手のスマホで確認）</label>`:''}
+ <button class="btn" style="margin-top:10px" data-a="makeCard" ${ok?'':'disabled'}>画像をつくる</button>
+ ${UI.cardImg?`<img src="${UI.cardImg}" alt="${label}の画像" style="display:block;width:100%;max-width:300px;margin:12px auto 0;border-radius:16px;border:1px solid var(--line)"><p class="small muted center">画像を長押しすると保存できます</p>
+ <button class="btn sub" style="margin-top:6px" data-a="saveCard">画像を保存</button>`:''}</div>`}
+function drawCard(){
+ const pair=S.mode==='pair';const code=pair?pairType().code:personType('me');const t=TYPES[code];
+ const c=document.createElement('canvas');c.width=1080;c.height=1920;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,1080,1920);gr.addColorStop(0,'#FF8FA3');gr.addColorStop(1,'#8C7BFF');g.fillStyle=gr;g.fillRect(0,0,1080,1920);
+ const rg=g.createRadialGradient(540,900,40,540,900,620);rg.addColorStop(0,'rgba(255,255,255,.28)');rg.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=rg;g.fillRect(0,0,1080,1920);
+ g.fillStyle='rgba(255,255,255,.55)';const sr=rng(hash(S.me.birth));for(let i=0;i<40;i++){g.beginPath();g.arc(sr()*1080,sr()*480+40,sr()*4+1.5,0,7);g.fill()}
+ const F='"Zen Maru Gothic","Noto Sans JP",sans-serif';g.fillStyle='#fff';g.textAlign='center';
+ g.font=`700 52px ${F}`;g.fillText(pair?`${S.me.name} ＆ ${S.pt.name}`:`${S.me.name}`,540,640);
+ g.font=`700 44px ${F}`;g.fillText(pair?'ふたりのタイプは':'わたしのタイプは',540,730);
+ g.font=`900 230px ${F}`;g.fillText(code,540,990);
+ g.font=`900 96px ${F}`;g.fillText(t[0],540,1150);
+ g.font=`500 42px ${F}`;const line=pair?t[1]:t[1].replace('ふたり','わたし');const w=[];let cur='';for(const ch of line){if(g.measureText(cur+ch).width>860){w.push(cur);cur=ch}else cur+=ch}w.push(cur);w.forEach((l,i)=>g.fillText(l,540,1260+i*60));
+ g.font=`500 36px ${F}`;g.fillText(axesLine(code),540,1480);
+ g.fillStyle='rgba(255,255,255,.9)';g.font=`900 64px ${F}`;g.fillText('ミラペア',540,1760);g.font=`500 32px ${F}`;g.fillText('ふたりの相性と未来を、毎日。',540,1815);
+ return c}
+let DOWNLOADS=null;try{if(window.claude&&claude.use)claude.use('downloads').then(f=>{DOWNLOADS=f}).catch(()=>{})}catch(e){}
+
 /* ========== AIに相談 ========== */
 let SAMPLE=null;try{if(window.claude&&claude.use)claude.use('sample').then(f=>{SAMPLE=f;if(UI.view==='ai')render()}).catch(()=>{})}catch(e){}
 const AI_TOPICS_PAIR=[['けんかした','けんかしてしまいました。仲直りのしかたを一緒に考えてほしいです。'],['プレゼント','もうすぐ相手の誕生日（または記念日）です。プレゼントを一緒に考えてほしいです。'],['デートの計画','次のデートの計画を一緒に立てたいです。'],['気持ちの伝え方','相手に言いにくいことがあります。どう伝えたらいいか相談したいです。'],['お金のこと','ふたりのお金のことで相談したいです。']];
@@ -758,6 +843,7 @@ function viewSoloHome(){
 function viewSoloDiag(){const z=sign(S.me.birth),lp=lifePath(S.me.birth);
  return `<div class="top"><h1>診断</h1></div>
  <div class="card"><span class="pill">占い・あそび</span><h3 style="margin-top:6px">${SIGNS[z]}（${ELEM[z%4]}）・数秘術 ${lp}</h3><p class="small muted">${['情熱的で、まっすぐ気持ちを伝えるタイプ。','おだやかで、時間をかけて信頼を育てるタイプ。','会話上手で、いっしょにいて楽しいタイプ。','やさしく、相手の気持ちに寄りそうタイプ。'][z%4]}</p></div>
+ <div class="card tap" data-a="go" data-v="ptype"><span class="pill sky">16タイプ</span><h3 style="margin-top:6px">あなたのタイプ ${typeReady()?`<b style="color:var(--pink)">${personType('me')}</b>`:''}</h3><p class="small muted">${typeReady()?`${TYPES[personType('me')][0]}タイプ ›`:'価値観に答えると、あなたの4文字タイプがわかります ›'}</p></div>
  <div class="card tap" data-a="go" data-v="values"><span class="pill sky">性格・価値観</span><h3 style="margin-top:6px">自分の価値観</h3><p class="small muted">${valueQs().length}問。恋人ができたら、そのまま相性診断に使えます。</p><p class="small">${valuesDone('me')?'回答ずみ':'まだ'}</p></div>`}
 function viewSoloValues(){
  if(!valuesDone('me'))return `${topBar('自分の価値観')}<p class="muted">お金・家事・連絡・休日など、${valueQs().length}問に答えます。2分くらい。</p><button class="btn" data-a="vqGo" data-v="me">はじめる</button>`;
@@ -902,7 +988,7 @@ function shopModal(){const s=SHOP.find(x=>x.id===UI.modalItem);const hs=seg(S.me
  <button class="btn" data-a="buyItem" ${over||(hs&&!UI.consent)?'disabled':''}>${s.price}円で買う（デモ・請求なし）</button><button class="btn ghost" style="width:100%" data-a="closeModal">やめる</button></div></div>`}
 
 /* ========== 描画 ========== */
-const VIEWS={ai:viewAI,wedding:viewWedding,compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
+const VIEWS={ptype:viewType,ai:viewAI,wedding:viewWedding,compat:viewCompat,values:viewValues,height:viewHeight,money:viewMoney,life:viewLife,photo:viewPhoto,daily:viewDaily,edit:viewEdit,shop:viewShop};
 const TABS={home:viewHome,diag:viewDiag,future:viewFuture,set:viewSet};
 function render(){
  const app=$('#app');let h;
@@ -952,7 +1038,7 @@ const ACT={
  vqStart(){UI.vq.stage='ans';render()},
  vqQuit(){UI.vq=null;render()},
  vqA(v){const qs=valueQs();S.values[UI.vq.who][qs[UI.vq.i][1]]=+v;save();
-  if(UI.vq.i<qs.length-1){UI.vq.i++;render()}else{const done=valuesDone('me')&&valuesDone('pt');UI.vq=null;window.scrollTo(0,0);render();toast(S.mode==='solo'?'答えました。分野ごとの傾向を見てみよう':done?'ふたりとも答えました。結果を見てみよう':'おつかれさま！つぎは相手の番です')}},
+  if(UI.vq.i<qs.length-1){UI.vq.i++;render()}else{const done=valuesDone('me')&&valuesDone('pt');UI.vq=null;window.scrollTo(0,0);render();if(typeReady()){UI.view='ptype';UI.cardImg=null}toast(S.mode==='solo'?'答えました。あなたのタイプがわかりました':done?'ふたりとも答えました。ふたりのタイプがわかりました':'答えました。相手が答えると結果が見られます')}},
  vqPrev(){UI.vq.i=Math.max(0,UI.vq.i-1);render()},
  vqReset(){if(!sure('vqReset','ふたりの答えを消して、答え直しますか？'))return;S.values={me:{},pt:{}};save();render()},
  paywall(){UI.modal='pay';UI.pay='m';UI.consent=false;render()},
@@ -966,6 +1052,11 @@ const ACT={
  notif(v){S.notif[v]=!S.notif[v];save();render()},
  prepT(){S.prep=!S.prep;save();render()},
  flag(v){S[v]=!S[v];save();render()},
+ shareOK(v,el){UI.shareOK=UI.shareOK||{};UI.shareOK[v]=el.checked;render()},
+ makeCard(){try{const c=drawCard();UI.cardImg=c.toDataURL('image/png');c.toBlob(b=>{UI.cardBlob=b},'image/png')}catch(e){toast('画像をつくれませんでした')}render()},
+ async saveCard(){const name='mirapair-type.png';
+  if(DOWNLOADS&&UI.cardBlob){try{await DOWNLOADS.save({filename:name,data:UI.cardBlob});return}catch(e){if(e&&e.code==='cancelled')return}}
+  try{const a=document.createElement('a');a.href=UI.cardImg;a.download=name;document.body.appendChild(a);a.click();a.remove()}catch(e){toast('画像を長押しして保存してください')}},
  aiTopic(v){const t=(S.mode==='pair'?AI_TOPICS_PAIR:AI_TOPICS_SOLO)[+v];UI.ai.draft=t[1];render();const b=document.getElementById('aiBox');if(b){b.focus();b.setSelectionRange(b.value.length,b.value.length)}},
  aiSend(){const b=document.getElementById('aiBox');if(b)UI.ai.draft=b.value;aiAsk()},
  aiStop(){UI.ai&&UI.ai.ctl&&UI.ai.ctl.abort()},
