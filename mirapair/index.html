@@ -705,6 +705,31 @@ const AXIS_TIP=[
  ['一緒にいたい量がちがうふたり。会えない日の連絡の回数を、先に決めておくと安心です。'],
  ['予定の立て方がちがうふたり。大きな予定は計画派、当日の寄り道は気まま派にまかせるとうまく回ります。'],
  ['気持ちの伝え方がちがうふたり。「言葉で言ってほしい」「行動で見てほしい」を、おたがいに伝えておきましょう。']];
+/* タイプの組み合わせ：軸ごとに「ふたりとも左の英字」「ふたりとも右の英字」「ちがう」の3通り（3×3×3×3＝81通り） */
+const COMBO=[
+ {hi:['休日の行動力','出かける計画がすぐ決まり、休日をめいっぱい楽しめます。','疲れがたまりやすいふたり。何もしない日も予定に入れて。'],
+  lo:['おうち時間の充実','家でのんびりする時間を、ふたりともいちばん楽しめます。','マンネリになりやすいふたり。月に1回は行ったことのない場所へ。'],
+  mix:['世界が広がる','出かける側が新しい場所を、おうち側が休み方を教え合えます。','休日の過ごし方の取り合いになりやすい。「出かける日」と「家の日」を交互に。']},
+ {hi:['安心感','一緒にいる時間が長く、さびしさを感じにくいふたりです。','友だちや自分の時間が減りがち。おたがいの予定も大事にして。'],
+  lo:['自立した関係','おたがいを縛らないので、長く続きやすいふたりです。','すれ違いに気づきにくい。週に1回は気持ちを確かめる時間を。'],
+  mix:['ほどよい距離','くっつきすぎず離れすぎない距離を、ふたりで作れます。','一緒にいたい側は不安に、ひとりがいい側は窮屈に感じやすい。会えない日の連絡の回数を先に決めて。']},
+ {hi:['実行力','旅行・貯金・引っ越しなど、大きなことを確実に進められます。','予定どおりにいかないとイライラしやすい。予定に「空白の日」を入れて。'],
+  lo:['身軽さ','その場のノリで、思いがけない楽しいことに出会えるふたりです。','手続きやお金の準備が後回しになりやすい。大事な期限だけはカレンダーに。'],
+  mix:['いい分担','計画と柔軟さの両方があるふたり。大きな予定は計画派、当日の寄り道は気まま派に。','急な予定変更でもめやすい。変更はわかった時点ですぐ伝えて。']},
+ {hi:['気持ちが伝わる','好きもごめんも、言葉にし合えるふたりです。','言葉がきつくなると、けんかが長引きやすい。言いすぎたと思ったら早めにひとこと。'],
+  lo:['行動の信頼','言葉より行動で支え合う、落ち着いたふたりです。','「言わなくてもわかるはず」ですれ違いやすい。大事なことだけは言葉で。'],
+  mix:['ふたつの愛情表現','言葉と行動、両方で愛情を受け取れるふたりです。','「言ってくれない」「わかってくれない」とすれ違いやすい。おたがいの「うれしい伝え方」を教え合って。']}];
+const PATTERN={4:['鏡のふたり','4つの軸がぜんぶ同じ。説明しなくても分かり合える組み合わせです。似ているぶん、苦手なことも同じなので、ときどき外の刺激を。'],3:['ほぼ双子','4つのうち3つが同じ。ほとんどのことは自然に合わせられます。ちがう1つの軸が、ふたりの話し合いのポイントです。'],2:['バランス型','同じ軸とちがう軸が半分ずつ。安心感と新鮮さの両方があるふたりです。'],1:['凸凹コンビ','ちがう軸が3つ。おたがいの足りないところを補える組み合わせです。ちがいを「相手の得意」と思えると強いふたり。'],0:['正反対の補い合い','4つの軸がぜんぶちがう。ひとりではしないことを、相手が全部持っている組み合わせです。最初は驚くことが多くても、役割分担がはまると最強。']};
+function comboOf(me,pt){return AXES.map((ax,k)=>me[k]!==pt[k]?'mix':me[k]===ax.hi?'hi':'lo')}
+/* 場面ごとの向き不向き（◎・○・工夫がいる）。タイプの組み合わせから決める */
+function scenes(me,pt){const c=comboOf(me,pt);const has=(k,l)=>me[k]===l||pt[k]===l;
+ const lv=n=>n>=3?'◎':n>=2?'○':'工夫';const out=[];
+ let n=(c[0]==='hi'?2:c[0]==='mix'?1:0)+(has(2,'P')?1:0);out.push(['旅行',lv(n),c[0]==='lo'?'遠出より、近場の温泉や宿でゆっくりする旅が合います。':has(2,'P')?'行き先を決めて動けるので、旅行の計画が立てやすいふたり。':'行き当たりばったりも楽しめますが、宿だけは先に予約を。']);
+ n=(c[1]!=='mix'?1:0)+(c[0]!=='mix'?1:0)+(has(2,'P')?1:0);out.push(['同棲・一緒の暮らし',lv(n),c[1]==='mix'?'一緒にいたい量がちがうので、ひとりになれる場所（部屋や時間）を決めておくと安心。':has(2,'P')?'家事の分担や家計のルールを決めて回せるふたり。':'ルールを決めずに始めがち。家事とお金の分け方だけは最初に話して。']);
+ n=(c[3]==='hi'?2:c[3]==='mix'?1:0)+(c[1]==='hi'?1:0);out.push(['けんかの仲直り',lv(n),c[3]==='lo'?'言葉にするのが苦手同士。「ごめん」のかわりの合図（好きなおやつを買う、など）を決めておくと早く戻れます。':c[3]==='mix'?'言葉で話したい側と、行動で示したい側。両方やると早く仲直りできます。':'話し合いで解決できるふたり。夜中まで続けないのがコツ。']);
+ n=(c[2]==='hi'?3:c[2]==='mix'?2:0);out.push(['お金の管理',lv(n),c[2]==='lo'?'ふたりとも気まま派。先取り貯金（給料日に自動で別口座へ）にすると、考えなくても貯まります。':c[2]==='mix'?'計画派が家計の仕組みを作り、気まま派はその中で楽しむ分担がおすすめ。':'計画どおりに貯められるふたり。ときどきは「使う楽しみ」の予算も。']);
+ return out}
+
 function axisScore(who,ax){const vs=ax.qs.map(t=>{const i=VALUES.findIndex(v=>v[1]===t);return S.values[who][i]}).filter(Boolean);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:3}
 function letter(ax,sc,tie){return sc>3?ax.hi:sc<3?ax.lo:(tie||ax.lo)}
 function personType(who){return AXES.map(ax=>letter(ax,axisScore(who,ax))).join('')}
@@ -730,11 +755,17 @@ function viewType(){
   <span title="${N1}" style="position:absolute;top:2px;left:calc(${X(a)} - 9px);width:18px;height:18px;border-radius:50%;background:var(--pink);border:2px solid var(--card)"></span>
   <span title="${N2}" style="position:absolute;top:2px;left:calc(${X(b)} - 9px);width:18px;height:18px;border-radius:50%;background:var(--sky);border:2px solid var(--card)"></span></div></div>`}).join('')}
   <p class="small muted" style="margin-top:8px"><span style="color:var(--pink)">●</span> ${N1}さん　<span style="color:var(--sky)">●</span> ${N2}さん</p></div>
- <div class="card"><h3>${r.diff.length?'補い合いポイント':'そっくりなふたり'}</h3>${r.diff.length?r.diff.map(k=>`<p>${AXIS_TIP[k][0]}</p>`).join(''):'<p>4つの軸がぜんぶ同じ。説明しなくても分かり合える組み合わせです。たまには相手の苦手そうなことにも、いっしょに挑戦してみて。</p>'}</div>
+ ${(()=>{const c=comboOf(r.me,r.pt);const same=c.filter(x=>x!=='mix').length;const pat=PATTERN[same];
+ return `<div class="card"><span class="pill">組み合わせの診断</span><h3 style="margin-top:6px">${r.me} × ${r.pt}：${pat[0]}</h3><p>${pat[1]}</p></div>
+ <div class="card"><h3>軸ごとの相性</h3>${AXES.map((ax,k)=>{const x=COMBO[k][c[k]];const st=c[k]==='mix'?`${N1}さん${r.me[k]}・${N2}さん${r.pt[k]}`:`ふたりとも${r.me[k]}（${r.me[k]===ax.hi?ax.hiN:ax.loN}）`;
+  return `<div class="item"><div class="ic ${c[k]==='mix'?'hard':'fun'}" style="font-size:.8rem">${ax.hi}/${ax.lo}</div><div><b>${x[0]}</b> <span class="small muted">${st}</span><p class="small">強み：${x[1]}</p><p class="small">気をつけたいこと：${x[2]}</p></div></div>`}).join('')}</div>
+ <div class="card"><h3>場面ごとの向き不向き</h3><table class="t">${scenes(r.me,r.pt).map(x=>`<tr><td style="white-space:nowrap"><b>${x[0]}</b></td><td style="text-align:center;font-weight:900;color:${x[1]==='工夫'?'var(--sun)':'var(--pink)'};white-space:nowrap">${x[1]==='工夫'?'工夫がいる':x[1]}</td></tr><tr><td colspan="2" style="text-align:left" class="small">${x[2]}</td></tr>`).join('')}</table>
+ <p class="small muted" style="margin-top:6px">「工夫がいる」は向いていないという意味ではなく、ルールを決めておくとうまくいく、という意味です。</p></div>`})()}
  ${shareBlock(r.code,t,'ふたりのタイプ')}${typeBasis()}`}
 function typeBasis(){return `<div class="card small"><p><b>どうやって決めているか</b></p>
  <p>価値観の質問のうち、各軸2問ずつ（5段階）の平均で決めます。ふたりのタイプは、ふたりの平均で決めます。平均がちょうど真ん中のときは、どちらか一方（生年月日で決まる）の英字にします。</p>
  ${AXES.map(ax=>`<p><b>${ax.hi}（${ax.hiN}）／${ax.lo}（${ax.loN}）</b><br>${ax.qs.map(t=>{const v=VALUES.find(x=>x[1]===t);return `「${v[1]} ⇔ ${v[2]}」`}).join('<br>')}<br><span class="muted">右寄りなら${ax.hi}、左寄りなら${ax.lo}</span></p>`).join('')}
+ <p><b>組み合わせの診断</b>：ふたりそれぞれのタイプを軸ごとにくらべ、「ふたりとも左」「ふたりとも右」「ちがう」の3通り×4軸（81通り）で文章を出しています。全体の呼び名は、同じ軸の数（0〜4）で決めています。場面ごとの向き不向きは、旅行＝休日と予定の軸、同棲＝休日・距離感・予定の軸、仲直り＝伝え方と距離感の軸、お金＝予定の軸、から決めています。</p>
  <p class="muted">性格を正確に測る検査ではなく、話のきっかけにするための分け方です。</p></div>`}
 function shareBlock(code,t,label){const pair=S.mode==='pair';const ok=!pair||(UI.shareOK&&UI.shareOK.me&&UI.shareOK.pt);
  return `<div class="card"><h3>シェア用の画像</h3><p class="small muted">画像にのるのはタイプと${pair?'ニックネーム':'ニックネーム'}だけです。年収・身長・答えの中身はのりません。</p>
