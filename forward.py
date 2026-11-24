@@ -77,6 +77,28 @@ def completed_sessions(sessions, market: str, now: datetime | None = None) -> li
     return [s for s in sessions if s < today or (s == today and done_today)]
 
 
+def repair_tz(store: Store) -> int:
+    """11/24 に日本時間のままの米国データで記録してしまった日（土曜日付・11/23）を消して、記録し直せるようにする"""
+    if store.st.get("fw_tz_fix_v1"):
+        return 0
+    n = 0
+    days = store.st.backend().read(store.DAYS)
+    if len(days) and "日付" in days.columns:
+        dd = pd.to_datetime(days["日付"], errors="coerce")
+        bad = (days["市場"] == "米国") & ((dd.dt.weekday >= 5) | (days["記録時刻"].astype(str) == "2026-11-24 10:21"))
+        if bad.any():
+            n += int(bad.sum())
+            store.st.backend().write(store.DAYS, days[~bad])
+    tr = store.st.backend().read(store.TRADES)
+    if len(tr) and "買い時刻" in tr.columns:
+        bt = pd.to_datetime(tr["買い時刻"], errors="coerce")
+        bad = (tr["市場"] == "米国") & ((bt.dt.hour < 9) | (bt.dt.weekday >= 5))
+        if bad.any():
+            store.st.backend().write(store.TRADES, tr[~bad])
+    store.st.put("fw_tz_fix_v1", True)
+    return n
+
+
 def update_day(store: Store, market: str, frames: dict, names: dict, index_df, capital, risk, fx,
                rule: dict | None) -> int:
     """未記録の取引日を記録する。戻り値＝新しく記録した日数"""
