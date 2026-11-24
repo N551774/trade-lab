@@ -34,6 +34,10 @@ _il.reload(scalp)  # サーバーが古いまま残らないよう、毎回読�
 _il.reload(pt)
 if getattr(storage, "VERSION", 1) < 2:  # 古い保存処理がサーバーに残っていたら読み直す
     _il.reload(storage)
+if not hasattr(data, "_local_tz"):  # 米国データの時間ずれ修正前の古い読み込みが残っていたら読み直す
+    _il.reload(data)
+if not hasattr(fw, "repair_tz"):
+    _il.reload(fw)
 if not hasattr(su, "upcoming_holidays"):  # 休場日カレンダー追加前の古い読み込みが残っていたら読み直す
     _il.reload(su)
 
@@ -1027,6 +1031,8 @@ def _fetch_many(pairs, period, interval):
 
 def run_forward_update(store):
     msgs = []
+    if fw.repair_tz(store):
+        msgs.append("時間ずれで誤って記録した米国の日を消して、記録し直しました")
     rule = load_rule()
     for mname, cats, idx_t, us in (("米国", ["米国株", "ETF"], "SPY", True), ("日本", ["日本株", "ETF"], "1321.T", False)):
         tk = [(n, t) for _, n, t in data.universe(cats) if data.is_tradable(t) and (t.endswith(".T") != us)]
