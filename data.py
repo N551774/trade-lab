@@ -207,7 +207,12 @@ def currency_of(ticker: str) -> str:
     return "$"
 
 
-def _clean(df: pd.DataFrame) -> pd.DataFrame:
+def _local_tz(ticker: str) -> str:
+    """その銘柄の取引所の現地時間（日本株・日経は東京、それ以外はニューヨーク）"""
+    return "Asia/Tokyo" if ticker.endswith(".T") or ticker in ("^N225", "^TPX") else "America/New_York"
+
+
+def _clean(df: pd.DataFrame, tz: str | None = None) -> pd.DataFrame:
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     rename = {c: c.capitalize() for c in df.columns}
@@ -218,6 +223,9 @@ def _clean(df: pd.DataFrame) -> pd.DataFrame:
         df["Volume"] = 0
     idx = pd.to_datetime(df.index)
     if getattr(idx, "tz", None) is not None:
+        # まとめて取得すると日米の銘柄が同じ時間帯（例：日本時間）にそろえられるので、必ず現地時間に直す
+        if tz:
+            idx = idx.tz_convert(tz)
         idx = idx.tz_localize(None)
     df.index = idx
     df.index.name = "Date"
@@ -247,7 +255,7 @@ def fetch_many(tickers: list[str], period: str, interval: str, chunk: int = 60) 
         for t in part:
             try:
                 sub = raw[t] if isinstance(raw.columns, pd.MultiIndex) else raw
-                df = _clean(sub.copy())
+                df = _clean(sub.copy(), _local_tz(t))
                 if len(df):
                     out[t] = df
                     _BULK[(t, period, interval)] = (_t.time(), df)
@@ -266,7 +274,7 @@ def fetch_yahoo(ticker: str, period: str, interval: str) -> pd.DataFrame:
     df = yf.Ticker(ticker).history(period=period, interval=interval, auto_adjust=False, prepost=False)
     if df is None or df.empty:
         raise RuntimeError(f"{ticker} のデータが取得できませんでした（ティッカー・期間を確認してください）")
-    return _clean(df)
+    return _clean(df, _local_tz(ticker))
 
 
 def fetch_quote(ticker: str) -> dict | None:
